@@ -9,10 +9,10 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-// Swagger documentation route
+// Swagger docs route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// API routes
+// User routes
 app.use('/users', userRoutes);
 
 // Default route
@@ -20,7 +20,6 @@ app.get('/', (req, res) => {
   res.send('Welcome to SurvivorSync API');
 });
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);

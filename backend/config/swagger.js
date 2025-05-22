@@ -6,15 +6,27 @@ const options = {
     info: {
       title: 'SurvivorSync API',
       version: '1.0.0',
-      description: 'API documentation for the SurvivorSync backend',
+      description: 'API documentation for SurvivorSync',
     },
     servers: [
       {
         url: 'http://localhost:3000',
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+    security: [{
+      bearerAuth: [],
+    }],
   },
-  apis: ['./routes/*.js'], // Scan for Swagger comments in route files
+  apis: ['./routes/*.js'], // Path to the API docs
 };
 
 const swaggerSpec = swaggerJsdoc(options);

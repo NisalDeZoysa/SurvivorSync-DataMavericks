@@ -1,84 +1,116 @@
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+require('dotenv').config();
 
-// Get all users
-exports.getAllUsers = async (req, res, next) => {
-  try {
-    const [rows] = await pool.query('SELECT * FROM users');
-    res.json(rows);
-  } catch (err) {
-    next(err);
-  }
+// Generate JWT token
+const generateToken = (user) => {
+  return jwt.sign(
+    { id: user.id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
 };
 
-// Get user by ID
-exports.getUserById = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [id]);
+// Register new user
+exports.registerUser = async (req, res) => {
+  const { full_name, email, password, nic, contact_number, address } = req.body;
 
-    if (rows.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.json(rows[0]);
-  } catch (err) {
-    next(err);
+  if (!full_name || !email || !password || !nic) {
+    return res.status(400).json({ error: 'Full name, email, password, and NIC are required' });
   }
-};
 
-// Create a new user
-exports.createUser = async (req, res, next) => {
   try {
-    const { name, email } = req.body;
-    if (!name || !email) {
-      return res.status(400).json({ error: 'Name and email are required' });
-    }
-
-    const [result] = await pool.query(
-      'INSERT INTO users (name, email) VALUES (?, ?)',
-      [name, email]
+    const [existing] = await pool.query(
+      'SELECT * FROM users WHERE email = ? OR nic = ?',
+      [email, nic]
     );
 
-    res.status(201).json({ id: result.insertId, name, email });
-  } catch (err) {
-    next(err);
-  }
-};
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'User with email or NIC already exists' });
+    }
 
-// Update a user by ID
-exports.updateUser = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { name, email } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const [result] = await pool.query(
-      'UPDATE users SET name = ?, email = ? WHERE id = ?',
-      [name, email, id]
+      'INSERT INTO users (full_name, email, password, nic, contact_number, address) VALUES (?, ?, ?, ?, ?, ?)',
+      [full_name, email, hashedPassword, nic, contact_number, address]
     );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.json({ message: 'User updated successfully' });
+    res.status(201).json({ message: 'User registered successfully', userId: result.insertId });
   } catch (err) {
-    next(err);
+    console.error('Registration Error:', err);
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 };
 
-// Delete a user by ID
-exports.deleteUser = async (req, res, next) => {
+// Login user and generate JWT
+exports.loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
+  }
+
   try {
-    const { id } = req.params;
+    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
 
-    const [result] = await pool.query('DELETE FROM users WHERE id = ?', [id]);
+    if (users.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
 
-    if (result.affectedRows === 0) {
+    const user = users[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    const token = generateToken(user);
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
+};
+
+// Middleware to verify JWT token
+exports.verifyToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Access denied, token missing!' });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) return res.status(403).json({ error: 'Invalid or expired token' });
+
+    req.user = decoded;
+    next();
+  });
+};
+
+// Get user profile (protected)
+exports.getProfile = async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const [results] = await pool.query(
+      'SELECT id, full_name, email, nic, contact_number, address, created_at FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (results.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ message: 'User deleted successfully' });
+    res.json(results[0]);
   } catch (err) {
-    next(err);
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 };

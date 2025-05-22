@@ -6,47 +6,14 @@ const usersController = require('../controllers/usersController');
  * @swagger
  * tags:
  *   name: Users
- *   description: User management
+ *   description: User management and authentication
  */
 
 /**
  * @swagger
- * /users:
- *   get:
- *     summary: Get all users
- *     tags: [Users]
- *     responses:
- *       200:
- *         description: List of users
- */
-router.get('/', usersController.getAllUsers);
-
-/**
- * @swagger
- * /users/{id}:
- *   get:
- *     summary: Get user by ID
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: User ID
- *     responses:
- *       200:
- *         description: User object
- *       404:
- *         description: User not found
- */
-router.get('/:id', usersController.getUserById);
-
-/**
- * @swagger
- * /users:
+ * /users/register:
  *   post:
- *     summary: Create a new user
+ *     summary: Register a new user
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -55,72 +22,78 @@ router.get('/:id', usersController.getUserById);
  *           schema:
  *             type: object
  *             required:
- *               - name
+ *               - full_name
  *               - email
+ *               - password
+ *               - nic
  *             properties:
- *               name:
+ *               full_name:
  *                 type: string
  *               email:
  *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               nic:
+ *                 type: string
+ *               contact_number:
+ *                 type: string
+ *               address:
+ *                 type: string
  *     responses:
  *       201:
- *         description: User created
+ *         description: User registered successfully
  *       400:
- *         description: Missing name or email
+ *         description: Missing required fields or user already exists
  */
-router.post('/', usersController.createUser);
 
 /**
  * @swagger
- * /users/{id}:
- *   put:
- *     summary: Update a user
+ * /users/login:
+ *   post:
+ *     summary: User login
  *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: User ID
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - email
+ *               - password
  *             properties:
- *               name:
- *                 type: string
  *               email:
  *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
  *     responses:
  *       200:
- *         description: User updated
- *       404:
- *         description: User not found
+ *         description: Login successful with JWT token
+ *       401:
+ *         description: Invalid credentials
  */
-router.put('/:id', usersController.updateUser);
 
 /**
  * @swagger
- * /users/{id}:
- *   delete:
- *     summary: Delete a user
+ * /users/profile:
+ *   get:
+ *     summary: Get user profile (requires auth)
  *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: User ID
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User deleted
- *       404:
- *         description: User not found
+ *         description: User profile data returned
+ *       401:
+ *         description: Missing or invalid token
  */
-router.delete('/:id', usersController.deleteUser);
+
+router.post('/register', usersController.registerUser);
+router.post('/login', usersController.loginUser);
+router.get('/profile', usersController.verifyToken, usersController.getProfile);
 
 module.exports = router;
