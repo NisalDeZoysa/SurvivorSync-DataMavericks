@@ -1,0 +1,6 @@
+# Environment variables
+backend/.env
+
+
+# MySQL data files
+database.sql
