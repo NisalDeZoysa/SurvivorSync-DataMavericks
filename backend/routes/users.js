@@ -11,7 +11,7 @@ const usersController = require('../controllers/usersController');
 
 /**
  * @swagger
- * /users/register:
+ * /api/users/register:
  *   post:
  *     summary: Register a new user
  *     tags: [Users]
@@ -26,6 +26,7 @@ const usersController = require('../controllers/usersController');
  *               - email
  *               - password
  *               - nic
+ *               - role
  *             properties:
  *               full_name:
  *                 type: string
@@ -41,6 +42,9 @@ const usersController = require('../controllers/usersController');
  *                 type: string
  *               address:
  *                 type: string
+ *               role:
+ *                 type: string
+ *                 enum: [admin, user, first_responder]
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -50,9 +54,9 @@ const usersController = require('../controllers/usersController');
 
 /**
  * @swagger
- * /users/login:
+ * /api/users/login:
  *   post:
- *     summary: User login
+ *     summary: User login and return access & refresh tokens
  *     tags: [Users]
  *     requestBody:
  *       required: true
@@ -72,14 +76,95 @@ const usersController = require('../controllers/usersController');
  *                 format: password
  *     responses:
  *       200:
- *         description: Login successful with JWT token
+ *         description: Login successful with JWT tokens
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                 refreshToken:
+ *                   type: string
+ *                 expiresIn:
+ *                   type: integer
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     full_name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     role:
+ *                       type: string
  *       401:
  *         description: Invalid credentials
  */
 
 /**
  * @swagger
- * /users/profile:
+ * /api/users/refresh-token:
+ *   post:
+ *     summary: Get a new access token using a refresh token
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: New access token generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                 expiresIn:
+ *                   type: integer
+ *       401:
+ *         description: Refresh token missing
+ *       403:
+ *         description: Invalid or expired refresh token
+ */
+
+/**
+ * @swagger
+ * /api/users/logout:
+ *   post:
+ *     summary: Logout user by invalidating refresh token
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *       400:
+ *         description: Refresh token required
+ */
+
+/**
+ * @swagger
+ * /api/users/profile:
  *   get:
  *     summary: Get user profile (requires auth)
  *     tags: [Users]
@@ -94,6 +179,10 @@ const usersController = require('../controllers/usersController');
 
 router.post('/register', usersController.registerUser);
 router.post('/login', usersController.loginUser);
+router.post('/refresh-token', usersController.refreshToken);
+router.post('/logout', usersController.logoutUser);
+/*router.get('/profile', usersController.verifyToken, usersController.getProfile);*/
 router.get('/profile', usersController.verifyToken, usersController.getProfile);
+
 
 module.exports = router;

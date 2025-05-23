@@ -13,7 +13,7 @@ app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // User routes
-app.use('/users', userRoutes);
+app.use('/api/users', userRoutes);
 
 // Default route
 app.get('/', (req, res) => {
