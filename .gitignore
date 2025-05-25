@@ -1,6 +1,7 @@
 # Environment variables
 #backend/.env
-
+backend/node_modules/
+frontend/node_modules/
 
 # MySQL data files
 #database.sql
