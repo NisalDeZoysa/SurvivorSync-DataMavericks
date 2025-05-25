@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./disaster_agent_system/a2a-python/src"
+    ]
+}
