@@ -45,13 +45,24 @@ export const isVolunteer = (req, res, next) => {
   next();
 };
 
+/*export const isAdmin = (req, res, next) => {
+  const adminTypes = ['Police', 'Army', 'Hospital', 'Redcross', 'NGO', 'Government', 'Other'];
+  if (!req.user || !adminTypes.includes(req.user.type)) {
+    return res.status(403).json({ message: 'Only admins allowed' });
+  }
+  next();
+};*/
+
 export const isAdmin = (req, res, next) => {
-  const adminTypes = ['Police', 'Army', 'Hospital', 'Redcorss', 'NGO', 'Government', 'Other'];
+  console.log('User in isAdmin middleware:', req.user);  // 👀
+
+  const adminTypes = ['Police', 'Army', 'Hospital', 'Redcross', 'NGO', 'Government', 'Other'];
   if (!req.user || !adminTypes.includes(req.user.type)) {
     return res.status(403).json({ message: 'Only admins allowed' });
   }
   next();
 };
+
 
 export const isPolice = (req, res, next) => {
   if (req.user?.type !== 'Police') {

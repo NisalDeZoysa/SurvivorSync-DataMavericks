@@ -26,7 +26,7 @@ const Admin = sequelize.define('Admin', {
     validate: { isEmail: true },
   },
   type: {
-    type: DataTypes.ENUM('Police', 'Army', 'Hospital', 'Redcorss', 'NGO', 'Government', 'Other'),
+    type: DataTypes.ENUM('Police', 'Army', 'Hospital', 'Redcross', 'NGO', 'Government', 'Other'),
     allowNull: false,
   },
   description: {
