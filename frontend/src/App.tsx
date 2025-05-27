@@ -11,6 +11,7 @@ import Report from "./pages/Report";
 import Emergencies from "./pages/Emergencies";
 import Assignments from "./pages/Assignments";
 import FieldObservations from "./pages/FieldObservations";
+import FloatingChatbot from "./components/FloatingChatbot";
 import NotFound from "./pages/NotFound";
 import News from "./pages/News";
 
@@ -35,6 +36,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+             <FloatingChatbot />
             <Footer />
           </div>
         </BrowserRouter>
