@@ -20,8 +20,11 @@ CREATE TABLE users (
   nic VARCHAR(20) NOT NULL UNIQUE,
   contact_number VARCHAR(20),
   address VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  role ENUM('admin', 'user', 'first_responder') NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  refresh_token VARCHAR(500) NULL
 );
+
 
 SHOW TABLES;
 
