@@ -71,9 +71,9 @@ const Navigation: React.FC = () => {
   }
 
   let navItems = [
-    { path: '/', label: 'Dashboard', access: [UserRole.USER, UserRole.FIRST_RESPONDER, UserRole.ADMIN] },
+    { path: '/', label: 'Dashboard', access: [UserRole.USER, UserRole.ADMIN, UserRole.VOLUNTEERS] },
     { path: '/news', label: 'News', access: [UserRole.USER, UserRole.FIRST_RESPONDER, UserRole.ADMIN] },
-    { path: '/report', label: 'Report Emergency', access: [UserRole.USER, UserRole.FIRST_RESPONDER, UserRole.ADMIN] },
+    { path: '/report', label: 'Report Emergency', access: [UserRole.USER] },
   ];
 
   if (currentUser.role === UserRole.VOLUNTEERS) {

@@ -409,7 +409,7 @@ const Index = () => {
             : "User Dashboard"}
         </h1>
 
-        {currentUser.role === UserRole.USER && (
+        {currentUser.role === UserRole.USER || currentUser.role === UserRole.VOLUNTEERS  && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
               <h2 className="text-l text-gray-500 font-semibold mb-4">Report Emergency</h2>
@@ -424,6 +424,7 @@ const Index = () => {
           </div>
         )}
 
+        {/* Need to fix this */}
         {currentUser.role === UserRole.FIRST_RESPONDER && (
           <div className="space-y-8">
             <div>
