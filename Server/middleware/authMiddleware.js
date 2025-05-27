@@ -46,7 +46,7 @@ export const isVolunteer = (req, res, next) => {
 };
 
 export const isAdmin = (req, res, next) => {
-  const adminTypes = ['Police', 'Army', 'Hospital', 'Redcorss', 'NGO', 'Government', 'Other'];
+  const adminTypes = ['Police', 'Army', 'Hospital', 'Redcross', 'NGO', 'Government', 'Other'];
   if (!req.user || !adminTypes.includes(req.user.type)) {
     return res.status(403).json({ message: 'Only admins allowed' });
   }
