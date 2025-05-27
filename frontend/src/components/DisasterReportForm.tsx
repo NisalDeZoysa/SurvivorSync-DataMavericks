@@ -173,8 +173,11 @@ const DisasterReportForm: React.FC = () => {
 
   return (
     <Card className="p-6 shadow-lg">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-safety-700">Report Emergency</h2>
+      <div className="mb-6 text-center">
+        <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-emergency-100 mb-4">
+                <AlertTriangle className="h-8 w-8 text-emergency-500" />
+        </div>
+        <h2 className="text-2xl font-bold text-red-600">Report Emergency</h2>
         <p className="text-gray-600">
           Please provide as much detail as possible about the emergency situation.
         </p>

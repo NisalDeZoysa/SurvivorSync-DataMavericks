@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { LogIn, UserPlus, User, UserCheck, AlertTriangle } from 'lucide-react';
+import { LogIn, UserPlus, User, UserCheck, AlertTriangle,Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -213,7 +213,7 @@ export const AuthForms: React.FC = () => {
                     rules={{ required: "Full name is required" }}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Name</FormLabel>
+                        <FormLabel>Name</FormLabel>
                         <FormControl>
                           <Input placeholder="John Doe" {...field} />
                         </FormControl>
@@ -285,7 +285,6 @@ export const AuthForms: React.FC = () => {
                     <p className='text-orange-500'><strong>Who are you ?</strong></p>
                     <p>- User: Report disasters and stay informed about emergencies</p>
                     <p>- Volunteer: Join rescue efforts and support your community</p>
-                    <p>- First Responder: Authorized personnel managing and responding to emergency situations</p>
                   </div>
                   
                   <FormField
@@ -304,9 +303,19 @@ export const AuthForms: React.FC = () => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value={UserRole.USER}>Regular User</SelectItem>
-                            <SelectItem value={UserRole.VOLUNTEERS}>Volunteers</SelectItem>
-                            <SelectItem value={UserRole.FIRST_RESPONDER}>First Responder</SelectItem>                           
+                            <SelectItem value={UserRole.USER}>
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-black" />
+                                Regular User
+                              </div>
+                            </SelectItem>
+                            <SelectItem value={UserRole.VOLUNTEERS}>
+                              <div className="flex items-center gap-2">
+                                <Heart className="h-4 w-4 text-red-500" />
+                                Volunteer
+                              </div>
+                            </SelectItem>
+                                
                           </SelectContent>
                         </Select>
                         <FormMessage />

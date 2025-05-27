@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { AlertTriangle, Search, Filter, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { AlertTriangle, Search,MapPin, Filter, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -88,6 +89,7 @@ const DisasterList: React.FC = () => {
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
+  const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(null);
 
   const filteredDisasters = disasters
     .filter(disaster => {
@@ -152,6 +154,23 @@ const DisasterList: React.FC = () => {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+    const getTypeIcon = (type: DisasterType) => {
+      switch (type) {
+        case DisasterType.FIRE:
+          return "🔥";
+        case DisasterType.FLOOD:
+          return "🌊";
+        case DisasterType.LANDSLIDE:
+          return "⛰️";
+        case DisasterType.TSUNAMI:
+          return "🌊";
+        case DisasterType.EARTHQUAKE:
+          return "🏚️";
+        default:
+          return "⚠️";
+      }
+    };
   
   return (
     <div className="space-y-6">
@@ -279,7 +298,13 @@ const DisasterList: React.FC = () => {
                     <span className="capitalize">{disaster.status}</span>
                   </div>
                   <div>
-                    <Button size="sm" variant="outline">View Details</Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => setSelectedDisaster(disaster)}
+                      >
+                    View Details
+                    </Button>
                   </div>
                 </CardFooter>
               </Card>
@@ -287,6 +312,76 @@ const DisasterList: React.FC = () => {
           </div>
         )}
       </div>
+
+        {/* Detailed View Dialog */}
+      <Dialog open={!!selectedDisaster} onOpenChange={() => setSelectedDisaster(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          {selectedDisaster && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-xl">
+                  <span className="text-2xl">{getTypeIcon(selectedDisaster.type)}</span>
+                  {selectedDisaster.name}
+                </DialogTitle>
+                <DialogDescription className="flex items-center gap-4">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    {selectedDisaster.location.address}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {formatTime(selectedDisaster.timestamp)}
+                  </span>
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <Badge className={getSeverityColor(selectedDisaster.severity)}>
+                    {selectedDisaster.severity} severity
+                  </Badge>
+                  <Badge className={getSeverityColor(selectedDisaster.severity)}>
+                    {selectedDisaster.status}
+                  </Badge>
+                </div>
+                
+                <div className="prose prose-sm">
+                  <p className="text-gray-700 leading-relaxed">{selectedDisaster.details}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Affected People:</span>
+                    <p className="text-lg font-semibold">{selectedDisaster.affectedCount}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Emergency Contact:</span>
+                    <p className="text-lg font-semibold">{selectedDisaster.contactNo}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Disaster Type:</span>
+                    <p className="text-lg font-semibold capitalize">{selectedDisaster.type}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Reported:</span>
+                    <p className="text-lg font-semibold">{new Date(selectedDisaster.timestamp).toLocaleString()}</p>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setSelectedDisaster(null)}>
+                    Close
+                  </Button>
+                  <Button className="bg-emergency-500 hover:bg-emergency-600">
+                    Contact Emergency Services
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };

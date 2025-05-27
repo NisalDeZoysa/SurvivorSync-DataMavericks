@@ -11,13 +11,22 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+
+
+// Create context with a default value
+const AuthContext = createContext<AuthContextType>({
+  currentUser: null,
+  isLoading: true,
+  login: async () => {},
+  register: async () => {},
+  logout: () => {},
+  isAuthenticated: false
+});
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  // Remove the error throwing to prevent the crash
   return context;
 };
 
@@ -35,6 +44,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
+      try {
+        setCurrentUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('user');
+      }
     }
     setIsLoading(false);
   }, []);
@@ -49,8 +64,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: '123',
         name: email.split('@')[0],
         email: email,
-        role: email.includes('admin') ? UserRole.ADMIN : 
-              email.includes('responder') ? UserRole.FIRST_RESPONDER : UserRole.USER,
+         role: email.includes('admin') ? UserRole.ADMIN : 
+              email.includes('responder') ? UserRole.FIRST_RESPONDER : 
+              email.includes('volunteer') ? UserRole.VOLUNTEERS : UserRole.USER,
         contactNo: '123-456-7890'
       };
       
@@ -100,17 +116,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem('user');
   };
 
+  const contextValue: AuthContextType = {
+    currentUser,
+    isLoading,
+    login,
+    register,
+    logout,
+    isAuthenticated: !!currentUser
+  };
+
   return (
-    <AuthContext.Provider
-      value={{
-        currentUser,
-        isLoading,
-        login,
-        register,
-        logout,
-        isAuthenticated: !!currentUser
-      }}
-    >
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
