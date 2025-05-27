@@ -2,17 +2,40 @@ import UserRequest from '../models/UserRequest.js';
 
 export const createUserRequest = async (req, res) => {
   try {
-    const { location, time, type, affectedCount, contactNumber } = req.body;
+    const {
+      name,
+      type,
+      severity,
+      details,
+      affectedCount,
+      contactNo,
+      time,
+      location = {},
+    } = req.body;
+
+    let { latitude, longitude, address } = location;
+
+    // Ensure address is stored as a plain string
+    if (typeof address === 'object') {
+      address = Array.isArray(address)
+        ? address.join(', ')
+        : Object.values(address).join(', ');
+    }
 
     const imageFiles = req.files?.images?.map(file => file.path) || [];
     const voiceFile = req.files?.voice?.[0]?.path || null;
 
     const request = await UserRequest.create({
-      location,
-      time,
+      name,
       type,
+      severity,
+      details,
       affectedCount,
-      contactNumber,
+      contactNo,
+      time,
+      latitude,
+      longitude,
+      address,
       images: imageFiles,
       voice: voiceFile,
       userId: req.user.id,
@@ -24,6 +47,7 @@ export const createUserRequest = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
 
 export const getAllRequests = async (req, res) => {
   try {
@@ -62,7 +86,6 @@ export const deleteRequest = async (req, res) => {
   }
 };
 
-
 export const updateRequest = async (req, res) => {
   try {
     const request = await UserRequest.findOne({
@@ -71,17 +94,39 @@ export const updateRequest = async (req, res) => {
 
     if (!request) return res.status(404).json({ error: 'Request not found' });
 
-    const { location, time, type, affectedCount, contactNumber } = req.body;
+    const {
+      name,
+      type,
+      severity,
+      details,
+      affectedCount,
+      contactNo,
+      time,
+      location = {},
+    } = req.body;
+
+    let { latitude, longitude, address } = location;
+
+    if (typeof address === 'object') {
+      address = Array.isArray(address)
+        ? address.join(', ')
+        : Object.values(address).join(', ');
+    }
 
     const imageFiles = req.files?.images?.map(file => file.path) || request.images;
     const voiceFile = req.files?.voice?.[0]?.path || request.voice;
 
     await request.update({
-      location,
-      time,
+      name,
       type,
+      severity,
+      details,
       affectedCount,
-      contactNumber,
+      contactNo,
+      time,
+      latitude,
+      longitude,
+      address,
       images: imageFiles,
       voice: voiceFile,
     });
@@ -92,6 +137,4 @@ export const updateRequest = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
-
-
 

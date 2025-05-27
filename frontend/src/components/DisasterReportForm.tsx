@@ -5,6 +5,9 @@ import { AlertTriangle, MapPin, Check, Mic, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import axios from 'axios';
+import Cookies from 'js-cookie';
+
 import { 
   Select,
   SelectContent,
@@ -116,60 +119,70 @@ const DisasterReportForm: React.FC = () => {
   };
 
   const onSubmit = async (data: DisasterFormValues) => {
-    if (!location && !data.address) {
-      toast({
-        variant: "destructive",
-        title: "Location Required",
-        description: "Please provide either your current location or an address.",
-      });
-      return;
-    }
+  if (!location && !data.address) {
+    toast({
+      variant: "destructive",
+      title: "Location Required",
+      description: "Please provide either your current location or an address.",
+    });
+    return;
+  }
 
+  const formData = new FormData();
+  formData.append('name', data.name);
+  formData.append('type', data.type);
+  formData.append('severity', data.severity);
+  formData.append('details', data.details);
+  formData.append('affectedCount', String(data.affectedCount));
+  formData.append('contactNo', data.contactNo || '');
+  formData.append('time', new Date().toISOString());
+
+  if (location) {
+    formData.append('location[latitude]', String(location.latitude));
+    formData.append('location[longitude]', String(location.longitude));
+  }
+
+  if (data.address) {
+    formData.append('location[address]', data.address);
+  }
+
+  if (selectedImage) {
+    formData.append('images', selectedImage);
+  }
+
+  // TODO: Append voice file if you have recorded audio implemented
+  // formData.append('voice', recordedAudioFile);
+
+  try {
     setIsSubmitting(true);
-    
-    try {
-      // In a real app, this would be sent to your API
-      const newDisaster: Partial<Disaster> = {
-        location: {
-          latitude: location?.latitude || 0,
-          longitude: location?.longitude || 0,
-          address: data.address
-        },
-        timestamp: new Date().toISOString(),
-        type: data.type,
-        name: data.name,
-        severity: data.severity,
-        details: data.details,
-        affectedCount: data.affectedCount,
-        contactNo: data.contactNo,
-        reportedBy: currentUser?.id,
-        status: "pending"
-      };
-      
-      // Simulating API call
-      console.log("Submitting disaster report:", newDisaster);
-      
-      setTimeout(() => {
-        toast({
-          title: "Report Submitted",
-          description: "Your emergency report has been submitted successfully.",
-        });
-        form.reset();
-        setSelectedImage(null);
-        setImagePreview(null);
-        setIsSubmitting(false);
-      }, 1500);
-      
-    } catch (error) {
-      console.error("Error submitting report:", error);
-      toast({
-        variant: "destructive",
-        title: "Submission Failed",
-        description: "There was a problem submitting your report. Please try again.",
-      });
-      setIsSubmitting(false);
-    }
-  };
+
+    const response = await axios.post('http://localhost:5000/api/requests', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      withCredentials: true,  // <=== critical: send cookies with request
+    });
+
+    toast({
+      title: "Report Submitted",
+      description: "Your emergency report has been successfully submitted.",
+    });
+
+    form.reset();
+    setSelectedImage(null);
+    setImagePreview(null);
+    setIsSubmitting(false);
+  } catch (error: any) {
+    console.error("Submission error:", error);
+    toast({
+      variant: "destructive",
+      title: "Submission Failed",
+      description: error?.response?.data?.message || "Please try again later.",
+    });
+    setIsSubmitting(false);
+  }
+};
+
 
   return (
     <Card className="p-6 shadow-lg">

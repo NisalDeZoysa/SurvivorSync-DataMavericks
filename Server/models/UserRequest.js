@@ -3,25 +3,45 @@ import sequelize from '../config/db.js';
 import User from './user.js';
 
 const UserRequest = sequelize.define('UserRequest', {
-  location: {
+  name: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  time: {
-    type: DataTypes.DATE,
+  type: {
+    type: DataTypes.ENUM('FLOOD', 'FIRE', 'EARTHQUAKE', 'LANDSLIDE', 'OTHER'),
     allowNull: false,
   },
-  type: {
-    type: DataTypes.ENUM('flood', 'fire', 'earthquake', 'landslide', 'other'),
+  severity: {
+    type: DataTypes.ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL'),
     allowNull: false,
+  },
+  details: {
+    type: DataTypes.TEXT,
+    allowNull: true,
   },
   affectedCount: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  contactNumber: {
+  contactNo: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  latitude: {
+    type: DataTypes.DECIMAL(10, 6),
+    allowNull: true,
+  },
+  longitude: {
+    type: DataTypes.DECIMAL(10, 6),
+    allowNull: true,
+  },
+  address: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  time: {
+    type: DataTypes.DATE,
+    allowNull: true,
   },
   images: {
     type: DataTypes.JSON,
@@ -34,7 +54,7 @@ const UserRequest = sequelize.define('UserRequest', {
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-  }
+  },
 });
 
 User.hasMany(UserRequest, { foreignKey: 'userId' });
