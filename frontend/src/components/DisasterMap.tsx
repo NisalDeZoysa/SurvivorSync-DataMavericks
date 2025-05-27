@@ -3,7 +3,11 @@ import { MapPin, AlertTriangle, Flame, Waves, Mountain } from 'lucide-react';
 import { Disaster, DisasterType, DisasterSeverity } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
+import { APIProvider, Map, Marker,AdvancedMarker } from "@vis.gl/react-google-maps";
+import flood from '../assets/flood.png';
+import fire from '../assets/fire.png';
+import other from '../assets/other.png';
+import landslide from '..//assets/landslide.png';
 
 const apikey = import.meta.env.VITE_MAP_API_KEY;
 
@@ -83,6 +87,36 @@ const DisasterMap: React.FC = () => {
     lng: 80.636696,
   });
 
+  const getDisasterIconForMap = (type: DisasterType) => {
+    switch (type) {
+      case DisasterType.FIRE:
+        return {
+          url: {fire},
+          scaledSize: new google.maps.Size(40, 40) 
+        };
+      case DisasterType.FLOOD:
+        return {
+          url: {flood},
+          scaledSize: new google.maps.Size(40, 40)
+        };
+      case DisasterType.LANDSLIDE:
+        return {
+          url: {landslide},
+          scaledSize:new google.maps.Size(40, 40)
+        };
+      case DisasterType.TSUNAMI:
+        return {
+          url: {other},
+          scaledSize: new google.maps.Size(40, 40)
+        };
+      default:
+        return {
+          url: {other},
+          scaledSize: new google.maps.Size(40, 40)
+        };
+    }
+  };
+
   const getDisasterIcon = (type: DisasterType) => {
     switch (type) {
       case DisasterType.FIRE:
@@ -92,7 +126,7 @@ const DisasterMap: React.FC = () => {
       case DisasterType.LANDSLIDE:
         return <Mountain className="h-6 w-6 text-orange-500" />;
       case DisasterType.TSUNAMI:
-        return <Waves className="h-6 w-6 text-indigo-500" />;
+        return <MapPin className="h-6 w-6 text-indigo-500" />;
       default:
         return <AlertTriangle className="h-6 w-6 text-yellow-500" />;
     }
@@ -130,83 +164,41 @@ const DisasterMap: React.FC = () => {
     <div className="space-y-6">
       {/* Simple Map Representation */}
       <div className="relative w-full h-100 bg-gradient-to-b from-blue-100 to-green-100 rounded-lg border-2 border-gray-200 overflow-hidden">
-        {/* <div 
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e5e7eb' fill-opacity='0.3'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-          }}
-        ></div> */}
 
         <APIProvider apiKey={apikey}>
               <div className="w-full h-[80vh]">
                 <Map defaultZoom={7} defaultCenter={currentLocation}>
-                  {/* {showShelters &&
-                    shelters.map((shelter, index) => (
-                      <Marker
-                        key={index}
-                        position={{
-                          lat: shelter.locationLatLang[0].latitude,
-                          lng: shelter.locationLatLang[0].longitude,
-                        }}
-                        onClick={() => handleMarkerClick(shelter)}
-                        icon={shelterIcon}
-                      />
-                    ))}
 
-                  {showTraffic &&
-                    traffics.map((traffic, index) => (
-                      <Marker
-                        key={index}
-                        position={{
-                          lat: traffic.closeLatLang[0].latitude,
-                          lng: traffic.closeLatLang[0].longitude,
+                  {/* Disaster Markers */}
+                  {mockMapDisasters.map((disaster) => (
+                    <Marker
+                      key={disaster.id}
+                      position={{
+                          lat: disaster.location.latitude,
+                          lng: disaster.location.longitude,
                         }}
-                        icon={trafficIcon}
-                      />
-                    ))} */}
+                      onMouseOver={() => setHoveredDisaster(disaster)}
+                      onMouseOut={() => setHoveredDisaster(null)}
+                      onClick={() => setSelectedDisaster(disaster)}
+                      // icon={getDisasterIconForMap(disaster.type)}             
+                    >
+                    </Marker>
+                  ))}
+
                 </Map>
               </div>
             </APIProvider>
         
-        {/* Map Title */}
-        {/* <div className="absolute top-4 left-4 bg-white px-3 py-2 rounded-lg shadow-md">
-          <h3 className="font-semibold text-sm">Sri Lanka - Live Disaster Map</h3>
-        </div> */}
-
-        {/* Disaster Markers */}
-        {mockMapDisasters.map((disaster) => (
-          <div
-            key={disaster.id}
-            className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 z-10"
-            style={{
-              left: `${((disaster.location.longitude - 79.5) / 2) * 100 + 50}%`,
-              top: `${((8.5 - disaster.location.latitude) / 4) * 100 + 20}%`
-            }}
-            onMouseEnter={() => setHoveredDisaster(disaster)}
-            onMouseLeave={() => setHoveredDisaster(null)}
-            onClick={() => setSelectedDisaster(disaster)}
-          >
-            <div className={`relative p-2 bg-white rounded-full shadow-lg border-2 hover:scale-110 transition-transform ${
-              disaster.status === 'resolved' ? 'opacity-60' : ''
-            }`}>
-              {getDisasterIcon(disaster.type)}
-              <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${
-                disaster.severity === DisasterSeverity.CRITICAL ? 'bg-red-500' :
-                disaster.severity === DisasterSeverity.HIGH ? 'bg-orange-500' :
-                disaster.severity === DisasterSeverity.MEDIUM ? 'bg-yellow-500' : 'bg-blue-500'
-              }`}></div>
-            </div>
-          </div>
-        ))}
+  
 
         {/* Hover Tooltip */}
         {hoveredDisaster && (
           <div 
-            className="absolute z-20 bg-white p-3 rounded-lg shadow-lg border max-w-xs pointer-events-none"
-            style={{
-              left: `${((hoveredDisaster.location.longitude - 79.5) / 2) * 100 + 55}%`,
-              top: `${((8.5 - hoveredDisaster.location.latitude) / 4) * 100 + 15}%`
-            }}
+            className="absolute z-20 bg-white p-3 rounded-lg shadow-lg border max-w-xs pointer-events-none top-10 left-1/2 transform -translate-x-1/2"
+            // style={{
+            //   left: `${((hoveredDisaster.location.longitude - 79.5) / 2) * 100 + 55}%`,
+            //   top: `${((8.5 - hoveredDisaster.location.latitude) / 4) * 100 + 15}%`
+            // }}
           >
             <h4 className="font-semibold text-sm mb-1">{hoveredDisaster.name}</h4>
             <p className="text-xs text-gray-600 mb-2">{hoveredDisaster.location.address}</p>
@@ -240,8 +232,8 @@ const DisasterMap: React.FC = () => {
           <span className="text-sm">Landslide</span>
         </div>
         <div className="flex items-center gap-2">
-          <Waves className="h-5 w-5 text-indigo-500" />
-          <span className="text-sm">Tsunami</span>
+          <MapPin className="h-5 w-5 text-indigo-500" />
+          <span className="text-sm">Other</span>
         </div>
       </div>
 
