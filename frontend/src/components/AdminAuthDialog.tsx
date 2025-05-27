@@ -3,9 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/context/AuthContext';
-import { UserRole } from '@/types';
-import { AlertTriangle, UserCheck } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminAuthDialogProps {
@@ -16,33 +14,43 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
     name: '',
+    NIC: '',
+    address: '',
+    contactNumber: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: UserRole.FIRST_RESPONDER,
-    badgeNumber: '',
-    department: ''
+    type: 'admin'
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { login, register } = useAuth();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
-      await login(loginData.email, loginData.password);
+      const res = await fetch('http://localhost:5000/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include', // to get/set cookies
+        body: JSON.stringify(loginData)
+      });
+
+      if (!res.ok) throw new Error('Login failed');
+
       toast({
-        title: "Login Successful",
-        description: "Welcome back to the emergency response system.",
+        title: 'Login Successful',
+        description: 'Welcome back to the emergency response system.',
       });
       onClose();
     } catch (error) {
       toast({
-        title: "Login Failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive",
+        title: 'Login Failed',
+        description: 'Please check your credentials and try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -51,35 +59,50 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (registerData.password !== registerData.confirmPassword) {
       toast({
-        title: "Password Mismatch",
-        description: "Passwords do not match. Please try again.",
-        variant: "destructive",
+        title: 'Password Mismatch',
+        description: 'Passwords do not match. Please try again.',
+        variant: 'destructive',
       });
       return;
     }
 
     setIsLoading(true);
-    
+
     try {
-      await register({
+      const payload = {
         name: registerData.name,
+        NIC: registerData.NIC,
+        address: registerData.address,
+        contactNumber: registerData.contactNumber,
         email: registerData.email,
-        role: registerData.role,
-      }, registerData.password);
-      
+        type: registerData.type,
+        password: registerData.password
+      };
+
+      const res = await fetch('http://localhost:5000/api/users/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error('Registration failed');
+
       toast({
-        title: "Registration Successful",
-        description: "Your admin account has been created successfully.",
+        title: 'Registration Successful',
+        description: 'Your admin account has been created successfully.',
       });
       onClose();
     } catch (error) {
       toast({
-        title: "Registration Failed",
-        description: "An error occurred during registration. Please try again.",
-        variant: "destructive",
+        title: 'Registration Failed',
+        description: 'An error occurred during registration. Please try again.',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -102,7 +125,7 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
           <TabsTrigger value="login">Login</TabsTrigger>
           <TabsTrigger value="register">Register</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="login">
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
@@ -127,11 +150,11 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing In..." : "Sign In"}
+              {isLoading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
         </TabsContent>
-        
+
         <TabsContent value="register">
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
@@ -145,6 +168,33 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
               />
             </div>
             <div>
+              <Label htmlFor="register-nic">NIC</Label>
+              <Input
+                id="register-nic"
+                value={registerData.NIC}
+                onChange={(e) => setRegisterData({ ...registerData, NIC: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="register-address">Address</Label>
+              <Input
+                id="register-address"
+                value={registerData.address}
+                onChange={(e) => setRegisterData({ ...registerData, address: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="register-contact">Contact Number</Label>
+              <Input
+                id="register-contact"
+                value={registerData.contactNumber}
+                onChange={(e) => setRegisterData({ ...registerData, contactNumber: e.target.value })}
+                required
+              />
+            </div>
+            <div>
               <Label htmlFor="register-email">Email</Label>
               <Input
                 id="register-email"
@@ -154,18 +204,6 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
                 placeholder="admin@emergency.gov"
                 required
               />
-            </div>
-            <div>
-              <Label htmlFor="register-role">Role</Label>
-              <select
-                id="register-role"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                value={registerData.role}
-                onChange={(e) => setRegisterData({ ...registerData, role: e.target.value as UserRole })}
-              >
-                <option value={UserRole.FIRST_RESPONDER}>First Responder</option>
-                <option value={UserRole.ADMIN}>Administrator</option>
-              </select>
             </div>
             <div>
               <Label htmlFor="register-password">Password</Label>
@@ -188,7 +226,7 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating Account..." : "Create Admin Account"}
+              {isLoading ? 'Creating Account...' : 'Create Admin Account'}
             </Button>
           </form>
         </TabsContent>
