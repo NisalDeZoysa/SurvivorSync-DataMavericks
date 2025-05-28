@@ -71,7 +71,8 @@ const Navigation: React.FC = () => {
   }
 
   let navItems = [
-    { path: '/', label: 'Dashboard', access: [UserRole.USER, UserRole.ADMIN, UserRole.VOLUNTEERS] },
+    { path: '/', label: 'Dashboard', access: [UserRole.USER, UserRole.VOLUNTEERS] },
+    { path: '/admin', label: 'Admin Dashboard', access: [UserRole.ADMIN] },
     { path: '/news', label: 'News', access: [UserRole.USER, UserRole.FIRST_RESPONDER, UserRole.ADMIN] },
     { path: '/report', label: 'Report Emergency', access: [UserRole.USER] },
   ];
@@ -88,13 +89,6 @@ const Navigation: React.FC = () => {
     navItems.push({ path: '/emergencies', label: 'All Emergencies', access: [UserRole.FIRST_RESPONDER, UserRole.ADMIN] });
   }
 
-  if (currentUser.role === UserRole.ADMIN) {
-    navItems.push(
-      { path: '/users', label: 'Manage Users', access: [UserRole.ADMIN] },
-        { path: '/assignments/manage', label: 'Manage Assignments', access: [UserRole.ADMIN] },
-      { path: '/settings', label: 'System Settings', access: [UserRole.ADMIN] }
-    );
-  }
 
   const filteredNavItems = navItems.filter(item => item.access.includes(currentUser.role));
 

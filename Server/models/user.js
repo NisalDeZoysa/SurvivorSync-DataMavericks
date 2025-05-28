@@ -1,8 +1,15 @@
 // models/user.js
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
+import DisasterRequest from './DisasterRequest.js';
 
+// User and Volunteer are same
 const User = sequelize.define('User', {
+  userId:{
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
   name: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -41,3 +48,5 @@ const User = sequelize.define('User', {
 });
 
 export default User;
+
+User.hasMany(DisasterRequest, { foreignKey: 'userId' });

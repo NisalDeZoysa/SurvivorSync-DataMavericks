@@ -1,6 +1,6 @@
-import Allocation from '../models/Allocation.js';
+import Allocation from '../models/ResourceAllocation.js';
 import ResourceCenter from '../models/ResourceCenter.js';
-import UserRequest from '../models/UserRequest.js';
+import UserRequest from '../models/DisasterRequest.js';
 
 // Create
 export const createAllocation = async (req, res) => {

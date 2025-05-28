@@ -17,6 +17,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import Admin from "@/pages/Admin"
 
 import first from "../assets/first.jpg";
 import second from "../assets/second.jpg";
@@ -443,43 +444,9 @@ const Index = () => {
         )}
 
         {currentUser.role === UserRole.ADMIN && (
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-xl font-semibold mb-4">System Overview</h2>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white rounded-lg shadow p-6 border-l-4 border-emergency-500">
-                  <h3 className="text-sm font-medium text-gray-500">
-                    Pending Emergencies
-                  </h3>
-                  <p className="text-3xl font-bold">12</p>
-                </div>
-                <div className="bg-white rounded-lg shadow p-6 border-l-4 border-alert-500">
-                  <h3 className="text-sm font-medium text-gray-500">
-                    In Progress
-                  </h3>
-                  <p className="text-3xl font-bold">8</p>
-                </div>
-                <div className="bg-white rounded-lg shadow p-6 border-l-4 border-safety-500">
-                  <h3 className="text-sm font-medium text-gray-500">
-                    Resolved Today
-                  </h3>
-                  <p className="text-3xl font-bold">5</p>
-                </div>
-                <div className="bg-white rounded-lg shadow p-6 border-l-4 border-gray-500">
-                  <h3 className="text-sm font-medium text-gray-500">
-                    Active Responders
-                  </h3>
-                  <p className="text-3xl font-bold">18</p>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-semibold mb-4">
-                All Emergency Reports
-              </h2>
-              <DisasterList />
-            </div>
+          <div>
+            <Admin/>
+            
           </div>
         )}
       </main>

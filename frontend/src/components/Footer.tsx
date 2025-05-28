@@ -80,7 +80,7 @@ const Footer = () => {
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Administrative Access</DialogTitle>
+                  <DialogTitle className='text-center font-bold'>Administrative Access</DialogTitle>
                 </DialogHeader>
                 <AdminAuthDialog onClose={() => setIsAdminDialogOpen(false)} />
               </DialogContent>

@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
 import Disaster from './Disaster.js'; // Make sure this model is already created
 
-const Precaution = sequelize.define('Precaution', {
+const SafetyPrecaution = sequelize.define('Precaution', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -16,14 +16,13 @@ const Precaution = sequelize.define('Precaution', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Disasters',
+      model: 'Disaster',
       key: 'id',
     },
   },
 });
 
 // Associations
-Disaster.hasMany(Precaution, { foreignKey: 'disasterId' });
-Precaution.belongsTo(Disaster, { foreignKey: 'disasterId' });
+SafetyPrecaution.belongsTo(Disaster, { foreignKey: 'disasterId' });
 
-export default Precaution;
+export default SafetyPrecaution;

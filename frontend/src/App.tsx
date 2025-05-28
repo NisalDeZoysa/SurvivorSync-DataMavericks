@@ -14,6 +14,7 @@ import FieldObservations from "./pages/FieldObservations";
 import FloatingChatbot from "./components/FloatingChatbot";
 import NotFound from "./pages/NotFound";
 import News from "./pages/News";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
                <Route path="/news" element={<News />} />
                 <Route path="/assignments" element={<Assignments />} />
                 <Route path="/observations" element={<FieldObservations />} />
+                <Route path="/admin" element={<Admin />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
