@@ -179,9 +179,16 @@ def handle_task():
             "status": "request-intake-agent-completed",
             "initial_request": task_request.get("message", {}),
             "next-agent": "request-verify-agent",
+            "message": '''Forwading to Verify Agent. 
+                          Please analyze the request details and verify the request using you tools. 
+                          Put Status as verified if the disaster request count is greater than <2>
+                          If the request is not verified, put status as unverified.
+                          If you are not able to verify the request, put status as pending.
+                          If you are not able to process the request, put status as error.
+                        ''',
             "request-intake-agent-response": [
                 {
-                    "role": "agent",
+                    "role": "request-intake-agent",
                     "response": response_format_dict,
                 }
             ]
@@ -191,8 +198,13 @@ def handle_task():
         target_send_url = f"{target_agent_url}/tasks/send"
 
         try:
-            response = requests.post(target_send_url, json=response_task, timeout=60)
-            response.raise_for_status()
+            if response_task.get("next-agent") == "request-verify-agent":
+               response = requests.post(target_send_url, json=response_task, timeout=60)
+               response.raise_for_status()
+            else:
+                print(f"Next agent is not request-verify-agent, skipping forwarding to {target_agent_url}")
+                return jsonify(response_task), 200 
+            
         except requests.exceptions.RequestException as e:
             print(f"Error forwarding task {task_id}: {e}")
             error_response_task = {
