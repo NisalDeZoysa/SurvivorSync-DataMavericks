@@ -18,6 +18,7 @@ const Resource = sequelize.define('Resource', {
   },
 }, {
   tableName: 'resources',
+  timestamps: true,
 });
 
 

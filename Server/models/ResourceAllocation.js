@@ -1,10 +1,7 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
-import UserRequest from './DisasterRequest.js';
-import ResourceAvailability from './ResourceAvailability.js';
-import DisasterRequest from './DisasterRequest.js'; 
 
-const ResourceAllocation = sequelize.define('ResourceAllocation', {
+const AllocatedResource = sequelize.define('ResourceAllocation', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -14,7 +11,7 @@ const ResourceAllocation = sequelize.define('ResourceAllocation', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: ResourceAvailability,
+      model: 'resource_availabilities', // Assuming ResourceAvailability is defined elsewhere
       key: 'id',
     },
   },
@@ -36,11 +33,10 @@ const ResourceAllocation = sequelize.define('ResourceAllocation', {
     },
   }, 
 }, {
-  tableName: 'resource_allocations',
+  tableName: 'allocated_resources',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
-
-
-
-
-export default ResourceAllocation;
+export default AllocatedResource;

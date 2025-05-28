@@ -1,8 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
-import User from './User.js';
-import ResourceAllocation from './ResourceAllocation.js';
-import Disaster from './Disaster.js';
+
 
 const DisasterRequest = sequelize.define('DisasterRequest', {
   id: {
@@ -64,23 +62,34 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
     allowNull: true,
   },
   images: {
-    type: DataTypes.JSON,
+    type: DataTypes.BLOB,
     allowNull: true,
   },
   voice: {
-    type: DataTypes.STRING,
+    type: DataTypes.BLOB,
     allowNull: true,
   },
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'users', 
+      key: 'id',
+    },
   },
   requestAllocationId: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    references: {
+      model: 'request_allocations', 
+      key: 'id',
+    },
   }
 },{
   tableName: 'disaster_requests',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
 

@@ -1,6 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
-import SafetyPrecaution from './SafetyPrecaution.js';
 
 const Disaster = sequelize.define('Disaster', {
   id:{
@@ -25,7 +24,7 @@ const Disaster = sequelize.define('Disaster', {
     type: DataTypes.TEXT,
     allowNull: true,
   },
-  describtion: {
+  description: {
     type: DataTypes.STRING,
     allowNull: true,
   },

@@ -16,12 +16,10 @@ const SafetyPrecaution = sequelize.define('Precaution', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'disasters', // Assuming Disaster is defined elsewhere
+      model: 'disasters', 
       key: 'id',
     },
   },
 });
-
-// Associations
 
 export default SafetyPrecaution;

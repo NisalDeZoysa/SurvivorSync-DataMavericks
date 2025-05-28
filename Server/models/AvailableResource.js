@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
 import ResourceCenter from './ResourceCenter.js';
 
-const ResourceAvailability = sequelize.define('ResourceAvailability', {
+const AvailableResource = sequelize.define('ResourceAvailability', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -25,8 +25,11 @@ const ResourceAvailability = sequelize.define('ResourceAvailability', {
     allowNull: false,
   },
 }, {
-  tableName: 'resource_availabilities',
+  tableName: 'available_resources',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
 
-export default ResourceAvailability;
+export default AvailableResource;

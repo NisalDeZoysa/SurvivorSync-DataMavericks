@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
 import Resource from './Resource.js';
-import ResourceAvailability from './ResourceAvailability.js';
+import ResourceAvailability from './AvailableResource.js';
 import FirstResponder from './FirstResponder.js';
 
 const ResourceCenter = sequelize.define('ResourceCenter', {
@@ -29,6 +29,10 @@ const ResourceCenter = sequelize.define('ResourceCenter', {
   resourceId: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    references: {
+      model: 'resources', 
+      key: 'id',
+    },
   },
 }, {
   tableName: 'resource_centers',
