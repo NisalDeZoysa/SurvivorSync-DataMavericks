@@ -10,6 +10,7 @@ import {
   getAdminProfile,
 } from '../controllers/adminController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
+import { checkIfAdmin } from '../controllers/adminController.js';
 
 const router = express.Router();
 
@@ -22,5 +23,6 @@ router.get('/admins/:id', authenticateToken, getAdminById);
 router.put('/admins/:id', authenticateToken, updateAdmin);
 router.delete('/admins/:id', authenticateToken, deleteAdmin);
 router.get('/profile', authenticateToken, getAdminProfile);
+router.get('/check-admin', authenticateToken, checkIfAdmin);
 
 export default router;

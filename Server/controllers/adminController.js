@@ -40,6 +40,7 @@ export const registerAdmin = async (req, res) => {
 
     const { accessToken, refreshToken } = generateTokens(admin);
     res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
+    res.cookie('userType', 'ADMIN', { sameSite: 'Strict' });
 
     res.json({
       message: 'Admin registered successfully',
@@ -73,6 +74,7 @@ export const loginAdmin = async (req, res) => {
 
     const { accessToken, refreshToken } = generateTokens(admin);
     res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
+    res.cookie('userType', 'USER', { sameSite: 'Strict' });
 
     res.json({
       message: 'Admin logged in successfully',
