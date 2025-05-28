@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, AsyncIterable, Dict, Literal
 from flask import Flask, json, request, jsonify
 from dotenv import load_dotenv
@@ -10,6 +11,7 @@ from langgraph.prebuilt import create_react_agent
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
 from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.messages import AIMessage, ToolMessage
+import requests
 from disaster_agent_system.models.models import DisasterRequestResponseFormat
 
 load_dotenv()
@@ -21,6 +23,7 @@ app = Flask(__name__)
 
 class VerifiedtResponseFormat(BaseModel):
     """Respond to the user in this format."""
+    status : Literal['pending', 'verified', 'not verified', 'error'] = 'pending'
     verificaion_status: Literal['pending', 'completed', 'error'] = 'pending'
     verification_message: str
     
@@ -45,6 +48,7 @@ class RequestVerifyAgent:
         'Use the available tools to verify the information.'
         'If the information is not available, respond with "Not applicable" or keep null for that field.'
         '''
+            "status": "pending" | "verified" | "not verified" | "error", # The status of the verification process
             "verificaion_status": "pending" | "completed" | "error", # The status of the verification process
             "verification_message": "<string>" # A message providing details about the verification process
         }'''
@@ -95,29 +99,25 @@ class RequestVerifyAgent:
         current_state = self.graph.get_state(config)
         structured_response = current_state.values.get('structured_response')
         if structured_response and isinstance(
-            structured_response, DisasterRequestResponseFormat
+            structured_response, VerifiedtResponseFormat
         ):
             if structured_response.status == 'pending':
                 return {
                         'is_task_complete': False,
-                        'require_user_input': True,
                         'content': structured_response,
                         }
             elif structured_response.status == 'error':
                 return {
                         'is_task_complete': False,
-                        'require_user_input': True,
                         'content': structured_response,
                         }
             elif structured_response.status == 'completed':
                 return {
                         'is_task_complete': True,
-                        'require_user_input': False,
                         'content': structured_response,
                         }
         return {
                 'is_task_complete': False,
-                'require_user_input': True,
                 'content': 'We are unable to process your request at the moment. Please try again.',
                 }
 
@@ -129,29 +129,27 @@ class RequestVerifyAgent:
 # Endpoint to serve the RAG Agent Card
 @app.get("/.well-known/agent.json")
 def get_agent_card():
-    return jsonify(RequestIntakeAgent.AGENT_CARD)
+    return jsonify(RequestVerifyAgent.AGENT_CARD)
 
 
 async def get_agent_response(task_request,task_id):
     # Extract user's message text from the request
     try:
-        user_text = task_request["message"]
-        print(f"Request Intake Agent received task {task_id} with text: '{user_text}'")
+        instructions = task_request["message"]
+        previous_agent_response = task_request.get("request-intake-agent-response", {})
+        print(f"Request Intake Agent received task {task_id} with text: '{instructions}' and previous agent response: {previous_agent_response}")
     except (KeyError, IndexError, TypeError) as e:
         print(f"Error extracting user text for task {task_id}: {e}")
         return jsonify({"error": "Bad message format"}), 400
     try:
+        print("Connecting to MCP servers...")
+        # Initialize the MCP client with the request count MCP server
         client = MultiServerMCPClient(
             {
-                "math": {
+                "request-count": {
                     "transport": "stdio",
                     "command": "python",
-                    "args": ["math.py"]
-                },
-                "web-search": {
-                    "transport": "stdio",
-                    "command": "python",
-                    "args": ["brave_search_mcp_server.py"]
+                    "args": ["disaster_agent_system/mcps/request_count.py"]
                 }
             }
         )
@@ -160,10 +158,12 @@ async def get_agent_response(task_request,task_id):
         tools = await client.get_tools()
         # Create a ReAct agent
         print("Creating ReAct agent...")
-        agent = VerifiedtResponseFormat(tools)
+        agent = RequestVerifyAgent(tools)
         # Run a prompt that uses the tools
         print("Sending prompt to agent...")
-        response = await agent.invoke(user_text, task_id)
+        instructions = f"instructions: {instructions}" + f" Previous agent response: {previous_agent_response}"
+        print(f"Agent instructions: {instructions}")
+        response = await agent.invoke(instructions, task_id)
         return response
         
     except Exception as e:
@@ -173,7 +173,7 @@ async def get_agent_response(task_request,task_id):
 # Endpoint to handle task 
 @app.post("/tasks/send")
 def handle_task():
-    REQUEST_VERIFY_AGENT = "http://localhost:5011"
+    TASK_PRIORITIZE_AGENT = "http://localhost:5012"
     task_request = request.get_json()
     if not task_request:
         return jsonify({"error": "Invalid request"}), 400
@@ -189,18 +189,18 @@ def handle_task():
         # Formulate A2A response Task
         response_task = {
             "id": task_id,
-            "status": "request-intake-agent-completed",
-            "initial_request": task_request.get("message", {}),
-            "next-agent": "request-verify-agent",
-            "request-intake-agent-response": [
+            "status": "request-verify-agent-completed",
+            "initial_request": task_request.get("request-intake-agent-response", {}),
+            "next-agent": "task-prioritize-agent",
+            "request-verify-agent-response": [
                 {
-                    "role": "agent",
+                    "role": "request-verify-agent",
                     "response": response_format_dict,
                 }
             ]
         }
         print(f"Forwarding task {task_id} response is {response_task}")
-        target_agent_url = REQUEST_VERIFY_AGENT
+        target_agent_url = TASK_PRIORITIZE_AGENT
         target_send_url = f"{target_agent_url}/tasks/send"
 
         try:
@@ -214,7 +214,7 @@ def handle_task():
                 "messages": [
                     task_request.get("message", {}),
                     {
-                        "role": "agent",
+                        "role": "request-verify-agent",
                         "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
                     }
                 ]
@@ -224,14 +224,14 @@ def handle_task():
         return jsonify(response.json())
 
     except Exception as e:
-        print(f"Agent error: {e}")
+        print(f"Request Verify Agent error: {e}")
         error_response_task = {
             "id": task_id,
             "status": {"state": "failed", "reason": f"Agent processing failed: {e}"},
             "messages": [
                 task_request.get("message", {}),
                 {
-                    "role": "agent",
+                    "role": "request-verify-agent",
                     "parts": [{"text": f"RAG agent failed. Details: {e}"}]
                 }
             ]
@@ -242,5 +242,5 @@ def handle_task():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5011))
-    print(f"Request Intake Agent server starting on port {port}")
+    print(f"Request Verify Agent server starting on port {port}")
     app.run(host="0.0.0.0", port=port) 
