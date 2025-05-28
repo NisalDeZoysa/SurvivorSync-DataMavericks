@@ -1,5 +1,5 @@
-import Availability from '../models/Availability.js';
-import Allocation from '../models/Allocation.js';
+import Availability from '../models/ResourceAvailability.js';
+import Allocation from '../models/ResourceAllocation.js';
 
 // Create or update availability for a resource
 export const setAvailability = async (req, res) => {

@@ -1,4 +1,4 @@
-import Precaution from '../models/Precaution.js';
+import Precaution from '../models/SafetyPrecaution.js';
 import Disaster from '../models/Disaster.js';
 
 // Create

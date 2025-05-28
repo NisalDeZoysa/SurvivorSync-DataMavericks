@@ -1,19 +1,35 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
 import User from './user.js';
+import ResourceAllocation from './ResourceAllocation.js';
+import Disaster from './Disaster.js';
 
-const UserRequest = sequelize.define('UserRequest', {
+const DisasterRequest = sequelize.define('DisasterRequest', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
   name: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  type: {
-    type: DataTypes.ENUM('FLOOD', 'FIRE', 'EARTHQUAKE', 'LANDSLIDE', 'OTHER'),
+  disaterId: {
+    type: DataTypes.INTEGER,
+    references: {
+      model: 'Disaster', 
+      key: 'id',
+    },
     allowNull: false,
   },
   severity: {
     type: DataTypes.ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL'),
     allowNull: false,
+  },
+  status:{
+    type: DataTypes.ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'),
+    allowNull: false,
+    defaultValue: 'PENDING',
   },
   details: {
     type: DataTypes.TEXT,
@@ -35,7 +51,11 @@ const UserRequest = sequelize.define('UserRequest', {
     type: DataTypes.DECIMAL(10, 6),
     allowNull: true,
   },
-  address: {
+  district: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  province: {
     type: DataTypes.STRING,
     allowNull: true,
   },
@@ -55,9 +75,22 @@ const UserRequest = sequelize.define('UserRequest', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  requestAllocationId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  }
+},{
+  tableName: 'disaster_requests',
 });
 
-User.hasMany(UserRequest, { foreignKey: 'userId' });
-UserRequest.belongsTo(User, { foreignKey: 'userId' });
 
-export default UserRequest;
+DisasterRequest.belongsTo(User, { foreignKey: 'userId' });
+
+DisasterRequest.hasMany(ResourceAllocation, {foreignKey: 'requestAllocationId', onDelete: 'CASCADE'});
+
+DisasterRequest.belongsTo(Disaster, { foreignKey: 'disaterId' });
+
+
+
+
+export default DisasterRequest;

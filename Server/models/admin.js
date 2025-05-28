@@ -6,11 +6,6 @@ const Admin = sequelize.define('Admin', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  NIC: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-  },
   address: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -25,10 +20,6 @@ const Admin = sequelize.define('Admin', {
     unique: true,
     validate: { isEmail: true },
   },
-  type: {
-    type: DataTypes.ENUM('Police', 'Army', 'Hospital', 'Redcross', 'NGO', 'Government', 'Other'),
-    allowNull: false,
-  },
   description: {
     type: DataTypes.TEXT,
   },
@@ -41,3 +32,5 @@ const Admin = sequelize.define('Admin', {
 });
 
 export default Admin;
+
+

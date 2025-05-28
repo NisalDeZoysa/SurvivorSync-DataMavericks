@@ -1,6 +1,8 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
 import Resource from './Resource.js';
+import ResourceAvailability from './ResourceAvailability.js';
+import FirstResponders from './FirstResponders.js';
 
 const ResourceCenter = sequelize.define('ResourceCenter', {
   id: {
@@ -32,7 +34,8 @@ const ResourceCenter = sequelize.define('ResourceCenter', {
   tableName: 'resource_centers',
 });
 
-Resource.hasMany(ResourceCenter, { foreignKey: 'resourceId', onDelete: 'CASCADE' });
+ResourceCenter.hasMany(FirstResponders, { foreignKey: 'id', onDelete: 'CASCADE' });
 ResourceCenter.belongsTo(Resource, { foreignKey: 'resourceId' });
+ResourceCenter.hasMany(ResourceAvailability, { foreignKey: 'id', onDelete: 'CASCADE' });
 
 export default ResourceCenter;
