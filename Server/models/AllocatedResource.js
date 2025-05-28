@@ -1,29 +1,12 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
 
-const AllocatedResource = sequelize.define('ResourceAllocation', {
+const AllocatedResource = sequelize.define('AllocatedResource', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
   },
-  resourceAvailabilityId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'resource_availabilities', // Assuming ResourceAvailability is defined elsewhere
-      key: 'id',
-    },
-  },
-  amount: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  
-  isAllocated: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  }, 
   disasterRequestId: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -32,6 +15,15 @@ const AllocatedResource = sequelize.define('ResourceAllocation', {
       key: 'id',
     },
   }, 
+  amount: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  isAllocated: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  }, 
+  
 }, {
   tableName: 'allocated_resources',
   timestamps: true,

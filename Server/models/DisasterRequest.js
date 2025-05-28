@@ -12,6 +12,14 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users', 
+      key: 'id',
+    },
+  },
   disasterId: {
     type: DataTypes.INTEGER,
     references: {
@@ -69,22 +77,7 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
     type: DataTypes.BLOB,
     allowNull: true,
   },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users', 
-      key: 'id',
-    },
-  },
-  requestAllocationId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'request_allocations', 
-      key: 'id',
-    },
-  }
+  
 },{
   tableName: 'disaster_requests',
   timestamps: true,

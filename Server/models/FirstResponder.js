@@ -7,6 +7,14 @@ const FirstResponder = sequelize.define('FirstResponder', {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
+  },
+  resourceCenterId:{
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'resource_centers', 
+        key: 'id',
+      },
     },
     name: {
       type: DataTypes.STRING,
@@ -35,14 +43,7 @@ const FirstResponder = sequelize.define('FirstResponder', {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    resourceCenterId:{
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'resource_centers', 
-        key: 'id',
-      },
-    }
+    
 }, {
   tableName: 'first_responders',
   timestamps: true,

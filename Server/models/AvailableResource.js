@@ -2,7 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
 import ResourceCenter from './ResourceCenter.js';
 
-const AvailableResource = sequelize.define('ResourceAvailability', {
+const AvailableResource = sequelize.define('AvailableResource', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,

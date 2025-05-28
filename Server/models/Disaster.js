@@ -21,7 +21,7 @@ const Disaster = sequelize.define('Disaster', {
     allowNull: false,
   },
   details: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING,
     allowNull: true,
   },
   description: {

@@ -1,14 +1,19 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
-import Resource from './Resource.js';
-import ResourceAvailability from './AvailableResource.js';
-import FirstResponder from './FirstResponder.js';
 
 const ResourceCenter = sequelize.define('ResourceCenter', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
+  },
+  resourceId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'resources', // Assuming Resource model is defined elsewhere
+      key: 'id',
+    },
   },
   lat: {
     type: DataTypes.FLOAT,
@@ -25,15 +30,7 @@ const ResourceCenter = sequelize.define('ResourceCenter', {
   contactNumber: {
     type: DataTypes.STRING,
     allowNull: false,
-  },
-  resourceId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'resources', 
-      key: 'id',
-    },
-  },
+  }
 }, {
   tableName: 'resource_centers',
 });

@@ -4,39 +4,39 @@ import DisasterRequest from './DisasterRequest.js';
 import Resource from './Resource.js';
 import ResourceCenter from './ResourceCenter.js';
 import AvailableResource from './AvailableResource.js';
-import AllocatedResource from './ResourceAllocation.js';
+import AllocatedResource from './AllocatedResource.js';
 import FirstResponder from './FirstResponder.js';
 import SafetyPrecaution from './SafetyPrecaution.js';
+import AvailableAllocatedResource from './AvailableAllocatedResource.js';
 
 
 User.hasMany(DisasterRequest, { foreignKey: 'userId' });
-DisasterRequest.belongsTo(User, { foreignKey: 'userId' });
-
 
 Disaster.hasMany(SafetyPrecaution, { foreignKey: 'disasterId' });
 
-AllocatedResource.belongsTo(DisasterRequest, { foreignKey: 'disasterRequestId' });
-DisasterRequest.hasMany(AllocatedResource, {foreignKey: 'requestAllocationId', onDelete: 'CASCADE'});
+DisasterRequest.hasMany(AllocatedResource, {foreignKey: 'disasterRequestId', onDelete: 'CASCADE'});
 
-
-DisasterRequest.belongsTo(Disaster, { foreignKey: 'disasterId' });
-
-AllocatedResource.belongsTo(DisasterRequest, { foreignKey: 'userRequestId' });
-
-AllocatedResource.belongsTo(AvailableResource, { foreignKey: 'ResourceAvailabilityId' });
-
+DisasterRequest.hasOne(Disaster, { foreignKey: 'disasterId' });
 
 AvailableResource.belongsTo(ResourceCenter, { foreignKey: 'resourceCenterId' });
 
 Resource.hasMany(ResourceCenter, { foreignKey: 'resourceId', onDelete: 'CASCADE' });
 
-ResourceCenter.belongsTo(Resource, { foreignKey: 'resourceId' });
-
-ResourceCenter.hasMany(AvailableResource, { foreignKey: 'id', onDelete: 'CASCADE' });
-
 FirstResponder.belongsTo(ResourceCenter, { foreignKey: 'resourceCenterId' });
 
-SafetyPrecaution.belongsTo(Disaster, { foreignKey: 'disasterId' });
+AllocatedResource.belongsToMany(AvailableResource, {
+  through: 'available_allocated_resources',
+  foreignKey: 'allocatedResourceId',
+  otherKey: 'availableResourceId'
+});
+
+AvailableResource.belongsToMany(AllocatedResource, {
+  through: 'available_allocated_resources',
+  foreignKey: 'availableResourceId',
+  otherKey: 'allocatedResourceId'
+});
+
+
 
 export default {
   Disaster,
@@ -47,6 +47,7 @@ export default {
   AvailableResource,
   AllocatedResource,
   FirstResponder,
-  SafetyPrecaution
+  SafetyPrecaution,
+  AvailableAllocatedResource
 };
 

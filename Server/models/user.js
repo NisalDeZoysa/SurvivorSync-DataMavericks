@@ -4,7 +4,7 @@ import sequelize from '../config/db.js';
 
 // User and Volunteer are same
 const User = sequelize.define('User', {
-  userId:{
+  id:{
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
