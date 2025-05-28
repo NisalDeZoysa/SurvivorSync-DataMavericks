@@ -2,6 +2,7 @@ import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
 import ResourceCenter from './ResourceCenter.js';
 
+
 const Resource = sequelize.define('Resource', {
   id: {
     type: DataTypes.INTEGER,
