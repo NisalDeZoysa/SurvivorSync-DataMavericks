@@ -20,6 +20,8 @@ export interface User {
   contactNo?: string;
 }
 
+
+
 export enum DisasterType {
   FLOOD = "flood",
   FIRE = "fire",

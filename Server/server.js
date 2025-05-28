@@ -15,6 +15,7 @@ import allocationRoutes from './routes/allocationRoutes.js';
 import availabilityRoutes from './routes/availabilityRoutes.js';
 import Disaster from './models/Disaster.js'; 
 import fs from 'fs';
+import seedDatabase from './seed.js'; // Import the seed function
 
 dotenv.config();
 
@@ -46,8 +47,9 @@ app.use('/api/availability', availabilityRoutes);
 // DB Sync + Server
 sequelize
   .sync()
-  .then(() => {
+  .then(async () => {
     console.log('Database connected');
+    await seedDatabase(); 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

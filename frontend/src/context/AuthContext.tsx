@@ -1,6 +1,8 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole } from '../types';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -30,6 +32,14 @@ export const useAuth = () => {
   return context;
 };
 
+const API_BASE_URL = 'http://localhost:5000/api';
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -55,28 +65,80 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   // Mock login function
+  // const login = async (email: string, password: string) => {
+  //   setIsLoading(true);
+  //   try {
+  //     // In a real app, this would be an API call
+  //     // For demo, we're simulating a successful login with mock data
+  //     const mockUser: User = {
+  //       id: '123',
+  //       name: email.split('@')[0],
+  //       email: email,
+  //        role: email.includes('admin') ? UserRole.ADMIN : 
+  //             email.includes('responder') ? UserRole.FIRST_RESPONDER : 
+  //             email.includes('volunteer') ? UserRole.VOLUNTEERS : UserRole.USER,
+  //       contactNo: '123-456-7890'
+  //     };
+      
+  //     setCurrentUser(mockUser);
+  //     localStorage.setItem('user', JSON.stringify(mockUser));
+      
+  //     console.log("User logged in:", mockUser);
+  //   } catch (error) {
+  //     console.error("Login failed:", error);
+  //     throw error;
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+    // Login function using backend API
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // In a real app, this would be an API call
-      // For demo, we're simulating a successful login with mock data
-      const mockUser: User = {
-        id: '123',
-        name: email.split('@')[0],
-        email: email,
-         role: email.includes('admin') ? UserRole.ADMIN : 
-              email.includes('responder') ? UserRole.FIRST_RESPONDER : 
-              email.includes('volunteer') ? UserRole.VOLUNTEERS : UserRole.USER,
-        contactNo: '123-456-7890'
+      console.log('Attempting login with:', { email });
+      
+      const response = await api.post('/admin/login', {
+        email,
+        password
+      });
+      
+      console.log('Login response:', response.data);
+      
+      // Assuming your backend returns user data and token
+      const { user, token } = response.data;
+      
+      // Create user object matching our User interface
+      const userData: User = {
+        id: user.id || user._id || Math.random().toString(36).substring(2, 9),
+        name: user.name || user.username || email.split('@')[0],
+        email: user.email || email,
+        role: user.role || UserRole.ADMIN, // Assuming admin login
+        contactNo: user.contactNo || user.phone
       };
       
-      setCurrentUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      // Store user data and token
+      setCurrentUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('token', token);
       
-      console.log("User logged in:", mockUser);
+      // Set axios default authorization header for future requests
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      console.log("User logged in successfully:", userData);
+      
     } catch (error) {
-      console.error("Login failed:", error);
-      throw error;
+      console.error("Login failed:", error);   
+      // Clear any stored data on login failure
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      delete api.defaults.headers.common['Authorization'];
+      
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Login failed';
+        throw new Error(errorMessage);
+      }
+      throw new Error('Network error. Please check your connection.');
     } finally {
       setIsLoading(false);
     }
