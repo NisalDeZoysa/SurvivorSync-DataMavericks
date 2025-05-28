@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
-import User from './user.js';
+import User from './User.js';
 import ResourceAllocation from './ResourceAllocation.js';
 import Disaster from './Disaster.js';
 
@@ -17,7 +17,7 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
   disaterId: {
     type: DataTypes.INTEGER,
     references: {
-      model: 'Disaster', 
+      model: 'disasters', 
       key: 'id',
     },
     allowNull: false,
@@ -84,11 +84,7 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
 });
 
 
-DisasterRequest.belongsTo(User, { foreignKey: 'userId' });
 
-DisasterRequest.hasMany(ResourceAllocation, {foreignKey: 'requestAllocationId', onDelete: 'CASCADE'});
-
-DisasterRequest.belongsTo(Disaster, { foreignKey: 'disaterId' });
 
 
 

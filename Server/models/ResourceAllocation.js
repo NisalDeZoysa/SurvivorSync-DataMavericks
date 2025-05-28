@@ -10,14 +10,6 @@ const ResourceAllocation = sequelize.define('ResourceAllocation', {
     primaryKey: true,
     autoIncrement: true,
   },
-  userRequestId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: UserRequest,
-      key: 'id',
-    },
-  },
   ResourceAvailabilityId: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -39,7 +31,7 @@ const ResourceAllocation = sequelize.define('ResourceAllocation', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'DisasterRequest', // Assuming DisasterRequest is defined elsewhere
+      model: 'disaster_requests', // Assuming DisasterRequest is defined elsewhere
       key: 'id',
     },
   }, 
@@ -48,12 +40,6 @@ const ResourceAllocation = sequelize.define('ResourceAllocation', {
 });
 
 
-
-ResourceAllocation.belongsTo(UserRequest, { foreignKey: 'userRequestId' });
-
-ResourceAllocation.belongsTo(ResourceAvailability, { foreignKey: 'ResourceAvailabilityId' });
-
-ResourceAllocation.belongsTo(DisasterRequest, { foreignKey: 'disasterRequestId' });
 
 
 

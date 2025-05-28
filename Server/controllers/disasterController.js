@@ -1,4 +1,4 @@
-import Disaster from '../models/Disaster.js';
+import Disaster from '../models/index.js';
 
 export const createDisaster = async (req, res) => {
   try {

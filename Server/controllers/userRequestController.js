@@ -1,4 +1,4 @@
-import UserRequest from '../models/DisasterRequest.js';
+import UserRequest from '../models/index.js';
 
 export const createUserRequest = async (req, res) => {
   try {

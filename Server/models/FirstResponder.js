@@ -38,12 +38,15 @@ const FirstResponder = sequelize.define('FirstResponder', {
     resourceCenterId:{
       type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: 'resource_centers', 
+        key: 'id',
+      },
     }
 }, {
   tableName: 'first_responders',
 });
 
-FirstResponder.belongsTo(ResourceCenter, { foreignKey: 'resourceCenterId' });
 
 
 export default FirstResponder;

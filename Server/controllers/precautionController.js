@@ -1,5 +1,5 @@
-import Precaution from '../models/SafetyPrecaution.js';
-import Disaster from '../models/Disaster.js';
+import Precaution from '../models/index.js';
+import Disaster from '../models/index.js';
 
 // Create
 export const createPrecaution = async (req, res) => {

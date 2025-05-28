@@ -12,7 +12,7 @@ const ResourceAvailability = sequelize.define('ResourceAvailability', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'ResourceCenter', 
+      model: 'resource_centers', // Assuming ResourceCenter is defined elsewhere
       key: 'id',
     },
   },
@@ -28,6 +28,5 @@ const ResourceAvailability = sequelize.define('ResourceAvailability', {
   tableName: 'resource_availabilities',
 });
 
-ResourceAvailability.belongsTo(ResourceCenter, { foreignKey: 'resourceCenterId' });
 
 export default ResourceAvailability;

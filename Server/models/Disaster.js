@@ -34,6 +34,6 @@ const Disaster = sequelize.define('Disaster', {
   timestamps: true
 });
 
-Disaster.hasMany(SafetyPrecaution, { foreignKey: 'disasterId' });
+
 
 export default Disaster;
