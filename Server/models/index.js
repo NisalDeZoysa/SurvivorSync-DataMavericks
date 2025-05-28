@@ -1,5 +1,6 @@
 import Disaster from './Disaster.js';
-import User from './User.js';
+import Admin from './admin.js';
+import User from './user.js';
 import DisasterRequest from './DisasterRequest.js';
 import Resource from './Resource.js';
 import ResourceCenter from './ResourceCenter.js';
@@ -8,6 +9,8 @@ import AllocatedResource from './AllocatedResource.js';
 import FirstResponder from './FirstResponder.js';
 import SafetyPrecaution from './SafetyPrecaution.js';
 import AvailableAllocatedResource from './AvailableAllocatedResource.js';
+
+
 
 
 User.hasMany(DisasterRequest, { foreignKey: 'userId' });
@@ -38,7 +41,8 @@ AvailableResource.belongsToMany(AllocatedResource, {
 
 
 
-export default {
+export  {
+  Admin,
   Disaster,
   User,
   DisasterRequest,

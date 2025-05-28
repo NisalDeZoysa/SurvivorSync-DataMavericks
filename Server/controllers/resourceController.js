@@ -1,4 +1,4 @@
-import Resource from '../models/index.js';
+import {Resource} from '../models/index.js';
 
 // Create
 export const createResource = async (req, res) => {

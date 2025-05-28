@@ -1,4 +1,4 @@
-import UserRequest from '../models/index.js';
+import {DisasterRequest} from '../models/index.js';
 
 export const createUserRequest = async (req, res) => {
   try {
@@ -25,7 +25,7 @@ export const createUserRequest = async (req, res) => {
     const imageFiles = req.files?.images?.map(file => file.path) || [];
     const voiceFile = req.files?.voice?.[0]?.path || null;
 
-    const request = await UserRequest.create({
+    const request = await DisasterRequest.create({
       name,
       type,
       severity,
@@ -51,7 +51,7 @@ export const createUserRequest = async (req, res) => {
 
 export const getAllRequests = async (req, res) => {
   try {
-    const requests = await UserRequest.findAll({ where: { userId: req.user.id } });
+    const requests = await DisasterRequest.findAll({ where: { userId: req.user.id } });
     res.json(requests);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -60,7 +60,7 @@ export const getAllRequests = async (req, res) => {
 
 export const getRequestById = async (req, res) => {
   try {
-    const request = await UserRequest.findOne({
+    const request = await DisasterRequest.findOne({
       where: { id: req.params.id, userId: req.user.id },
     });
 
@@ -73,7 +73,7 @@ export const getRequestById = async (req, res) => {
 
 export const deleteRequest = async (req, res) => {
   try {
-    const request = await UserRequest.findOne({
+    const request = await DisasterRequest.findOne({
       where: { id: req.params.id, userId: req.user.id },
     });
 
@@ -88,7 +88,7 @@ export const deleteRequest = async (req, res) => {
 
 export const updateRequest = async (req, res) => {
   try {
-    const request = await UserRequest.findOne({
+    const request = await DisasterRequest.findOne({
       where: { id: req.params.id, userId: req.user.id },
     });
 
