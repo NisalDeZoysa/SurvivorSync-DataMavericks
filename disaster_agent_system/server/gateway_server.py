@@ -11,8 +11,8 @@ load_dotenv()
 
 # Setup the Ollama Qwen3:4b model
 llm = ChatOllama(
-    model="gemma3:4b",
-    temperature = 0.8,
+    model="llama3.1:8b",
+    temperature = 0.2,
     num_predict = 256,
     # You can add more params here if needed
 )
@@ -39,7 +39,7 @@ AGENT_CARD = {
 # --- New Function: OpenAI Routing Logic ---
 def route_query_with_ollama(user_text: str) -> str:
     prompt = f"""
-You are an intelligent request router. You need to decide whether to route a user's disaster request to a 'RESOURCE_INTAKE_AGENT', 'CHAT_BOT_AGENT', 'TIPS_AGENT', or 'SEARCH_AGENT'.
+You are an intelligent request router. You need to decide whether to route a user's disaster request to a 'REQUEST_INTAKE_AGENT', 'CHAT_BOT_AGENT', 'TIPS_AGENT', or 'SEARCH_AGENT'.
 - The 'REQUEST_INTAKE_AGENT' handles initial intake of disaster requests.
 - The 'CHAT_BOT_AGENT' is a conversational agent that can answer questions and provide information.
 - The 'TIPS_AGENT' provides safety tips and advice for disaster preparedness.
@@ -55,16 +55,17 @@ Based on the query, which agent is more appropriate? Respond with ONLY 'REQUEST_
         {"role": "user", "content": prompt}
         ]
         response = llm.invoke(messages)
+        print(f"Ollama response: {response.content}")  # Log the response for debugging
         # Extract the choice from the response
         choice = response.content.strip().upper()  # Normalize to uppercase for consistency
         
-        if choice == "REQUEST_INTAKE_AGENT":
+        if choice == 'REQUEST_INTAKE_AGENT':
             return REQUEST_INTAKE_AGENT
-        elif choice == "CHAT_BOT_AGENT":
+        elif choice == 'CHAT_BOT_AGENT':
             return CHAT_BOT_AGENT
-        elif choice == "TIPS_AGENT":
+        elif choice == 'TIPS_AGENT':
             return TIPS_AGENT
-        elif choice == "SEARCH_AGENT":
+        elif choice == 'SEARCH_AGENT':
             return SEARCH_AGENT
         else:
             print(f"Unknown agent choice: {choice}. Defaulting to Search Agent.")
