@@ -7,7 +7,7 @@ const AllocatedResource = sequelize.define('ResourceAllocation', {
     primaryKey: true,
     autoIncrement: true,
   },
-  ResourceAvailabilityId: {
+  resourceAvailabilityId: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
