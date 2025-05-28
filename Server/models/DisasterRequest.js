@@ -12,7 +12,7 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  disaterId: {
+  disasterId: {
     type: DataTypes.INTEGER,
     references: {
       model: 'disasters', 

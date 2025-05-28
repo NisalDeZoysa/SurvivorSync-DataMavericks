@@ -19,7 +19,7 @@ AllocatedResource.belongsTo(DisasterRequest, { foreignKey: 'disasterRequestId' }
 DisasterRequest.hasMany(AllocatedResource, {foreignKey: 'requestAllocationId', onDelete: 'CASCADE'});
 
 
-DisasterRequest.belongsTo(Disaster, { foreignKey: 'disaterId' });
+DisasterRequest.belongsTo(Disaster, { foreignKey: 'disasterId' });
 
 AllocatedResource.belongsTo(DisasterRequest, { foreignKey: 'userRequestId' });
 
@@ -31,6 +31,7 @@ AvailableResource.belongsTo(ResourceCenter, { foreignKey: 'resourceCenterId' });
 Resource.hasMany(ResourceCenter, { foreignKey: 'resourceId', onDelete: 'CASCADE' });
 
 ResourceCenter.belongsTo(Resource, { foreignKey: 'resourceId' });
+
 ResourceCenter.hasMany(AvailableResource, { foreignKey: 'id', onDelete: 'CASCADE' });
 
 FirstResponder.belongsTo(ResourceCenter, { foreignKey: 'resourceCenterId' });
