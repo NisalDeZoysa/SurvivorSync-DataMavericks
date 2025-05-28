@@ -56,6 +56,8 @@ export const register = async (req, res) => {
         type: user.type,
       },
     });
+
+    console.log('User registered Succusfully');
   } catch (error) {
     console.error('Sequelize error:', error);
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
