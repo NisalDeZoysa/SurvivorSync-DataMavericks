@@ -43,31 +43,19 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
   });
 
   // Admin and First Responder Login
-  const handleLogin = async (data: LoginFormValues) => {
-    // e.preventDefault();
-    setIsLoading(true);
-
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Login data:", loginData);
     try {
-      // const res = await fetch("http://localhost:5000/api/admin/login", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   credentials: "include", // to get/set cookies
-      //   body: JSON.stringify(loginData),
-      // });
-
-      // if (!res.ok) throw new Error("Login failed");
-
       await login(loginData.email, loginData.password);
 
       toast({
         title: "Login Successful",
         description: "Welcome back to the emergency response system.",
       });
-
-      // navigate('/admin', { replace: true });
-      // onClose();
+      onClose();
+      navigate("/admin");
+      
     } catch (error) {
       toast({
         title: "Login Failed",
@@ -75,9 +63,7 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
         variant: "destructive",
       });
       console.error("Login error:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    } 
   };
 
   const handleRegister = async (e: React.FormEvent) => {

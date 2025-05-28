@@ -17,14 +17,7 @@ interface AuthContextType {
 
 
 // Create context with a default value
-const AuthContext = createContext<AuthContextType>({
-  currentUser: null,
-  isLoading: true,
-  login: async () => {},
-  register: async () => {},
-  logout: () => {},
-  isAuthenticated: false
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -32,7 +25,7 @@ export const useAuth = () => {
   return context;
 };
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:7000/api';
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -106,15 +99,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log('Login response:', response.data);
       
       // Assuming your backend returns user data and token
-      const { user, token } = response.data;
+      const token = response.data.accessToken ;
+      console.log('Token:', token);
       
       // Create user object matching our User interface
+      if (!token) {
+        throw new Error('Invalid login response');
+      }
       const userData: User = {
-        id: user.id || user._id || Math.random().toString(36).substring(2, 9),
-        name: user.name || user.username || email.split('@')[0],
-        email: user.email || email,
-        role: user.role || UserRole.ADMIN, // Assuming admin login
-        contactNo: user.contactNo || user.phone
+        id: response.data.admin.id,
+        name: response.data.admin.name,
+        email: response.data.admin.email,
+        role: UserRole.ADMIN
       };
       
       // Store user data and token

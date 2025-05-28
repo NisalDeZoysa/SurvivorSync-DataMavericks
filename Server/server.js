@@ -49,7 +49,7 @@ sequelize
   .sync()
   .then(async () => {
     console.log('Database connected');
-    await seedDatabase(); 
+    // await seedDatabase(); 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
