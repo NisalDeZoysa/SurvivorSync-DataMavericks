@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import User from '../models/user.js';
+import {User} from '../models/index.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -56,6 +56,8 @@ export const register = async (req, res) => {
         type: user.type,
       },
     });
+
+    console.log('User registered Succusfully');
   } catch (error) {
     console.error('Sequelize error:', error);
     if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {

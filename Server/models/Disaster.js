@@ -1,6 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
-import SafetyPrecaution from './SafetyPrecaution.js';
 
 const Disaster = sequelize.define('Disaster', {
   id:{
@@ -22,10 +21,10 @@ const Disaster = sequelize.define('Disaster', {
     allowNull: false,
   },
   details: {
-    type: DataTypes.TEXT,
+    type: DataTypes.STRING,
     allowNull: true,
   },
-  describtion: {
+  description: {
     type: DataTypes.STRING,
     allowNull: true,
   },
@@ -34,6 +33,6 @@ const Disaster = sequelize.define('Disaster', {
   timestamps: true
 });
 
-Disaster.hasMany(SafetyPrecaution, { foreignKey: 'disasterId' });
+
 
 export default Disaster;

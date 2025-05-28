@@ -1,34 +1,35 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, UserRole } from '../types';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 interface AuthContextType {
   currentUser: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: Partial<User>, password: string) => Promise<void>;
+  userLogin: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
 
-
-
-
 // Create context with a default value
-const AuthContext = createContext<AuthContextType>({
-  currentUser: null,
-  isLoading: true,
-  login: async () => {},
-  register: async () => {},
-  logout: () => {},
-  isAuthenticated: false
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   // Remove the error throwing to prevent the crash
   return context;
 };
+
+const API_BASE_URL = 'http://localhost:5000/api';
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -54,29 +55,112 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setIsLoading(false);
   }, []);
 
-  // Mock login function
+ 
+    // Login function using backend API
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // In a real app, this would be an API call
-      // For demo, we're simulating a successful login with mock data
-      const mockUser: User = {
-        id: '123',
-        name: email.split('@')[0],
-        email: email,
-         role: email.includes('admin') ? UserRole.ADMIN : 
-              email.includes('responder') ? UserRole.FIRST_RESPONDER : 
-              email.includes('volunteer') ? UserRole.VOLUNTEERS : UserRole.USER,
-        contactNo: '123-456-7890'
+      console.log('Attempting login with:', { email });
+      
+      const response = await api.post('/admin/login', {
+        email,
+        password
+      });
+      
+      console.log('Login response:', response.data);
+      
+      // Assuming your backend returns user data and token
+      const token = response.data.accessToken ;
+      console.log('Token:', token);
+      
+      // Create user object matching our User interface
+      if (!token) {
+        throw new Error('Invalid login response');
+      }
+      const userData: User = {
+        id: response.data.admin.id,
+        name: response.data.admin.name,
+        email: response.data.admin.email,
+        role: UserRole.ADMIN
       };
       
-      setCurrentUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      // Store user data and token
+      setCurrentUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('token', token);
       
-      console.log("User logged in:", mockUser);
+      // Set axios default authorization header for future requests
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      console.log("User logged in successfully:", userData);
+      
     } catch (error) {
-      console.error("Login failed:", error);
-      throw error;
+      console.error("Login failed:", error);   
+      // Clear any stored data on login failure
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      delete api.defaults.headers.common['Authorization'];
+      
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Login failed';
+        throw new Error(errorMessage);
+      }
+      throw new Error('Network error. Please check your connection.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  //  login function for users and volunteers
+  const userLogin = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      console.log('Attempting login with:', { email });
+      
+      const response = await api.post('/users/login', {
+        email,
+        password
+      });
+      
+      console.log('Login response:', response.data);
+      
+      // Assuming your backend returns user data and token
+      const token = response.data.accessToken ;
+      console.log('Token:', token);
+      
+      // Create user object matching our User interface
+      if (!token) {
+        throw new Error('Invalid login response');
+      }
+      const userData: User = {
+        id: response.data.user.id,
+        name: response.data.user.name,
+        email: response.data.user.email,
+        role: UserRole.USER, // by changing the role can navigate to different pages
+      };
+      
+      // Store user data and token
+      setCurrentUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('token', token);
+      
+      // Set axios default authorization header for future requests
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      console.log("User logged in successfully:", userData);
+      
+    } catch (error) {
+      console.error("Login failed:", error);   
+      // Clear any stored data on login failure
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      delete api.defaults.headers.common['Authorization'];
+      
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Login failed';
+        throw new Error(errorMessage);
+      }
+      throw new Error('Network error. Please check your connection.');
     } finally {
       setIsLoading(false);
     }
@@ -120,6 +204,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     currentUser,
     isLoading,
     login,
+    userLogin,
     register,
     logout,
     isAuthenticated: !!currentUser

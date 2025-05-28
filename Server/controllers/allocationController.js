@@ -1,6 +1,6 @@
-import Allocation from '../models/ResourceAllocation.js';
-import ResourceCenter from '../models/ResourceCenter.js';
-import UserRequest from '../models/DisasterRequest.js';
+import {AllocatedResource} from '../models/index.js';
+import {ResourceCenter} from '../models/index.js';
+import {DisasterRequest} from '../models/index.js';
 
 // Create
 export const createAllocation = async (req, res) => {
@@ -8,13 +8,13 @@ export const createAllocation = async (req, res) => {
     const { resourceCenterId, userRequestId } = req.body;
 
     const center = await ResourceCenter.findByPk(resourceCenterId);
-    const request = await UserRequest.findByPk(userRequestId);
+    const request = await DisasterRequest.findByPk(userRequestId);
 
     if (!center || !request) {
       return res.status(404).json({ error: 'Resource center or user request not found' });
     }
 
-    const allocation = await Allocation.create({ resourceCenterId, userRequestId });
+    const allocation = await AllocatedResource.create({ resourceCenterId, userRequestId });
     res.status(201).json({ message: 'Resource allocated', allocation });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -24,8 +24,8 @@ export const createAllocation = async (req, res) => {
 // Get all
 export const getAllAllocations = async (req, res) => {
   try {
-    const allocations = await Allocation.findAll({
-      include: [ResourceCenter, UserRequest]
+    const allocations = await AllocatedResource.findAll({
+      include: [ResourceCenter, DisasterRequest]
     });
     res.json(allocations);
   } catch (error) {
@@ -36,8 +36,8 @@ export const getAllAllocations = async (req, res) => {
 // Get by ID
 export const getAllocationById = async (req, res) => {
   try {
-    const allocation = await Allocation.findByPk(req.params.id, {
-      include: [ResourceCenter, UserRequest]
+    const allocation = await AllocatedResource.findByPk(req.params.id, {
+      include: [ResourceCenter, DisasterRequest]
     });
     if (!allocation) return res.status(404).json({ error: 'Allocation not found' });
     res.json(allocation);
@@ -49,7 +49,7 @@ export const getAllocationById = async (req, res) => {
 // Delete
 export const deleteAllocation = async (req, res) => {
   try {
-    const allocation = await Allocation.findByPk(req.params.id);
+    const allocation = await AllocatedResource.findByPk(req.params.id);
     if (!allocation) return res.status(404).json({ error: 'Allocation not found' });
 
     await allocation.destroy();

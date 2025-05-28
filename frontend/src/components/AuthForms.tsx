@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { LogIn, UserPlus, User, Heart, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -19,6 +19,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 enum UserRole {
   USER = 'victim',
@@ -45,6 +46,10 @@ const AuthForms: React.FC = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const navigate = useNavigate();
+  const { userLogin, register } = useAuth();
+  
 
   const loginForm = useForm<LoginFormValues>({
     defaultValues: {
@@ -66,32 +71,29 @@ const AuthForms: React.FC = () => {
     },
   });
 
+ 
   const handleLoginSubmit = async (data: LoginFormValues) => {
-    setIsLoading(true);
-    try {
-      const res = await axios.post('http://localhost:5000/api/users/login', data, {
-        withCredentials: true,
-      });
+  setIsLoading(true);
+  try {
+    await userLogin(data.email, data.password);
 
-      const { accessToken } = res.data;
-      if (accessToken) {
-        Cookies.set('accessToken', accessToken);
-      }
+    toast({
+      title: "Login Successful",
+      description: "Welcome back to the emergency response system.",
+    });
 
-      toast({
-        title: 'Login Successful',
-        description: 'Welcome back to Emergency Aid Connect!',
-      });
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: error?.response?.data?.error || 'Invalid email or password',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    navigate("/");
+  } catch (error) {
+    toast({
+      title: "Login Failed",
+      description: "Please check your credentials and try again.",
+      variant: "destructive",
+    });
+    console.error("Login error:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleRegisterSubmit = async (data: RegisterFormValues) => {
   setIsLoading(true);
@@ -180,50 +182,50 @@ const AuthForms: React.FC = () => {
             </TabsList>
 
             <TabsContent value="login">
-              <Form {...loginForm}>
-                <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-6">
-                  <FormField
-                    control={loginForm.control}
-                    name="email"
-                    rules={{
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                        message: 'Invalid email address',
-                      },
-                    }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="your.email@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-6">
+                    <FormField
+                      control={loginForm.control}
+                      name="email"
+                      rules={{
+                        required: 'Email is required',
+                        pattern: {
+                          value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                          message: 'Invalid email address',
+                        },
+                      }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="your.email@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={loginForm.control}
-                    name="password"
-                    rules={{ required: 'Password is required' }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={loginForm.control}
+                      name="password"
+                      rules={{ required: 'Password is required' }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <Button type="submit" className="w-full bg-safety-500 hover:bg-safety-600" disabled={isLoading}>
-                    {isLoading ? 'Logging in...' : 'Login'}
-                  </Button>
-                </form>
-              </Form>
-            </TabsContent>
+                    <Button type="submit" className="w-full bg-safety-500 hover:bg-safety-600" disabled={isLoading}>
+                      {isLoading ? 'Logging in...' : 'Login'}
+                    </Button>
+                  </form>
+                </Form>
+              </TabsContent>
 
             <TabsContent value="register">
               <Form {...registerForm}>

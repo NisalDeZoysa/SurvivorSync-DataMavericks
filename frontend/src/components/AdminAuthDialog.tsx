@@ -1,10 +1,13 @@
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from '@/context/AuthContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useForm } from 'react-hook-form';
 
 interface AdminAuthDialogProps {
   onClose: () => void;
@@ -23,38 +26,44 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
     type: "admin",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const { login, register } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
+  interface LoginFormValues {
+    email: string;
+    password: string;
+  }
+
+  const loginForm = useForm<LoginFormValues>({
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  // Admin and First Responder Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
+    console.log("Login data:", loginData);
     try {
-      const res = await fetch("http://localhost:5000/api/users/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // to get/set cookies
-        body: JSON.stringify(loginData),
-      });
-
-      if (!res.ok) throw new Error("Login failed");
+      await login(loginData.email, loginData.password);
 
       toast({
         title: "Login Successful",
         description: "Welcome back to the emergency response system.",
       });
       onClose();
+      navigate("/admin");
+      
     } catch (error) {
       toast({
         title: "Login Failed",
         description: "Please check your credentials and try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
-    }
+      console.error("Login error:", error);
+    } 
   };
 
   const handleRegister = async (e: React.FormEvent) => {

@@ -1,8 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/db.js';
-import User from './user.js';
-import ResourceAllocation from './ResourceAllocation.js';
-import Disaster from './Disaster.js';
+
 
 const DisasterRequest = sequelize.define('DisasterRequest', {
   id: {
@@ -14,10 +12,18 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  disaterId: {
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users', 
+      key: 'id',
+    },
+  },
+  disasterId: {
     type: DataTypes.INTEGER,
     references: {
-      model: 'Disaster', 
+      model: 'disasters', 
       key: 'id',
     },
     allowNull: false,
@@ -64,31 +70,23 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
     allowNull: true,
   },
   images: {
-    type: DataTypes.JSON,
+    type: DataTypes.BLOB,
     allowNull: true,
   },
   voice: {
-    type: DataTypes.STRING,
+    type: DataTypes.BLOB,
     allowNull: true,
   },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  requestAllocationId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-  }
+  
 },{
   tableName: 'disaster_requests',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
 
-DisasterRequest.belongsTo(User, { foreignKey: 'userId' });
 
-DisasterRequest.hasMany(ResourceAllocation, {foreignKey: 'requestAllocationId', onDelete: 'CASCADE'});
-
-DisasterRequest.belongsTo(Disaster, { foreignKey: 'disaterId' });
 
 
 

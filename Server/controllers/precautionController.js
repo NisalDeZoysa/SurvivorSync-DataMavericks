@@ -1,11 +1,11 @@
-import Precaution from '../models/SafetyPrecaution.js';
-import Disaster from '../models/Disaster.js';
+import {SafetyPrecaution} from '../models/index.js';
+import {Disaster} from '../models/index.js';
 
 // Create
 export const createPrecaution = async (req, res) => {
   try {
     const { description, disasterId } = req.body;
-    const precaution = await Precaution.create({ description, disasterId });
+    const precaution = await SafetyPrecaution.create({ description, disasterId });
     res.status(201).json({ message: 'Precaution created', precaution });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -15,7 +15,7 @@ export const createPrecaution = async (req, res) => {
 // Read All
 export const getAllPrecautions = async (req, res) => {
   try {
-    const precautions = await Precaution.findAll({ include: Disaster });
+    const precautions = await SafetyPrecaution.findAll({ include: Disaster });
     res.json(precautions);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -25,7 +25,7 @@ export const getAllPrecautions = async (req, res) => {
 // Read by ID
 export const getPrecautionById = async (req, res) => {
   try {
-    const precaution = await Precaution.findByPk(req.params.id, { include: Disaster });
+    const precaution = await SafetyPrecaution.findByPk(req.params.id, { include: Disaster });
     if (!precaution) return res.status(404).json({ error: 'Precaution not found' });
     res.json(precaution);
   } catch (error) {
@@ -36,7 +36,7 @@ export const getPrecautionById = async (req, res) => {
 // Update
 export const updatePrecaution = async (req, res) => {
   try {
-    const precaution = await Precaution.findByPk(req.params.id);
+    const precaution = await SafetyPrecaution.findByPk(req.params.id);
     if (!precaution) return res.status(404).json({ error: 'Precaution not found' });
 
     await precaution.update(req.body);
@@ -49,7 +49,7 @@ export const updatePrecaution = async (req, res) => {
 // Delete
 export const deletePrecaution = async (req, res) => {
   try {
-    const precaution = await Precaution.findByPk(req.params.id);
+    const precaution = await SafetyPrecaution.findByPk(req.params.id);
     if (!precaution) return res.status(404).json({ error: 'Precaution not found' });
 
     await precaution.destroy();

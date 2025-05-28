@@ -16,13 +16,10 @@ const SafetyPrecaution = sequelize.define('Precaution', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Disaster',
+      model: 'disasters', 
       key: 'id',
     },
   },
 });
-
-// Associations
-SafetyPrecaution.belongsTo(Disaster, { foreignKey: 'disasterId' });
 
 export default SafetyPrecaution;

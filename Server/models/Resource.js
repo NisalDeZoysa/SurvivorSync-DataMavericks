@@ -19,9 +19,8 @@ const Resource = sequelize.define('Resource', {
   },
 }, {
   tableName: 'resources',
+  timestamps: true,
 });
-
-Resource.hasMany(ResourceCenter, { foreignKey: 'id', onDelete: 'CASCADE' });
 
 
 export default Resource;

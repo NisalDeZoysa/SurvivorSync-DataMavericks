@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import Admin from '../models/Admin.js';
+import {Admin} from '../models/index.js';
+// const { Admin } = models;
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -9,7 +10,7 @@ const generateTokens = (admin) => {
     {
       id: admin.id,
       role: 'admin',        
-      type: admin.type       
+     
     },
     process.env.ACCESS_TOKEN_SECRET,
     { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN }
@@ -25,17 +26,14 @@ const generateTokens = (admin) => {
 };
 
 export const registerAdmin = async (req, res) => {
-  const { name, NIC, address, contactNumber, email, type, description, password } = req.body;
+  const { name, contactNumber, email, description, password } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const admin = await Admin.create({
       name,
-      NIC,
-      address,
       contactNumber,
       email,
-      type,
       description,
       password: hashedPassword,
     });
@@ -52,7 +50,6 @@ export const registerAdmin = async (req, res) => {
         id: admin.id,
         name: admin.name,
         email: admin.email,
-        type: admin.type,
       },
     });
   } catch (error) {
@@ -86,7 +83,6 @@ export const loginAdmin = async (req, res) => {
         id: admin.id,
         name: admin.name,
         email: admin.email,
-        type: admin.type,
       },
     });
   } catch (error) {

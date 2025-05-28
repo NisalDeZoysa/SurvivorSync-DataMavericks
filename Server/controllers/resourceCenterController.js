@@ -1,5 +1,5 @@
-import ResourceCenter from '../models/ResourceCenter.js';
-import Resource from '../models/Resource.js';
+import {ResourceCenter} from '../models/index.js';
+import {Resource} from '../models/index.js';
 
 // Create
 export const createResourceCenter = async (req, res) => {
