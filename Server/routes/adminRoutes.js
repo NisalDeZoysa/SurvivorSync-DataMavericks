@@ -11,6 +11,7 @@ import {
 } from '../controllers/adminController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
+
 const router = express.Router();
 
 router.post('/register', registerAdmin);

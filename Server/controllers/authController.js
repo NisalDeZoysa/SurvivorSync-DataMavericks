@@ -43,6 +43,7 @@ export const register = async (req, res) => {
     const { accessToken, refreshToken } = generateTokens(user);
 
     res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
+    res.cookie('userType', 'USER', { sameSite: 'Strict' });
 
     res.json({
       message: 'Registered successfully',
@@ -81,6 +82,7 @@ export const login = async (req, res) => {
     const { accessToken, refreshToken } = generateTokens(user);
 
     res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
+    res.cookie('userType', 'USER', { sameSite: 'Strict' });
 
     res.json({
       message: 'Logged in successfully',
@@ -141,4 +143,16 @@ export const refreshAccessToken = (req, res) => {
     res.cookie('accessToken', newAccessToken, { httpOnly: true, sameSite: 'Strict' });
     res.json({ accessToken: newAccessToken });
   });
+};
+
+export const getVolunteerCount = async (req, res) => {
+  try {
+    const count = await User.count({
+      where: { type: 'volunteer' }
+    });
+
+    res.json({ volunteerCount: count });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };

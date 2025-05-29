@@ -3,6 +3,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { User, UserRole } from '../types';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Cookies from 'js-cookie';
+
 
 interface AuthContextType {
   currentUser: User | null;
@@ -128,6 +130,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Assuming your backend returns user data and token
       const token = response.data.accessToken ;
       console.log('Token:', token);
+
+      const userType = Cookies.get('userType');
       
       // Create user object matching our User interface
       if (!token) {
@@ -137,7 +141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: response.data.user.id,
         name: response.data.user.name,
         email: response.data.user.email,
-        role: UserRole.USER, // by changing the role can navigate to different pages
+        role: userType, // by changing the role can navigate to different pages
       };
       
       // Store user data and token
