@@ -144,3 +144,15 @@ export const refreshAccessToken = (req, res) => {
     res.json({ accessToken: newAccessToken });
   });
 };
+
+export const getVolunteerCount = async (req, res) => {
+  try {
+    const count = await User.count({
+      where: { type: 'volunteer' }
+    });
+
+    res.json({ volunteerCount: count });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
