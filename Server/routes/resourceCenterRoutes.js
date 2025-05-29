@@ -21,6 +21,5 @@ router.get('/count', authenticateToken, getResourceCenterCount);
 router.get('/:id', authenticateToken, getResourceCenterById);
 router.put('/:id', authenticateToken, updateResourceCenter);
 router.delete('/:id', authenticateToken, deleteResourceCenter);
-router.get('/count', authenticateToken, getResourceCenterCount);
 
 export default router;
