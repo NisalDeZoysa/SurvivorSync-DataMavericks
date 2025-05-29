@@ -255,7 +255,7 @@ class ResourceAllocationAgent:
 def get_agent_card():
     return jsonify(ResourceAllocationAgent.AGENT_CARD)
 
-async def get_agent_response(task_request, task_id):
+async def get_agent_response(task_request, task_id):   #oka
     """Process the agent response"""
     try:
         instructions = task_request.get("message", "")
