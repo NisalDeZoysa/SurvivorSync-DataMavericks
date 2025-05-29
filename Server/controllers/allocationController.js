@@ -5,7 +5,7 @@ import {DisasterRequest} from '../models/index.js';
 // Create
 export const createAllocation = async (req, res) => {
   try {
-    const { resourceCenterId, userRequestId } = req.body;
+    const { resourceCenterId, userRequestId,amount,isAllocated } = req.body;
 
     const center = await ResourceCenter.findByPk(resourceCenterId);
     const request = await DisasterRequest.findByPk(userRequestId);
@@ -14,7 +14,7 @@ export const createAllocation = async (req, res) => {
       return res.status(404).json({ error: 'Resource center or user request not found' });
     }
 
-    const allocation = await AllocatedResource.create({ resourceCenterId, userRequestId });
+    const allocation = await AllocatedResource.create({ resourceCenterId, userRequestId,amount,isAllocated });
     res.status(201).json({ message: 'Resource allocated', allocation });
   } catch (error) {
     res.status(400).json({ error: error.message });

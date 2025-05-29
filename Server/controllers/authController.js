@@ -26,13 +26,13 @@ const generateTokens = (user) => {
 
 
 export const register = async (req, res) => {
-  const { name, NIC, address, contactNumber, email, type, password } = req.body;
+  const { name, nic, address, contactNumber, email, type, password } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       name,
-      NIC,
+      nic,
       address,
       contactNumber,
       email,

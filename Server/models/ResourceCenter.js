@@ -11,7 +11,7 @@ const ResourceCenter = sequelize.define('ResourceCenter', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'resources', // Assuming Resource model is defined elsewhere
+      model: 'resources',
       key: 'id',
     },
   },

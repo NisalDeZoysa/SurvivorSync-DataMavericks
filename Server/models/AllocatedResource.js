@@ -15,6 +15,14 @@ const AllocatedResource = sequelize.define('AllocatedResource', {
       key: 'id',
     },
   }, 
+  resouceCenterId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'resource_centers',
+      key: 'id',
+    },
+  },
   amount: {
     type: DataTypes.INTEGER,
     allowNull: false,

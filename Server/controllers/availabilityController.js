@@ -1,23 +1,24 @@
-import {AvailableResource} from '../models/index.js';
+import {ResourceCenter} from '../models/index.js';
 import {AllocatedResource} from '../models/index.js';
 
 // Create or update availability for a resource
 export const setAvailability = async (req, res) => {
-  const { allocatedResourceId, is_available } = req.body;
-
+  const { resourceId, lat, long, count, contactNumber } = req.body;
   try {
-    const allocation = await AllocatedResource.findByPk(allocatedResourceId);
-    if (!allocation) return res.status(404).json({ error: 'AllocatedResource not found' });
+    // Check if the resource center already exists
+    let resourceCenter = await ResourceCenter.findOne({ where: { resourceId, lat, long } });
 
-    const [availability, created] = await AvailableResource.upsert(
-      { allocatedResourceId, is_available },
-      { returning: true }
-    );
-
-    res.json({
-      message: created ? 'AvailableResource set' : 'AvailableResource updated',
-      availability,
-    });
+    if (resourceCenter) {
+      // Update existing resource center
+      resourceCenter.count = count;
+      resourceCenter.contactNumber = contactNumber;
+      await resourceCenter.save();
+      res.json({ message: 'Resource center updated', resourceCenter });
+    } else {
+      // Create new resource center
+      resourceCenter = await ResourceCenter.create({ resourceId, lat, long, count, contactNumber });
+      res.status(201).json({ message: 'Resource center created', resourceCenter });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -26,14 +27,7 @@ export const setAvailability = async (req, res) => {
 // Get availability by allocation
 export const getAvailabilityByAllocation = async (req, res) => {
   try {
-    const availability = await AvailableResource.findOne({
-      where: { allocatedResourceId: req.params.allocatedResourceId },
-      include: AllocatedResource
-    });
-
-    if (!availability) return res.status(404).json({ error: 'AvailableResource not found' });
-
-    res.json(availability);
+    
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -42,7 +36,7 @@ export const getAvailabilityByAllocation = async (req, res) => {
 // Get all availabilities
 export const getAllAvailabilities = async (req, res) => {
   try {
-    const all = await AvailableResource.findAll({ include: AllocatedResource });
+    const all = await ResourceCenter.findAll({ include: AllocatedResource, where: { is_available: true } });
     res.json(all);
   } catch (error) {
     res.status(500).json({ error: error.message });
