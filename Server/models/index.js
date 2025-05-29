@@ -24,6 +24,7 @@ DisasterRequest.hasOne(Disaster, { foreignKey: 'disasterId' });
 AvailableResource.belongsTo(ResourceCenter, { foreignKey: 'resourceCenterId' });
 
 Resource.hasMany(ResourceCenter, { foreignKey: 'resourceId', onDelete: 'CASCADE' });
+ResourceCenter.belongsTo(Resource, { foreignKey: 'resourceId' });
 
 FirstResponder.belongsTo(ResourceCenter, { foreignKey: 'resourceCenterId' });
 

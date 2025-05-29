@@ -4,7 +4,9 @@ import {
   getAllDisasters,
   getDisasterById,
   updateDisaster,
-  deleteDisaster
+  deleteDisaster,
+  getDisasterCount,
+  getDisasterTypeCountsFiveYears
 } from '../controllers/disasterController.js';
 
 
@@ -16,9 +18,11 @@ import {
 const router = express.Router();
 
 router.post('/', authenticateToken, createDisaster);
-router.get('/', getAllDisasters); // public or authenticated as needed
+router.get('/', getAllDisasters);
+router.get('/count', getDisasterCount); // public or authenticated as needed
 router.get('/:id', getDisasterById);
 router.put('/:id', authenticateToken, updateDisaster);
 router.delete('/:id', authenticateToken, deleteDisaster);
+router.get('/count/by-type/year', getDisasterTypeCountsFiveYears);
 
 export default router;

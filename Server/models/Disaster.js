@@ -13,7 +13,7 @@ const Disaster = sequelize.define('Disaster', {
     unique: true,
   },
   type: {
-    type: DataTypes.ENUM('natural', 'man-made', 'other'),
+    type: DataTypes.ENUM('natural', 'flood', 'landslide', 'earthquake', 'other'),
     allowNull: false,
   },
   severity: {

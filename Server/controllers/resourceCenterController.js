@@ -62,3 +62,12 @@ export const deleteResourceCenter = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getResourceCenterCount = async (req, res) => {
+  try {
+    const count = await ResourceCenter.count();
+    res.json({ totalResourceCenters: count });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

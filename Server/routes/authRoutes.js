@@ -6,7 +6,7 @@ import {
   getUserById,
   updateUser,
   deleteUser,
-  getVolunteerCount,
+  getVolunteerAndVictimCount,
 } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
@@ -19,6 +19,6 @@ router.get('/users', authenticateToken, getAllUsers);
 router.get('/users/:id', authenticateToken, getUserById);
 router.put('/users/:id', authenticateToken, updateUser);
 router.delete('/users/:id', authenticateToken, deleteUser);
-router.get('/volunteer/count', getVolunteerCount);
+router.get('/count/volunteers-victims', getVolunteerAndVictimCount);
 
 export default router;

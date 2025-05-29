@@ -145,13 +145,14 @@ export const refreshAccessToken = (req, res) => {
   });
 };
 
-export const getVolunteerCount = async (req, res) => {
+export const getVolunteerAndVictimCount = async (req, res) => {
   try {
-    const count = await User.count({
-      where: { type: 'volunteer' }
-    });
+    const [volunteerCount, victimCount] = await Promise.all([
+      User.count({ where: { type: 'volunteer' } }),
+      User.count({ where: { type: 'victim' } }),
+    ]);
 
-    res.json({ volunteerCount: count });
+    res.json({ volunteerCount, victimCount });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
