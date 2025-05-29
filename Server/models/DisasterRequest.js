@@ -77,6 +77,10 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
     type: DataTypes.BLOB,
     allowNull: true,
   },
+  isVerified: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+  }
   
 },{
   tableName: 'disaster_requests',

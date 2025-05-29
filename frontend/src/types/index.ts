@@ -6,6 +6,12 @@ export enum UserRole {
   ADMIN = "admin"
 }
 
+export enum FirstResponderStatus {
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected"
+}
+
 export interface User {
   id: string;
   name: string;

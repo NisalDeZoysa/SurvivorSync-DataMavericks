@@ -13,6 +13,7 @@ interface AuthContextType {
   register: (userData: Partial<User>, password: string) => Promise<void>;
   userLogin: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  createUser: (userData: Partial<User>, password: string) => Promise<void>;
   isAuthenticated: boolean;
 }
 
