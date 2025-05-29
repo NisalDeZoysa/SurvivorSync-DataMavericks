@@ -1,4 +1,5 @@
 import {Disaster} from '../models/index.js';
+
 import { Op, fn, col } from 'sequelize';
 
 export const createDisaster = async (req, res) => {
