@@ -1,0 +1,100 @@
+{
+  "resources": [
+    {
+      "resource_id": "FIRE_001",
+      "resource_type": "Fire Truck",
+      "location": [6.9271, 79.8612],
+      "availability_status": "available",
+      "contact_info": "+94-11-2691691",
+      "capacity": "High pressure water system, 2000L tank"
+    },
+    {
+      "resource_id": "MED_001",
+      "resource_type": "Ambulance",
+      "location": [6.9344, 79.8428],
+      "availability_status": "available",
+      "contact_info": "+94-11-1990",
+      "capacity": "Advanced life support, 2 paramedics"
+    },
+    {
+      "resource_id": "POLICE_001",
+      "resource_type": "Police Unit",
+      "location": [6.9147, 79.8734],
+      "availability_status": "busy",
+      "contact_info": "+94-11-2433333",
+      "capacity": "Traffic control, crowd management, 4 officers"
+    },
+    {
+      "resource_id": "RESCUE_001",
+      "resource_type": "Search and Rescue Team",
+      "location": [6.9319, 79.8478],
+      "availability_status": "available",
+      "contact_info": "+94-11-2697697",
+      "capacity": "Urban search and rescue, 6 specialists"
+    },
+    {
+      "resource_id": "FIRE_002",
+      "resource_type": "Fire Truck",
+      "location": [6.95, 79.82],
+      "availability_status": "available",
+      "contact_info": "+94-11-2691692",
+      "capacity": "Ladder truck, aerial rescue capability"
+    },
+    {
+      "resource_id": "MED_002",
+      "resource_type": "Mobile Medical Unit",
+      "location": [6.918, 79.89],
+      "availability_status": "available",
+      "contact_info": "+94-11-1991",
+      "capacity": "Field hospital setup, 3 doctors, 5 nurses"
+    },
+    {
+      "resource_id": "UTIL_001",
+      "resource_type": "Emergency Generator Unit",
+      "location": [6.94, 79.85],
+      "availability_status": "maintenance",
+      "contact_info": "+94-11-2345678",
+      "capacity": "500kW portable generator, fuel for 24hrs"
+    },
+    {
+      "resource_id": "WATER_001",
+      "resource_type": "Water Tanker",
+      "location": [6.925, 79.87],
+      "availability_status": "available",
+      "contact_info": "+94-11-2456789",
+      "capacity": "5000L clean water supply"
+    },
+    {
+      "resource_id": "COMM_001",
+      "resource_type": "Communication Unit",
+      "location": [6.935, 79.835],
+      "availability_status": "available",
+      "contact_info": "+94-11-2567890",
+      "capacity": "Satellite communication, radio network setup"
+    },
+    {
+      "resource_id": "POLICE_002",
+      "resource_type": "K9 Unit",
+      "location": [6.91, 79.88],
+      "availability_status": "available",
+      "contact_info": "+94-11-2433334",
+      "capacity": "Search dogs, explosive detection, 2 handlers"
+    },
+    {
+      "resource_id": "HEAVY_001",
+      "resource_type": "Heavy Machinery Unit",
+      "location": [6.945, 79.815],
+      "availability_status": "busy",
+      "contact_info": "+94-11-2678901",
+      "capacity": "Excavator, bulldozer, debris clearing"
+    },
+    {
+      "resource_id": "SHELTER_001",
+      "resource_type": "Emergency Shelter Unit",
+      "location": [6.92, 79.86],
+      "availability_status": "available",
+      "contact_info": "+94-11-2789012",
+      "capacity": "Temporary shelter for 50 people, supplies for 3 days"
+    }
+  ]
+}
