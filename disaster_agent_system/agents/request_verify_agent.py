@@ -23,8 +23,8 @@ app = Flask(__name__)
 
 class VerifiedtResponseFormat(BaseModel):
     """Respond to the user in this format."""
-    status : Literal['pending', 'verified', 'not verified', 'error'] = 'pending'
-    verificaion_status: Literal['pending', 'completed', 'error'] = 'pending'
+    status : Literal['pending', 'completed','error'] = 'pending'
+    verificaion_status: Literal['pending', 'verified', 'not_verified'] = 'pending'
     verification_message: str
     
 class RequestVerifyAgent:
@@ -46,16 +46,21 @@ class RequestVerifyAgent:
         'You are an intelligent request verify agent.' 
         'Your task is to verify the disaster request information provided by the user and respond in the following JSON format.'
         'Use the available tools to verify the information.'
+        'If the tool calling gives a value, set the status to "completed"'
+        'If the return query count from request_count tool is greater than 2, set the verification_status to "verified".' 
+        'If the return value from tool is less than 2, set the verification_status to "not_verified".'
+        'verification_message should contain the details of the verification process.'
         'If the information is not available, respond with "Not applicable" or keep null for that field.'
         '''
-            "status": "pending" | "verified" | "not verified" | "error", # The status of the verification process
-            "verificaion_status": "pending" | "completed" | "error", # The status of the verification process
+            "status": "pending" | "completed" | "error", # The status of the verification process
+            "verificaion_status": "pending" | "verified" | "not_verified", # The status of the verification process
             "verification_message": "<string>" # A message providing details about the verification process
         }'''
     )
     def __init__(self,tools):
         self.llm = ChatOllama(model="llama3.1:8b",temperature=0.8)
         self.tools = tools
+        self.tool_outputs = []
 
         self.graph = create_react_agent(
             self.llm,
@@ -67,6 +72,7 @@ class RequestVerifyAgent:
 
     async def invoke(self, query, sessionId) -> str:
         config = {'configurable': {'thread_id': sessionId}}
+        # Invoke the graph with the user query
         self.graph.invoke({'messages': [('user', query)]}, config)
         return self.get_agent_response(config)
 
@@ -156,6 +162,7 @@ async def get_agent_response(task_request,task_id):
         # Load tools from the MCP servers
         print("Loading tools from MCP servers...")
         tools = await client.get_tools()
+        print(f"Loaded {len(tools)} tools from MCP servers.")
         # Create a ReAct agent
         print("Creating ReAct agent...")
         agent = RequestVerifyAgent(tools)
@@ -169,11 +176,12 @@ async def get_agent_response(task_request,task_id):
     except Exception as e:
         print(f"Error processing task {task_id}: {e}")
         return jsonify({"error": str(e)}), 500
-    
+
+
 # Endpoint to handle task 
 @app.post("/tasks/send")
 def handle_task():
-    TASK_PRIORITIZE_AGENT = "http://localhost:5012"
+    RESOURCE_TRACKING_AGENT = "http://localhost:5012"
     task_request = request.get_json()
     if not task_request:
         return jsonify({"error": "Invalid request"}), 400
@@ -183,6 +191,7 @@ def handle_task():
     try:
         # Run the async agent response using asyncio
         response = asyncio.run(get_agent_response(task_request, task_id))
+        print(f"Request Verify Agent response for task {task_id}: {response}")
         response_format = response['content']
         response_format_dict = response_format.model_dump()
 
@@ -192,6 +201,7 @@ def handle_task():
             "status": "request-verify-agent-completed",
             "initial_request": task_request.get("request-intake-agent-response", {}),
             "next-agent": "task-prioritize-agent",
+            "message": "request verify agent has verified the request. now your task is to track the resources and output the available resources list.",
             "request-verify-agent-response": [
                 {
                     "role": "request-verify-agent",
@@ -200,7 +210,7 @@ def handle_task():
             ]
         }
         print(f"Forwarding task {task_id} response is {response_task}")
-        target_agent_url = TASK_PRIORITIZE_AGENT
+        target_agent_url = RESOURCE_TRACKING_AGENT
         target_send_url = f"{target_agent_url}/tasks/send"
 
         try:

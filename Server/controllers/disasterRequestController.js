@@ -1,19 +1,21 @@
-import {DisasterRequest} from '../models/index.js';
+import {DisasterRequest, User} from '../models/index.js';
 
 export const createUserRequest = async (req, res) => {
   try {
     const {
       name,
-      type,
+      userId,
+      disasterId,
       severity,
       details,
       affectedCount,
       contactNo,
-      time,
-      location = {},
+      latitude,
+      longitude,
+      district,
+      province,
+      
     } = req.body;
-
-    let { latitude, longitude, address } = location;
 
     // Ensure address is stored as a plain string
     if (typeof address === 'object') {
@@ -21,24 +23,24 @@ export const createUserRequest = async (req, res) => {
         ? address.join(', ')
         : Object.values(address).join(', ');
     }
-
+    //check valid user
     const imageFiles = req.files?.images?.map(file => file.path) || [];
     const voiceFile = req.files?.voice?.[0]?.path || null;
 
     const request = await DisasterRequest.create({
       name,
-      type,
+      userId,
+      disasterId,
       severity,
       details,
       affectedCount,
       contactNo,
-      time,
       latitude,
       longitude,
-      address,
       images: imageFiles,
       voice: voiceFile,
-      userId: req.user.id,
+      district,
+      province,
     });
 
     res.status(201).json({ message: 'User request created', request });
@@ -51,7 +53,7 @@ export const createUserRequest = async (req, res) => {
 
 export const getAllRequests = async (req, res) => {
   try {
-    const requests = await DisasterRequest.findAll({ where: { userId: req.user.id } });
+    const requests = await DisasterRequest.findAll();
     res.json(requests);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -96,16 +98,17 @@ export const updateRequest = async (req, res) => {
 
     const {
       name,
-      type,
+      userId,
+      disasterId,
       severity,
       details,
       affectedCount,
       contactNo,
-      time,
-      location = {},
+      latitude,
+      longitude,
+      district,
+      province,
     } = req.body;
-
-    let { latitude, longitude, address } = location;
 
     if (typeof address === 'object') {
       address = Array.isArray(address)
@@ -118,17 +121,18 @@ export const updateRequest = async (req, res) => {
 
     await request.update({
       name,
-      type,
+      userId,
+      disasterId,
       severity,
       details,
       affectedCount,
       contactNo,
-      time,
       latitude,
       longitude,
-      address,
       images: imageFiles,
       voice: voiceFile,
+      district,
+      province,
     });
 
     res.json({ message: 'Request updated', request });

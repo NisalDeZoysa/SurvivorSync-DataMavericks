@@ -83,9 +83,12 @@ import multiprocessing
 import os
 
 SERVERS = {
+    # gateway
     "gateway": "disaster_agent_system.server.gateway_server",
+    # agents
     "request_intake_agent": "disaster_agent_system.agents.request_intake_agent",
     "request_verify_agent": "disaster_agent_system.agents.request_verify_agent",
+    #mcps
     "math_mcp": "disaster_agent_system.mcps.math",
     "request_count_mcp": "disaster_agent_system.mcps.request_count",
     "brave_mcp": "disaster_agent_system.mcps.brave_search_mcp_server"

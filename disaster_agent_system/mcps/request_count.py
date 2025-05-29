@@ -5,37 +5,57 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP("request-count")
 
 @mcp.tool()
-def count_requests(lat: float, long: float, type: str) -> int:
-    """Count the number of requests based on location and type on the current day within ~5km"""
-    
-    today = datetime.datetime.now().date()
-    tomorrow = today + datetime.timedelta(days=1)
-
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="surviorsync"  # Make sure spelling is correct here!
-    )
-    cursor = conn.cursor()
-
-    query = """
-        SELECT COUNT(*) FROM disaster_requests
-        WHERE type = %s
-        AND date >= %s AND date < %s
-        AND ST_Distance_Sphere(POINT(longitude, latitude), POINT(%s, %s)) <= 5000
+def output_requests(lat: float, long: float, disasterId: int) -> list:
     """
+    Fetch and print all requests based on location and disaster ID on the current day within ~5km,
+    then return the matching rows.
+    """
+    try:
+        now = datetime.datetime.now()
+        today_start = datetime.datetime.combine(now.date(), datetime.time.min)
+        tomorrow_start = today_start + datetime.timedelta(days=1)
+        print(f"Today's date: {today_start}, Tomorrow's date: {tomorrow_start}")
 
-    cursor.execute(query, (type, today, tomorrow, long, lat))
-    (count_decimal,) = cursor.fetchone()
-    count = int(count_decimal)
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="",
+            database="survivorsync"
+        )
+        cursor = conn.cursor()
 
-    cursor.close()
-    conn.close()
+        cursor.execute("SELECT NOW()")
+        print(f"MySQL Server Time: {cursor.fetchone()[0]}")
 
-    return count
+        query = """
+            SELECT * FROM disaster_requests
+            WHERE disasterId = %s
+            AND created_at >= %s AND created_at < %s
+            AND ST_Distance_Sphere(
+                POINT(longitude, latitude),
+                POINT(%s, %s)
+            ) <= 100000
+            """
 
+        cursor.execute(query, (disasterId, today_start, tomorrow_start, long, lat))
+        rows = cursor.fetchall()
 
+        print(f"Fetched {len(rows)} rows:")
+        for row in rows:
+            print(row)
+
+        cursor.close()
+        conn.close()
+
+        return rows
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
+        return []
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return []
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")
+
+

@@ -49,9 +49,9 @@ class RequestIntakeAgent:
             "type": "<string>", # Extract Type of request, e.g., "fire", "medical", "flood"
             "affected_count": <int>, # Extract Number of people affected
             "contact_info": "<string>", # Extract Contact information such as phone number or email
-            "image_description": "<string>", # Extract Description of any images provided
-            "voice_description": "<string>", # Extract Description of any voice messages provided
-            "text_description": "<string>" # Extract Description of any text messages provided
+            "image_description": "<string>", # Extract Description of if images provided else "Not applicable"
+            "voice_description": "<string>", # Extract Description of if voice messages provided else "Not applicable"
+            "text_description": "<string>" # Extract Description of if text messages provided else "Not applicable"
             }'''
     )
     def __init__(self,tools):
@@ -105,24 +105,20 @@ class RequestIntakeAgent:
             if structured_response.status == 'pending':
                 return {
                         'is_task_complete': False,
-                        'require_user_input': True,
                         'content': structured_response,
                         }
             elif structured_response.status == 'error':
                 return {
                         'is_task_complete': False,
-                        'require_user_input': True,
                         'content': structured_response,
                         }
             elif structured_response.status == 'completed':
                 return {
                         'is_task_complete': True,
-                        'require_user_input': False,
                         'content': structured_response,
                         }
         return {
                 'is_task_complete': False,
-                'require_user_input': True,
                 'content': 'We are unable to process your request at the moment. Please try again.',
                 }
 
@@ -179,13 +175,7 @@ def handle_task():
             "status": "request-intake-agent-completed",
             "initial_request": task_request.get("message", {}),
             "next-agent": "request-verify-agent",
-            "message": '''Forwading to Verify Agent. 
-                          Please analyze the request details and verify the request using you tools. 
-                          Put Status as verified if the disaster request count is greater than <2>
-                          If the request is not verified, put status as unverified.
-                          If you are not able to verify the request, put status as pending.
-                          If you are not able to process the request, put status as error.
-                        ''',
+            "message": "Please analyze the request details and verify the request using the tools. Put Status as verified if the disaster request count is greater than <2>. If the request is not verified, put status as unverified. If you are not able to verify the request, put status as pending. If you encounter any error to process the request, put status as error.",
             "request-intake-agent-response": [
                 {
                     "role": "request-intake-agent",

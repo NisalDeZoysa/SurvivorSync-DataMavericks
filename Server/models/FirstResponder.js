@@ -7,8 +7,8 @@ const FirstResponder = sequelize.define('FirstResponder', {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
-  },
-  resourceCenterId:{
+    },
+    resourceCenterId:{
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -20,7 +20,7 @@ const FirstResponder = sequelize.define('FirstResponder', {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    NIC: {
+    nic: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
@@ -42,6 +42,10 @@ const FirstResponder = sequelize.define('FirstResponder', {
     password: {
       type: DataTypes.STRING,
       allowNull: false,
+  },
+    is_verified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     
 }, {

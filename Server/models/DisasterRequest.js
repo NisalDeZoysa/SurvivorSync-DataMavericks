@@ -14,7 +14,7 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
   },
   userId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: 'users', 
       key: 'id',
@@ -65,10 +65,6 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  time: {
-    type: DataTypes.DATE,
-    allowNull: true,
-  },
   images: {
     type: DataTypes.BLOB,
     allowNull: true,
@@ -80,8 +76,8 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
   isVerified: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
+    defaultValue: false,
   }
-  
 },{
   tableName: 'disaster_requests',
   timestamps: true,

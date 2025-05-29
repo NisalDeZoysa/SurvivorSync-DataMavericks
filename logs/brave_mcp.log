@@ -1,0 +1,41 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\Competition\SurvivorSync-DataMavericks\disaster_agent_system\mcps\brave_search_mcp_server.py", line 22, in <module>
+    mcp.run()
+    ~~~~~~~^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\mcp\server\fastmcp\server.py", line 234, in run
+    anyio.run(self.run_stdio_async)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\_core\_eventloop.py", line 74, in run
+    return async_backend.run(func, args, {}, backend_options)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2310, in run
+    return runner.run(wrapper())
+           ~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python313\Lib\asyncio\base_events.py", line 712, in run_until_complete
+    self.run_forever()
+    ~~~~~~~~~~~~~~~~^^
+  File "C:\Python313\Lib\asyncio\base_events.py", line 683, in run_forever
+    self._run_once()
+    ~~~~~~~~~~~~~~^^
+  File "C:\Python313\Lib\asyncio\base_events.py", line 2002, in _run_once
+    event_list = self._selector.select(timeout)
+  File "C:\Python313\Lib\asyncio\windows_events.py", line 446, in select
+    self._poll(timeout)
+    ~~~~~~~~~~^^^^^^^^^
+  File "C:\Python313\Lib\asyncio\windows_events.py", line 775, in _poll
+    status = _overlapped.GetQueuedCompletionStatus(self._iocp, ms)
+  File "C:\Python313\Lib\asyncio\runners.py", line 157, in _on_sigint
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+Exception ignored on threading shutdown:
+Traceback (most recent call last):
+  File "C:\Python313\Lib\threading.py", line 1540, in _shutdown
+    _thread_shutdown()
+KeyboardInterrupt: 
+^C
+D:\Competition\SurvivorSync-DataMavericks>^C

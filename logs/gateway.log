@@ -1,0 +1,14 @@
+Gateway server starting on port 5005
+ * Serving Flask app 'gateway_server'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5005
+ * Running on http://192.168.212.174:5005
+Press CTRL+C to quit
+127.0.0.1 - - [29/May/2025 10:57:13] "POST /tasks/send HTTP/1.1" 502 -
+Ollama response: REQUEST_INTAKE_AGENT
+Routing task 4d238919-5ab0-47d9-adf8-6a56855a1901 via Ollama decision to Agent (http://localhost:5010)
+Error forwarding task 4d238919-5ab0-47d9-adf8-6a56855a1901 to http://localhost:5010: 502 Server Error: BAD GATEWAY for url: http://localhost:5010/tasks/send
+
+D:\Competition\SurvivorSync-DataMavericks>

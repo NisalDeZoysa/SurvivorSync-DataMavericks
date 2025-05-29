@@ -47,7 +47,8 @@ You are an intelligent request router. You need to decide whether to route a use
 
 User query: "{user_text}"
 
-Based on the query, which agent is more appropriate? Respond with ONLY 'REQUEST_INTAKE_AGENT', 'CHAT_BOT_AGENT', 'TIPS_AGENT', 'SEARCH_AGENT'.
+Based on the query, which agent is more appropriate? If the user query contain data of a disaster and affected count value is there then pick the 'REQUEST_INTAKE_AGENT'.
+Respond with ONLY 'REQUEST_INTAKE_AGENT', 'CHAT_BOT_AGENT', 'TIPS_AGENT', 'SEARCH_AGENT'.
 """
     try:
         messages=[
@@ -73,10 +74,6 @@ Based on the query, which agent is more appropriate? Respond with ONLY 'REQUEST_
             
     except Exception as e:
         print(f"Error calling Ollama for routing: {e}. Defaulting to Search.")
-        # Optional: Implement fallback to keyword logic here if desired
-        # if ("use my local rag system" in user_text.lower() or
-        #     "use my local rag server" in user_text.lower()):
-        #     return RAG_AGENT_URL
         return SEARCH_AGENT
 
 # Endpoint to serve the Gateway Agent Card
@@ -123,7 +120,7 @@ def handle_task():
             "messages": [
                 task_request.get("message", {}), # include original user message
                  {
-                    "role": "agent",
+                    "role": "gateway-agent",
                     "parts": [{"text": f"Error: Could not reach the target agent at {target_agent_url}. Details: {e}"}]
                 }
             ]

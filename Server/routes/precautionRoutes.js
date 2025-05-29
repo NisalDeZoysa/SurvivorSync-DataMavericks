@@ -14,10 +14,10 @@ import {
 
 const router = express.Router();
 
-router.post('/', authenticateToken, createPrecaution);
+router.post('/', createPrecaution);
 router.get('/', getAllPrecautions);
 router.get('/:id', getPrecautionById);
-router.put('/:id', authenticateToken, updatePrecaution);
-router.delete('/:id', authenticateToken, deletePrecaution);
+router.put('/:id', updatePrecaution);
+router.delete('/:id',deletePrecaution);
 
 export default router;

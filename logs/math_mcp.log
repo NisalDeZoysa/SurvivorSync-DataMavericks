@@ -1,0 +1,79 @@
+Traceback (most recent call last):
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\streams\memory.py", line 111, in receive
+    return self.receive_nowait()
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\streams\memory.py", line 106, in receive_nowait
+    raise WouldBlock
+anyio.WouldBlock
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Python313\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2298, in wrapper
+    return await func(*args)
+           ^^^^^^^^^^^^^^^^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\mcp\server\fastmcp\server.py", line 593, in run_stdio_async
+    await self._mcp_server.run(
+    ...<3 lines>...
+    )
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\mcp\server\lowlevel\server.py", line 495, in run
+    async with AsyncExitStack() as stack:
+               ~~~~~~~~~~~~~~^^
+  File "C:\Python313\Lib\contextlib.py", line 768, in __aexit__
+    raise exc
+  File "C:\Python313\Lib\contextlib.py", line 751, in __aexit__
+    cb_suppress = await cb(*exc_details)
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\mcp\shared\session.py", line 220, in __aexit__
+    return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 776, in __aexit__
+    raise exc_val
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\mcp\server\lowlevel\server.py", line 506, in run
+    async with anyio.create_task_group() as tg:
+               ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 776, in __aexit__
+    raise exc_val
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\mcp\server\lowlevel\server.py", line 507, in run
+    async for message in session.incoming_messages:
+    ...<8 lines>...
+        )
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\abc\_streams.py", line 35, in __anext__
+    return await self.receive()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\streams\memory.py", line 119, in receive
+    await receive_event.wait()
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 1774, in wait
+    await self._event.wait()
+  File "C:\Python313\Lib\asyncio\locks.py", line 213, in wait
+    await fut
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\Competition\SurvivorSync-DataMavericks\disaster_agent_system\mcps\math.py", line 16, in <module>
+    mcp.run(transport="stdio")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\mcp\server\fastmcp\server.py", line 234, in run
+    anyio.run(self.run_stdio_async)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\_core\_eventloop.py", line 74, in run
+    return async_backend.run(func, args, {}, backend_options)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Competition\SurvivorSync-DataMavericks\venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 2310, in run
+    return runner.run(wrapper())
+           ~~~~~~~~~~^^^^^^^^^^^
+  File "C:\Python313\Lib\asyncio\runners.py", line 123, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+^C
+D:\Competition\SurvivorSync-DataMavericks>^C

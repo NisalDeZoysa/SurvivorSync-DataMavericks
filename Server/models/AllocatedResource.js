@@ -11,7 +11,7 @@ const AllocatedResource = sequelize.define('AllocatedResource', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'disaster_requests', // Assuming DisasterRequest is defined elsewhere
+      model: 'disaster_requests',
       key: 'id',
     },
   }, 

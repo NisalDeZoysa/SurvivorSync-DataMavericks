@@ -28,3 +28,6 @@ git config --global http.proxy 10.50.225.222:3128
 git config --global https.proxy 10.50.225.222:3128
 
 
+netstat -ano | findstr <port_number>
+
+
