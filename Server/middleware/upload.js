@@ -1,6 +1,5 @@
 import multer from 'multer';
 import fs from 'fs';
-import path from 'path';
 
 const imageDir = './uploads/images';
 const voiceDir = './uploads/voices';
@@ -10,7 +9,7 @@ if (!fs.existsSync(voiceDir)) fs.mkdirSync(voiceDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    if (file.fieldname === 'images') cb(null, imageDir);
+    if (file.fieldname === 'image') cb(null, imageDir);
     else if (file.fieldname === 'voice') cb(null, voiceDir);
     else cb(new Error('Unknown file field'), null);
   },
@@ -25,6 +24,6 @@ const upload = multer({
 });
 
 export const userRequestUpload = upload.fields([
-  { name: 'images', maxCount: 1 },
+  { name: 'image', maxCount: 1 },
   { name: 'voice', maxCount: 1 },
 ]);

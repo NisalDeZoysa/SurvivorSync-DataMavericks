@@ -1,8 +1,8 @@
-import {DisasterRequest, User} from '../models/index.js';
+import { DisasterRequest, User } from '../models/index.js';
 
 export const createUserRequest = async (req, res) => {
   try {
-    const {
+    let {
       name,
       userId,
       disasterId,
@@ -14,20 +14,22 @@ export const createUserRequest = async (req, res) => {
       longitude,
       district,
       province,
-      
+      address,
     } = req.body;
 
-    // Ensure address is stored as a plain string
     if (typeof address === 'object') {
       address = Array.isArray(address)
         ? address.join(', ')
         : Object.values(address).join(', ');
     }
-    //check valid user
-    const imageFiles = req.files?.images?.map(file => file.path) || [];
+
+    // Since only one image is allowed, pick the first file's path as a string
+    const imageFile = req.files?.image?.[0]?.path || null;
     const voiceFile = req.files?.voice?.[0]?.path || null;
-    console.log('Image files:', imageFiles);
-    console.log('Voice file:', voiceFile);
+
+    console.log('Image file path:', imageFile);
+    console.log('Voice file path:', voiceFile);
+
     const request = await DisasterRequest.create({
       name,
       userId,
@@ -38,11 +40,14 @@ export const createUserRequest = async (req, res) => {
       contactNo,
       latitude,
       longitude,
-      images: imageFiles,
+      image: imageFile,
       voice: voiceFile,
       district,
       province,
+      address,
     });
+
+    
 
     res.status(201).json({ message: 'User request created', request });
   } catch (error) {
@@ -117,8 +122,8 @@ export const updateRequest = async (req, res) => {
         : Object.values(address).join(', ');
     }
 
-    const imageFiles = req.files?.images?.map(file => file.path) || request.images;
-    const voiceFile = req.files?.voice?.[0]?.path || request.voice;
+    const imageFile = req.files?.image?.[0]?.path || null;
+    const voiceFile = req.files?.voice?.[0]?.path || null;
 
     await request.update({
       name,
@@ -130,7 +135,7 @@ export const updateRequest = async (req, res) => {
       contactNo,
       latitude,
       longitude,
-      images: imageFiles,
+      images: imageFile,
       voice: voiceFile,
       district,
       province,

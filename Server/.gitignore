@@ -23,6 +23,8 @@ pids/
 .DS_Store
 Thumbs.db
 
+uploads/
+
 # Build output
 dist/
 build/
