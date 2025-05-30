@@ -40,24 +40,48 @@ async function seedDatabase() {
     { type: 'Infrastructure', name: 'Waste management equipment' },
   ]);
 
-  // Fetch resources to get their IDs for resource centers
+  const centerLat = 6.81;
+  const centerLong = 79.87;
+  const radiusInKm = 25;
+
+  function getRandomLatLong(centerLat, centerLong, radiusInKm) {
+    const radiusInDegrees = radiusInKm / 111; // Rough conversion: 1 degree latitude ~111km
+
+    // Random distance and angle
+    const u = Math.random();
+    const v = Math.random();
+    const w = radiusInDegrees * Math.sqrt(u);
+    const t = 2 * Math.PI * v;
+    const x = w * Math.cos(t);
+    const y = w * Math.sin(t);
+
+    // Adjust longitude based on latitude
+    const newLat = centerLat + y;
+    const newLong = centerLong + x / Math.cos(centerLat * (Math.PI / 180));
+
+    return { lat: newLat, long: newLong };
+  }
+
   const resources = await Resource.findAll();
 
-  // Insert resource centers
   const resourceCentersData = [];
   for (let i = 0; i < 10; i++) {
     const resource = resources[i % resources.length];
+    const { lat, long } = getRandomLatLong(centerLat, centerLong, radiusInKm);
+
     resourceCentersData.push({
       resourceId: resource.id,
-      lat: 20 + Math.random() * 10,
-      long: 70 + Math.random() * 10,
+      lat,
+      long,
       count: Math.floor(Math.random() * 100) + 1,
       contactNumber: `+1-555-010${i}`,
     });
   }
+
   await ResourceCenter.bulkCreate(resourceCentersData);
 
   console.log('Seeding completed');
+
 }
 
 export default seedDatabase;

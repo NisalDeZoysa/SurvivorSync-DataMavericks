@@ -93,11 +93,37 @@ export const createUserRequest = async (req, res) => {
       district,
       province
     });
-    res.status(201).json({ message: "User request created", success: true });
-    } catch (error) {
-      console.error("Create error:", error);
-      res.status(400).json({ error: error.message });
+    // call gateway_server to get a response
+    const messageText = `
+      User ID: ${request.userId}
+      Disaster ID: ${request.disasterId}
+      Severity: ${request.severity}
+      Details: ${request.details}
+      Affected Count: ${request.affectedCount}
+      Contact No: ${request.contactNo}
+      Location: Latitude ${request.latitude}, Longitude ${request.longitude}
+      District: ${request.district}
+      Province: ${request.province}
+      Address: ${request.address}
+      `;
+    // const response = await fetch('http://127.0.0.1:5005/tasks/send', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({
+    //     message: messageText.trim(),
+    //   }),
+    // });
+    console.log('Response from gateway_server:', response);
+    if (!response.ok) {
+      throw new Error('Failed to send request to gateway_server');
     }
+    res.status(201).json({ message: 'User request created', request });
+  } catch (error) {
+    console.error('Create error:', error);
+    res.status(400).json({ error: error.message });
+  }
 };
 
 export const getAllRequests = async (req, res) => {
