@@ -5,6 +5,8 @@ import { AlertTriangle, MapPin, Check, Mic, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { MediaRecorder, register } from 'extendable-media-recorder';
+import { connect } from 'extendable-media-recorder-wav-encoder';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import {
@@ -48,6 +50,7 @@ const DisasterReportForm: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
 
+  const streamRef = useRef<MediaStream | null>(null);
 
 
   const form = useForm<DisasterFormValues>({
@@ -98,61 +101,115 @@ const DisasterReportForm: React.FC = () => {
 
 
 
-const toggleAudioRecording = async () => {
-  if (isRecordingAudio) {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecordingAudio(false);
-    toast({
-      title: "Recording stopped",
-      description: "Your audio recording has been saved.",
-    });
-  } else {
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      // Choose supported mimeType
-      let mimeType = '';
-      if (MediaRecorder.isTypeSupported('audio/wav')) {
-        mimeType = 'audio/wav';
-      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-        mimeType = 'audio/webm';
+// const toggleAudioRecording = async () => {
+//   if (isRecordingAudio) {
+//     if (mediaRecorderRef.current) {
+//       mediaRecorderRef.current.stop();
+//     }
+//     setIsRecordingAudio(false);
+//     toast({
+//       title: "Recording stopped",
+//       description: "Your audio recording has been saved.",
+//     });
+//   } else {
+//     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+//       // Choose supported mimeType
+//       let mimeType = '';
+//       if (MediaRecorder.isTypeSupported('audio/wav')) {
+//         mimeType = 'audio/wav';
+//       } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+//         mimeType = 'audio/webm';
+//       }
+//       const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+//       mediaRecorderRef.current = mediaRecorder;
+//       const chunks = [];
+
+//       mediaRecorder.ondataavailable = (e) => {
+//         chunks.push(e.data);
+//       };
+
+//       mediaRecorder.onstop = () => {
+//         const blob = new Blob(chunks, { type: mimeType });
+//         setAudioBlob(blob);
+//         // Use the blob directly here:
+//         console.log("Audio blob (immediate):", audioBlob);
+//         // Optionally, create a URL for playback:
+//         console.log("Audio URL:", URL.createObjectURL(blob));
+//       };
+
+//       console.log('Audio blob size:', audioBlob.size);
+//       console.log('Audio blob type:', audioBlob.type);
+
+//       mediaRecorder.start();
+//       setIsRecordingAudio(true);
+//       toast({
+//         title: "Recording started",
+//         description: "Speak clearly to describe the emergency.",
+//       });
+//     }).catch((error) => {
+//       console.error("Error accessing microphone:", error);
+//       toast({
+//         title: "Error",
+//         description: "Microphone access was denied.",
+//       });
+//     });
+//   }
+// };
+
+
+ const toggleAudioRecording = async () => {
+    if (isRecordingAudio) {
+      // Stop recording
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
       }
-      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-      mediaRecorderRef.current = mediaRecorder;
-      const chunks = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        chunks.push(e.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: mimeType });
-        setAudioBlob(blob);
-        // Use the blob directly here:
-        console.log("Audio blob (immediate):", audioBlob);
-        // Optionally, create a URL for playback:
-        console.log("Audio URL:", URL.createObjectURL(blob));
-      };
-
-      console.log('Audio blob size:', audioBlob.size);
-      console.log('Audio blob type:', audioBlob.type);
-
-      mediaRecorder.start();
-      setIsRecordingAudio(true);
+      setIsRecordingAudio(false);
       toast({
-        title: "Recording started",
-        description: "Speak clearly to describe the emergency.",
+        title: "Recording stopped",
+        description: "Your audio recording has been saved.",
       });
-    }).catch((error) => {
-      console.error("Error accessing microphone:", error);
-      toast({
-        title: "Error",
-        description: "Microphone access was denied.",
-      });
-    });
-  }
-};
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        streamRef.current = stream;
 
+        const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/wav' });
+        mediaRecorderRef.current = mediaRecorder;
+
+        const chunks: BlobPart[] = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            chunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          // Stop all tracks to release mic
+          stream.getTracks().forEach(track => track.stop());
+
+          const blob = new Blob(chunks, { type: 'audio/wav' });
+          setAudioBlob(blob);
+
+          console.log("Audio blob (immediate):", blob);
+          console.log("Audio URL:", URL.createObjectURL(blob));
+        };
+
+        mediaRecorder.start();
+        setIsRecordingAudio(true);
+        toast({
+          title: "Recording started",
+          description: "Speak clearly to describe the emergency.",
+        });
+      } catch (error) {
+        console.error("Error accessing microphone:", error);
+        toast({
+          title: "Error",
+          description: "Microphone access was denied.",
+        });
+      }
+    }
+  };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -239,6 +296,14 @@ const toggleAudioRecording = async () => {
       setIsSubmitting(false);
     }
   };
+
+    // Register the WAV encoder once on mount
+  useEffect(() => {
+    (async () => {
+      await register(await connect());
+    })();
+  }, []);
+
 
 
   return (
