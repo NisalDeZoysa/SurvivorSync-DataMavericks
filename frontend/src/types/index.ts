@@ -29,20 +29,20 @@ export interface User {
 
 
 export enum DisasterType {
-  FLOOD = "flood",
-  FIRE = "fire",
-  EARTHQUAKE = "earthquake",
-  LANDSLIDE = "landslide",
-  TSUNAMI = "tsunami",
-  HURRICANE = "hurricane",
-  OTHER = "other"
+  FLOOD = 1,
+  EARTHQUAKE = 2,
+  HOUSEHOLDFIRE = 3,
+  WILDFIRE = 4,
+  TORNADO = 5,
+  CHEMICALSPILL = 6,
+  OTHER = 7
 }
 
 export enum DisasterSeverity {
-  LOW = "low",
-  MEDIUM = "medium",
-  HIGH = "high",
-  CRITICAL = "critical"
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH",
+  CRITICAL = "CRITICAL"
 }
 
 export interface Disaster {

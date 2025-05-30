@@ -8,12 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue, 
+  SelectValue,
 } from '@/components/ui/select';
 import {
   Form,
@@ -30,19 +30,21 @@ import { Card } from '@/components/ui/card';
 
 interface DisasterFormValues {
   name: string;
-  type: DisasterType;
+  disasterId: DisasterType; // changed from 'type'
   severity: DisasterSeverity;
   details: string;
   affectedCount: number;
   contactNo?: string;
   address?: string;
+  district?: string;
+  province?: string;
 }
 
 const DisasterReportForm: React.FC = () => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [location, setLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [location, setLocation] = useState<{ latitude: number, longitude: number } | null>(null);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -50,12 +52,14 @@ const DisasterReportForm: React.FC = () => {
   const form = useForm<DisasterFormValues>({
     defaultValues: {
       name: '',
-      type: DisasterType.OTHER,
+      disasterId: DisasterType.OTHER, // changed from 'type'
       severity: DisasterSeverity.MEDIUM,
       details: '',
       affectedCount: 1,
       contactNo: currentUser?.contactNo || '',
       address: '',
+      district: '',
+      province: '',
     }
   });
 
@@ -119,83 +123,118 @@ const DisasterReportForm: React.FC = () => {
   };
 
   const onSubmit = async (data: DisasterFormValues) => {
-  if (!location && !data.address) {
-    toast({
-      variant: "destructive",
-      title: "Location Required",
-      description: "Please provide either your current location or an address.",
-    });
-    return;
-  }
+    if (!location && !data.address) {
+      toast({
+        variant: "destructive",
+        title: "Location Required",
+        description: "Please provide either your current location or an address.",
+      });
+      return;
+    }
 
-  const formData = new FormData();
-  formData.append('name', data.name);
-  formData.append('type', data.type);
-  formData.append('severity', data.severity);
-  formData.append('details', data.details);
-  formData.append('affectedCount', String(data.affectedCount));
-  formData.append('contactNo', data.contactNo || '');
-  formData.append('time', new Date().toISOString());
+    let province = data.province || '';
+    let district = data.district || '';
 
-  if (location) {
-    formData.append('location[latitude]', String(location.latitude));
-    formData.append('location[longitude]', String(location.longitude));
-  }
+    // If location is available but province/district are not, fetch them
+    if (location && (!province || !district)) {
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}&zoom=10&addressdetails=1`;
 
-  if (data.address) {
-    formData.append('location[address]', data.address);
-  }
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'SurvivorSync/1.0 (dinukpkcc@gmail.com)' // Required by Nominatim usage policy
+          }
+        });
+        console.log("Nominatim response:", response);
+        if (!response.ok) {
+          throw new Error('Failed to fetch province/district from coordinates');
+        }
+        const responseData = await response.json();
 
-  if (selectedImage) {
-    formData.append('images', selectedImage);
-  }
+        // Update province and district if found
+        province = responseData.address?.state || province;
+        district = responseData.address?.county || responseData.address?.district || district;
 
-  // TODO: Append voice file if you have recorded audio implemented
-  // formData.append('voice', recordedAudioFile);
+      } catch (err) {
+        console.warn("Failed to fetch province/district from coordinates", err);
+        // You may want to notify the user or handle this case gracefully
+      }
+    }
 
-  try {
-    setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append('name', data.name);
+    formData.append('userId', currentUser?._id || '');
+    formData.append('disasterId', String(Number(data.disasterId))); // ensure int
+    formData.append('severity', data.severity);
+    formData.append('details', data.details || '');
+    formData.append('affectedCount', String(Number(data.affectedCount))); // ensure int
+    formData.append('contactNo', data.contactNo || '');
+    formData.append('address', data.address || '');
+    formData.append('district', district);
+    formData.append('province', province);
 
-    const response = await axios.post('http://localhost:5000/api/requests', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      withCredentials: true,  // <=== critical: send cookies with request
-    });
+    if (location) {
+      formData.append('latitude', String(location.latitude)); // ensure float as string
+      formData.append('longitude', String(location.longitude));
+    }
 
-    toast({
-      title: "Report Submitted",
-      description: "Your emergency report has been successfully submitted.",
-    });
+    if (selectedImage) {
+      formData.append('images', selectedImage);
+    }
 
-    form.reset();
-    setSelectedImage(null);
-    setImagePreview(null);
-    setIsSubmitting(false);
-  } catch (error: any) {
-    console.error("Submission error:", error);
-    toast({
-      variant: "destructive",
-      title: "Submission Failed",
-      description: error?.response?.data?.message || "Please try again later.",
-    });
-    setIsSubmitting(false);
-  }
-};
+    // TODO: Append voice file if you have recorded audio implemented
+    // formData.append('voice', recordedAudioFile);
+
+    try {
+      setIsSubmitting(true);
+      console.log("Submitting form data:", Object.fromEntries(formData.entries()));
+
+      const response = await axios.post('http://localhost:7000/api/requests', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        withCredentials: true,
+      });
+
+      console.log("Submission response:", response.data);
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || "Submission failed");
+      }
+
+      toast({
+        title: "Report Submitted",
+        description: "Your emergency report has been successfully submitted.",
+      });
+
+      form.reset();
+      setSelectedImage(null);
+      setImagePreview(null);
+    } catch (error: any) {
+      console.error("Submission error:", error);
+      toast({
+        variant: "destructive",
+        title: "Submission Failed",
+        description: error?.response?.data?.message || "Please try again later.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
 
   return (
     <Card className="p-6 shadow-lg">
       <div className="mb-6 text-center">
         <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-emergency-100 mb-4">
-                <AlertTriangle className="h-8 w-8 text-emergency-500" />
+          <AlertTriangle className="h-8 w-8 text-emergency-500" />
         </div>
         <h2 className="text-2xl font-bold text-red-600">Report Emergency</h2>
         <p className="text-gray-600">
           Please provide as much detail as possible about the emergency situation.
         </p>
       </div>
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="flex items-center gap-4 mb-4">
@@ -229,7 +268,7 @@ const DisasterReportForm: React.FC = () => {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="name"
@@ -244,17 +283,17 @@ const DisasterReportForm: React.FC = () => {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
-              name="type"
+              name="disasterId"
               rules={{ required: "Type is required" }}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Emergency Type</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    defaultValue={field.value?.toString()}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -262,20 +301,20 @@ const DisasterReportForm: React.FC = () => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value={DisasterType.FLOOD}>Flood</SelectItem>
-                      <SelectItem value={DisasterType.FIRE}>Fire</SelectItem>
-                      <SelectItem value={DisasterType.EARTHQUAKE}>Earthquake</SelectItem>
-                      <SelectItem value={DisasterType.LANDSLIDE}>Landslide</SelectItem>
-                      <SelectItem value={DisasterType.TSUNAMI}>Tsunami</SelectItem>
-                      <SelectItem value={DisasterType.HURRICANE}>Hurricane/Storm</SelectItem>
-                      <SelectItem value={DisasterType.OTHER}>Other</SelectItem>
+                      <SelectItem value={DisasterType.FLOOD.toString()}>Flood</SelectItem>
+                      <SelectItem value={DisasterType.EARTHQUAKE.toString()}>Earthquake</SelectItem>
+                      <SelectItem value={DisasterType.HOUSEHOLDFIRE.toString()}>Household Fire</SelectItem>
+                      <SelectItem value={DisasterType.WILDFIRE.toString()}>Wild Fire</SelectItem>
+                      <SelectItem value={DisasterType.TORNADO.toString()}>Tornado</SelectItem>
+                      <SelectItem value={DisasterType.CHEMICALSPILL.toString()}>Chemical Spill</SelectItem>
+                      <SelectItem value={DisasterType.OTHER.toString()}>Other</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="severity"
@@ -312,18 +351,18 @@ const DisasterReportForm: React.FC = () => {
                 <FormItem>
                   <FormLabel>Estimated People Affected</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      min="0" 
-                      {...field} 
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
+                    <Input
+                      type="number"
+                      min="0"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="contactNo"
@@ -347,17 +386,17 @@ const DisasterReportForm: React.FC = () => {
               <FormItem>
                 <FormLabel>Emergency Details</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Provide as much detail as possible about the emergency situation..." 
-                    className="min-h-[120px]" 
-                    {...field} 
+                  <Textarea
+                    placeholder="Provide as much detail as possible about the emergency situation..."
+                    className="min-h-[120px]"
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <FormLabel className="block mb-2">Upload Image Evidence</FormLabel>
@@ -369,10 +408,10 @@ const DisasterReportForm: React.FC = () => {
                       <span className="text-sm text-gray-500 mt-1">Select image</span>
                     </div>
                   </div>
-                  <Input 
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
                     onChange={handleImageChange}
                   />
                 </label>
@@ -400,7 +439,7 @@ const DisasterReportForm: React.FC = () => {
                 )}
               </div>
             </div>
-            
+
             <div>
               <FormLabel className="block mb-2">Record Audio Description</FormLabel>
               <Button
@@ -417,15 +456,15 @@ const DisasterReportForm: React.FC = () => {
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between pt-4 border-t">
             <div className="flex items-center text-emergency-500">
               <AlertTriangle className="h-5 w-5 mr-2" />
               <span className="text-sm font-medium">This will be reported to emergency services</span>
             </div>
-            <Button 
-              type="submit" 
-              className="bg-emergency-500 hover:bg-emergency-600" 
+            <Button
+              type="submit"
+              className="bg-emergency-500 hover:bg-emergency-600"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Submitting..." : "Submit Emergency Report"}
