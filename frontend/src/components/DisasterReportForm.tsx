@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { AlertTriangle, MapPin, Check, Mic, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-
 import {
   Select,
   SelectContent,
@@ -31,13 +30,11 @@ import { Card } from '@/components/ui/card';
 interface DisasterFormValues {
   name: string;
   disasterId: DisasterType; // changed from 'type'
+  emergencyName: string; // new field for brief name
   severity: DisasterSeverity;
   details: string;
   affectedCount: number;
   contactNo?: string;
-  address?: string;
-  district?: string;
-  province?: string;
 }
 
 const DisasterReportForm: React.FC = () => {
@@ -46,23 +43,27 @@ const DisasterReportForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [location, setLocation] = useState<{ latitude: number, longitude: number } | null>(null);
   const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+
+
 
   const form = useForm<DisasterFormValues>({
     defaultValues: {
-      name: '',
+      name: currentUser?.name || '',
+      emergencyName: '', // new field for brief name
       disasterId: DisasterType.OTHER, // changed from 'type'
       severity: DisasterSeverity.MEDIUM,
       details: '',
       affectedCount: 1,
       contactNo: currentUser?.contactNo || '',
-      address: '',
-      district: '',
-      province: '',
+
     }
   });
 
+  // current location fetch function
   const getLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -71,6 +72,7 @@ const DisasterReportForm: React.FC = () => {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
           });
+          console.log("Location detected:", position.coords);
           toast({
             title: "Location detected",
             description: `Lat: ${position.coords.latitude.toFixed(4)}, Long: ${position.coords.longitude.toFixed(4)}`,
@@ -94,21 +96,63 @@ const DisasterReportForm: React.FC = () => {
     }
   };
 
-  const toggleAudioRecording = () => {
-    setIsRecordingAudio(!isRecordingAudio);
-    // In a real app, implement actual audio recording functionality here
-    if (isRecordingAudio) {
-      toast({
-        title: "Recording stopped",
-        description: "Your audio recording has been saved.",
-      });
-    } else {
+
+
+const toggleAudioRecording = async () => {
+  if (isRecordingAudio) {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecordingAudio(false);
+    toast({
+      title: "Recording stopped",
+      description: "Your audio recording has been saved.",
+    });
+  } else {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      // Choose supported mimeType
+      let mimeType = '';
+      if (MediaRecorder.isTypeSupported('audio/wav')) {
+        mimeType = 'audio/wav';
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = 'audio/webm';
+      }
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      mediaRecorderRef.current = mediaRecorder;
+      const chunks = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        chunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: mimeType });
+        setAudioBlob(blob);
+        // Use the blob directly here:
+        console.log("Audio blob (immediate):", audioBlob);
+        // Optionally, create a URL for playback:
+        console.log("Audio URL:", URL.createObjectURL(blob));
+      };
+
+      console.log('Audio blob size:', audioBlob.size);
+      console.log('Audio blob type:', audioBlob.type);
+
+      mediaRecorder.start();
+      setIsRecordingAudio(true);
       toast({
         title: "Recording started",
         description: "Speak clearly to describe the emergency.",
       });
-    }
-  };
+    }).catch((error) => {
+      console.error("Error accessing microphone:", error);
+      toast({
+        title: "Error",
+        description: "Microphone access was denied.",
+      });
+    });
+  }
+};
+
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -123,7 +167,8 @@ const DisasterReportForm: React.FC = () => {
   };
 
   const onSubmit = async (data: DisasterFormValues) => {
-    if (!location && !data.address) {
+    if (!location) {
+      
       toast({
         variant: "destructive",
         title: "Location Required",
@@ -132,46 +177,15 @@ const DisasterReportForm: React.FC = () => {
       return;
     }
 
-    let province = data.province || '';
-    let district = data.district || '';
-
-    // If location is available but province/district are not, fetch them
-    if (location && (!province || !district)) {
-      try {
-        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}&zoom=10&addressdetails=1`;
-
-        const response = await fetch(url, {
-          headers: {
-            'User-Agent': 'SurvivorSync/1.0 (dinukpkcc@gmail.com)' // Required by Nominatim usage policy
-          }
-        });
-        console.log("Nominatim response:", response);
-        if (!response.ok) {
-          throw new Error('Failed to fetch province/district from coordinates');
-        }
-        const responseData = await response.json();
-
-        // Update province and district if found
-        province = responseData.address?.state || province;
-        district = responseData.address?.county || responseData.address?.district || district;
-
-      } catch (err) {
-        console.warn("Failed to fetch province/district from coordinates", err);
-        // You may want to notify the user or handle this case gracefully
-      }
-    }
-
     const formData = new FormData();
-    formData.append('name', data.name);
-    formData.append('userId', currentUser?._id || '');
+    formData.append('name', currentUser?.name || data.name);
+    formData.append('userId', currentUser?.id || '1'); 
     formData.append('disasterId', String(Number(data.disasterId))); // ensure int
     formData.append('severity', data.severity);
     formData.append('details', data.details || '');
     formData.append('affectedCount', String(Number(data.affectedCount))); // ensure int
     formData.append('contactNo', data.contactNo || '');
-    formData.append('address', data.address || '');
-    formData.append('district', district);
-    formData.append('province', province);
+
 
     if (location) {
       formData.append('latitude', String(location.latitude)); // ensure float as string
@@ -179,17 +193,20 @@ const DisasterReportForm: React.FC = () => {
     }
 
     if (selectedImage) {
-      formData.append('images', selectedImage);
+      formData.append('image', selectedImage);
     }
 
-    // TODO: Append voice file if you have recorded audio implemented
-    // formData.append('voice', recordedAudioFile);
+    if (isRecordingAudio) {
+      // In a real app, you would handle audio recording and append the file here
+      formData.append('voice', audioBlob,'recording.wav'); // Placeholder for audio recording
+    } 
+
 
     try {
       setIsSubmitting(true);
       console.log("Submitting form data:", Object.fromEntries(formData.entries()));
 
-      const response = await axios.post('http://localhost:7000/api/requests', formData, {
+      const response = await axios.post('http://localhost:5000/api/requests', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -205,12 +222,13 @@ const DisasterReportForm: React.FC = () => {
       toast({
         title: "Report Submitted",
         description: "Your emergency report has been successfully submitted.",
+        color: "green",
       });
 
       form.reset();
       setSelectedImage(null);
       setImagePreview(null);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Submission error:", error);
       toast({
         variant: "destructive",
@@ -237,6 +255,8 @@ const DisasterReportForm: React.FC = () => {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+
+        {/* Location fetch button */}
           <div className="flex items-center gap-4 mb-4">
             <Button
               type="button"
@@ -257,32 +277,19 @@ const DisasterReportForm: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
-              name="address"
+              name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address (if location not detected)</FormLabel>
+                  <FormLabel>Name (contact person name)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Street, City, Province..." {...field} />
+                    <Input placeholder="your name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="name"
-              rules={{ required: "Emergency name is required" }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Emergency Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Brief name for this emergency" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            
 
             <FormField
               control={form.control}
@@ -310,6 +317,21 @@ const DisasterReportForm: React.FC = () => {
                       <SelectItem value={DisasterType.OTHER.toString()}>Other</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="emergencyName"
+              rules={{ required: "Emergency name is required" }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Emergency Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Brief name for this emergency" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
