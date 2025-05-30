@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { MediaRecorder, register } from 'extendable-media-recorder';
 import { connect } from 'extendable-media-recorder-wav-encoder';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import {
   Select,
   SelectContent,
@@ -44,13 +43,15 @@ const DisasterReportForm: React.FC = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [location, setLocation] = useState<{ latitude: number, longitude: number } | null>(null);
-  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const mimeTypeRef = useRef<string>('audio/wav'); // Default to WAV
+
 
 
   const form = useForm<DisasterFormValues>({
@@ -99,65 +100,7 @@ const DisasterReportForm: React.FC = () => {
     }
   };
 
-
-
-// const toggleAudioRecording = async () => {
-//   if (isRecordingAudio) {
-//     if (mediaRecorderRef.current) {
-//       mediaRecorderRef.current.stop();
-//     }
-//     setIsRecordingAudio(false);
-//     toast({
-//       title: "Recording stopped",
-//       description: "Your audio recording has been saved.",
-//     });
-//   } else {
-//     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-//       // Choose supported mimeType
-//       let mimeType = '';
-//       if (MediaRecorder.isTypeSupported('audio/wav')) {
-//         mimeType = 'audio/wav';
-//       } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-//         mimeType = 'audio/webm';
-//       }
-//       const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-//       mediaRecorderRef.current = mediaRecorder;
-//       const chunks = [];
-
-//       mediaRecorder.ondataavailable = (e) => {
-//         chunks.push(e.data);
-//       };
-
-//       mediaRecorder.onstop = () => {
-//         const blob = new Blob(chunks, { type: mimeType });
-//         setAudioBlob(blob);
-//         // Use the blob directly here:
-//         console.log("Audio blob (immediate):", audioBlob);
-//         // Optionally, create a URL for playback:
-//         console.log("Audio URL:", URL.createObjectURL(blob));
-//       };
-
-//       console.log('Audio blob size:', audioBlob.size);
-//       console.log('Audio blob type:', audioBlob.type);
-
-//       mediaRecorder.start();
-//       setIsRecordingAudio(true);
-//       toast({
-//         title: "Recording started",
-//         description: "Speak clearly to describe the emergency.",
-//       });
-//     }).catch((error) => {
-//       console.error("Error accessing microphone:", error);
-//       toast({
-//         title: "Error",
-//         description: "Microphone access was denied.",
-//       });
-//     });
-//   }
-// };
-
-
- const toggleAudioRecording = async () => {
+  const toggleAudioRecording = async () => {
     if (isRecordingAudio) {
       // Stop recording
       if (mediaRecorderRef.current) {
@@ -170,29 +113,44 @@ const DisasterReportForm: React.FC = () => {
       });
     } else {
       try {
+        // Clear previous recordings
+        audioChunksRef.current = [];
+        setAudioBlob(null);
+
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         streamRef.current = stream;
 
-        const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/wav' });
+        // Determine supported MIME type
+        if (MediaRecorder.isTypeSupported('audio/wav')) {
+          mimeTypeRef.current = 'audio/wav';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          mimeTypeRef.current = 'audio/webm';
+        } else if (MediaRecorder.isTypeSupported('audio/mp3')) {
+          mimeTypeRef.current = 'audio/mp3';
+        } else {
+          mimeTypeRef.current = 'audio/webm'; // Fallback
+        }
+
+        const mediaRecorder = new MediaRecorder(stream, {
+          mimeType: mimeTypeRef.current
+        });
+
         mediaRecorderRef.current = mediaRecorder as unknown as MediaRecorder;
 
-        const chunks: BlobPart[] = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            chunks.push(event.data);
-          }
+        mediaRecorder.ondataavailable = (e) => {
+          audioChunksRef.current.push(e.data);
         };
 
         mediaRecorder.onstop = () => {
-          // Stop all tracks to release mic
+          const blob = new Blob(audioChunksRef.current, {
+            type: mimeTypeRef.current
+          });
+
+          // Stop all tracks to release microphone
           stream.getTracks().forEach(track => track.stop());
 
-          const blob = new Blob(chunks, { type: 'audio/wav' });
           setAudioBlob(blob);
-
-          console.log("Audio blob (immediate):", blob);
-          console.log("Audio URL:", URL.createObjectURL(blob));
+          audioChunksRef.current = [];
         };
 
         mediaRecorder.start();
@@ -225,7 +183,7 @@ const DisasterReportForm: React.FC = () => {
 
   const onSubmit = async (data: DisasterFormValues) => {
     if (!location) {
-      
+
       toast({
         variant: "destructive",
         title: "Location Required",
@@ -236,7 +194,7 @@ const DisasterReportForm: React.FC = () => {
 
     const formData = new FormData();
     formData.append('name', currentUser?.name || data.name);
-    formData.append('userId', currentUser?.id || '1'); 
+    formData.append('userId', currentUser?.id || '1');
     formData.append('disasterId', String(Number(data.disasterId))); // ensure int
     formData.append('severity', data.severity);
     formData.append('details', data.details || '');
@@ -253,12 +211,12 @@ const DisasterReportForm: React.FC = () => {
       formData.append('image', selectedImage);
     }
 
-    if (isRecordingAudio) {
-      // In a real app, you would handle audio recording and append the file here
-      formData.append('voice', audioBlob,'recording.wav'); // Placeholder for audio recording
-    } 
+    if (audioBlob) {
+      const extension = mimeTypeRef.current.split('/')[1] || 'wav';
+      const filename = `recording.${extension}`;
 
-
+      formData.append('voice', audioBlob, filename);
+    }
     try {
       setIsSubmitting(true);
       console.log("Submitting form data:", Object.fromEntries(formData.entries()));
@@ -297,7 +255,7 @@ const DisasterReportForm: React.FC = () => {
     }
   };
 
-    // Register the WAV encoder once on mount
+  // Register the WAV encoder once on mount
   useEffect(() => {
     (async () => {
       await register(await connect());
@@ -321,7 +279,7 @@ const DisasterReportForm: React.FC = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-        {/* Location fetch button */}
+          {/* Location fetch button */}
           <div className="flex items-center gap-4 mb-4">
             <Button
               type="button"
@@ -354,7 +312,7 @@ const DisasterReportForm: React.FC = () => {
               )}
             />
 
-            
+
 
             <FormField
               control={form.control}

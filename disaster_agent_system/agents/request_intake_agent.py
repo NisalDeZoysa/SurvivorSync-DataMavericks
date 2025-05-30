@@ -171,24 +171,27 @@ def handle_task():
 
         # Formulate A2A response Task
         response_task = {
-            "id": task_id,
-            "status": "request-intake-agent-completed",
-            "initial_request": task_request.get("message", {}),
-            "next-agent": "request-verify-agent",
-            "message": "Please analyze the request details and verify the request using the tools. Put Status as verified if the disaster request count is greater than <2>. If the request is not verified, put status as unverified. If you are not able to verify the request, put status as pending. If you encounter any error to process the request, put status as error.",
-            "request-intake-agent-response": [
+            "request_intake_agent":{
+                "id": task_id,
+                "status": "request-intake-agent-completed",
+                "agent": "request-intake-agent",
+                "initial_request": task_request.get("message", {}),
+                "next-agent": "request-verify-agent",
+                "message": "Please analyze the request details and verify the request using the tools.",
+                "request-intake-agent-response": [
                 {
                     "role": "request-intake-agent",
                     "response": response_format_dict,
                 }
             ]
+            }
         }
         print(f"Forwarding task {task_id} response is {response_task}")
         target_agent_url = REQUEST_VERIFY_AGENT
         target_send_url = f"{target_agent_url}/tasks/send"
 
         try:
-            if response_task.get("next-agent") == "request-verify-agent":
+            if response_task.get("request_intake_agent", {}).get("next-agent") == "request-verify-agent":
                response = requests.post(target_send_url, json=response_task, timeout=60)
                response.raise_for_status()
             else:
