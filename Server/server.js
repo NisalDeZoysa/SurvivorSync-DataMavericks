@@ -109,34 +109,20 @@ app.use('/api/allocations', allocationRoutes);
 app.use('/api/availability', availabilityRoutes);
 
 // DB Sync + Server start with force sync and seeding
-sequelize
-  .sync({ force: process.env.NODE_ENV !== 'production' }) // Drop & recreate tables in non-production env
-  .then(async () => {
-    console.log('Database synced');
-
-    if (process.env.NODE_ENV !== 'production') {
-      try {
-        await seedDatabase(); // Run your seeder function here
-        console.log('Database seeded successfully');
-      } catch (err) {
-        console.error('Seeding failed:', err);
-      }
-    }
-
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('Database connection failed:', err);
-  });
-
-// DB Sync + Server
 // sequelize
-//   .sync()
+//   .sync({ force: process.env.NODE_ENV !== 'production' }) // Drop & recreate tables in non-production env
 //   .then(async () => {
-//     console.log('Database connected');
-//     // await seedDatabase();
+//     console.log('Database synced');
+
+//     if (process.env.NODE_ENV !== 'production') {
+//       try {
+//         await seedDatabase(); // Run your seeder function here
+//         console.log('Database seeded successfully');
+//       } catch (err) {
+//         console.error('Seeding failed:', err);
+//       }
+//     }
+
 //     app.listen(PORT, () => {
 //       console.log(`Server running on port ${PORT}`);
 //     });
@@ -144,3 +130,17 @@ sequelize
 //   .catch((err) => {
 //     console.error('Database connection failed:', err);
 //   });
+
+// DB Sync + Server
+sequelize
+  .sync()
+  .then(async () => {
+    console.log('Database connected');
+    // await seedDatabase();
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Database connection failed:', err);
+  });
