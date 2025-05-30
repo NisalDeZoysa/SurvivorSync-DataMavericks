@@ -34,7 +34,7 @@ def output_requests(lat: float, long: float, disasterId: int) -> list:
             AND ST_Distance_Sphere(
                 POINT(longitude, latitude),
                 POINT(%s, %s)
-            ) <= 100000
+            ) <= 10000
             """
 
         cursor.execute(query, (disasterId, today_start, tomorrow_start, long, lat))

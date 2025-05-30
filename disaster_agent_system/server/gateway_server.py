@@ -117,11 +117,12 @@ def handle_task():
         error_response_task = {
             "id": task_id,
             "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
+            "agent":"gateway_agent",
             "messages": [
                 task_request.get("message", {}), # include original user message
                  {
                     "role": "gateway-agent",
-                    "parts": [{"text": f"Error: Could not reach the target agent at {target_agent_url}. Details: {e}"}]
+                    "error": [{"text": f"Error: Could not reach the target agent at {target_agent_url}. Details: {e}"}]
                 }
             ]
         }

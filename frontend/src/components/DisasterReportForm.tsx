@@ -8,7 +8,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { MediaRecorder, register } from 'extendable-media-recorder';
 import { connect } from 'extendable-media-recorder-wav-encoder';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import {
   Select,
   SelectContent,
@@ -100,121 +99,6 @@ const DisasterReportForm: React.FC = () => {
       });
     }
   };
-
-
-
-  // const toggleAudioRecording = async () => {
-  //   if (isRecordingAudio) {
-  //     if (mediaRecorderRef.current) {
-  //       mediaRecorderRef.current.stop();
-  //     }
-  //     setIsRecordingAudio(false);
-  //     toast({
-  //       title: "Recording stopped",
-  //       description: "Your audio recording has been saved.",
-  //     });
-  //   } else {
-  //     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-  //       // Choose supported mimeType
-  //       let mimeType = '';
-  //       if (MediaRecorder.isTypeSupported('audio/wav')) {
-  //         mimeType = 'audio/wav';
-  //       } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-  //         mimeType = 'audio/webm';
-  //       }
-  //       const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-  //       mediaRecorderRef.current = mediaRecorder;
-  //       const chunks = [];
-
-  //       mediaRecorder.ondataavailable = (e) => {
-  //         chunks.push(e.data);
-  //       };
-
-  //       mediaRecorder.onstop = () => {
-  //         const blob = new Blob(chunks, { type: mimeType });
-  //         setAudioBlob(blob);
-  //         // Use the blob directly here:
-  //         console.log("Audio blob (immediate):", audioBlob);
-  //         // Optionally, create a URL for playback:
-  //         console.log("Audio URL:", URL.createObjectURL(blob));
-  //       };
-
-  //       console.log('Audio blob size:', audioBlob.size);
-  //       console.log('Audio blob type:', audioBlob.type);
-
-  //       mediaRecorder.start();
-  //       setIsRecordingAudio(true);
-  //       toast({
-  //         title: "Recording started",
-  //         description: "Speak clearly to describe the emergency.",
-  //       });
-  //     }).catch((error) => {
-  //       console.error("Error accessing microphone:", error);
-  //       toast({
-  //         title: "Error",
-  //         description: "Microphone access was denied.",
-  //       });
-  //     });
-  //   }
-  // };
-
-
-  //  const toggleAudioRecording = async () => {
-  //     if (isRecordingAudio) {
-  //       // Stop recording
-  //       if (mediaRecorderRef.current) {
-  //         mediaRecorderRef.current.stop();
-  //       }
-  //       setIsRecordingAudio(false);
-  //       toast({
-  //         title: "Recording stopped",
-  //         description: "Your audio recording has been saved.",
-  //       });
-  //     } else {
-  //       try {
-  //         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  //         streamRef.current = stream;
-
-  //         const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/wav' });
-  //         mediaRecorderRef.current = mediaRecorder as unknown as MediaRecorder;
-
-  //         const chunks: BlobPart[] = [];
-
-  //         mediaRecorder.ondataavailable = (event) => {
-  //           if (event.data.size > 0) {
-  //             chunks.push(event.data);
-  //           }
-  //         };
-
-  //         mediaRecorder.onstop = () => {
-  //           // Stop all tracks to release mic
-  //           stream.getTracks().forEach(track => track.stop());
-
-  //           const blob = new Blob(chunks, { type: 'audio/wav' });
-  //           setAudioBlob(blob);
-
-  //           console.log("Audio blob (immediate):", blob);
-  //           console.log("Audio URL:", URL.createObjectURL(blob));
-  //         };
-
-  //         mediaRecorder.start();
-  //         setIsRecordingAudio(true);
-  //         toast({
-  //           title: "Recording started",
-  //           description: "Speak clearly to describe the emergency.",
-  //         });
-  //       } catch (error) {
-  //         console.error("Error accessing microphone:", error);
-  //         toast({
-  //           title: "Error",
-  //           description: "Microphone access was denied.",
-  //         });
-  //       }
-  //     }
-  //   };
-
-  // Add these refs and state variables at the top of your component
-
 
   const toggleAudioRecording = async () => {
     if (isRecordingAudio) {
