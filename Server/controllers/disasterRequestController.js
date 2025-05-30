@@ -115,11 +115,8 @@ export const createUserRequest = async (req, res) => {
     //     message: messageText.trim(),
     //   }),
     // });
-    console.log('Response from gateway_server:', response);
-    if (!response.ok) {
-      throw new Error('Failed to send request to gateway_server');
-    }
-    res.status(201).json({ message: 'User request created', request });
+    // console.log('Response from gateway_server:', response);
+    res.status(201).json({ message: 'User request created', success: true, request });
   } catch (error) {
     console.error('Create error:', error);
     res.status(400).json({ error: error.message });

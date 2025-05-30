@@ -174,7 +174,7 @@ const DisasterReportForm: React.FC = () => {
         streamRef.current = stream;
 
         const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/wav' });
-        mediaRecorderRef.current = mediaRecorder;
+        mediaRecorderRef.current = mediaRecorder as unknown as MediaRecorder;
 
         const chunks: BlobPart[] = [];
 
