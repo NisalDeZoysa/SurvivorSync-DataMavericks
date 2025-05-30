@@ -65,12 +65,12 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  images: {
-    type: DataTypes.BLOB,
+  image: {
+    type: DataTypes.STRING,
     allowNull: true,
   },
   voice: {
-    type: DataTypes.BLOB,
+    type: DataTypes.STRING,
     allowNull: true,
   },
   isVerified: {

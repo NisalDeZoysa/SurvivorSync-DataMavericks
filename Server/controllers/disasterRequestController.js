@@ -26,7 +26,8 @@ export const createUserRequest = async (req, res) => {
     //check valid user
     const imageFiles = req.files?.images?.map(file => file.path) || [];
     const voiceFile = req.files?.voice?.[0]?.path || null;
-
+    console.log('Image files:', imageFiles);
+    console.log('Voice file:', voiceFile);
     const request = await DisasterRequest.create({
       name,
       userId,

@@ -25,6 +25,6 @@ const upload = multer({
 });
 
 export const userRequestUpload = upload.fields([
-  { name: 'images', maxCount: 5 },
+  { name: 'images', maxCount: 1 },
   { name: 'voice', maxCount: 1 },
 ]);
