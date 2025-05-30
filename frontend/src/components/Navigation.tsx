@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/types';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/logo_bdrm.png'
 
 const Navigation: React.FC = () => {
   const { currentUser, logout } = useAuth();
@@ -18,8 +19,8 @@ const Navigation: React.FC = () => {
       <nav className="bg-gray-200 shadow-sm border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2">
-            <AlertTriangle className="h-6 w-6 text-emergency-500" />
-            <span className="text-xl font-bold">Emergency Aid Connect</span>
+          <img src={logo} alt="Logo" className="h-10 w-11" />
+            <span className="text-xl font-bold">SurvivorSync</span>
           </Link>
           
           <div className="hidden md:flex items-center gap-4">
