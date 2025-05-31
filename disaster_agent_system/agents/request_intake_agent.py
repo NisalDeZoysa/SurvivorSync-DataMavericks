@@ -206,17 +206,17 @@ def handle_task():
             print(f"Error forwarding task {task_id}: {e}")
             error_response_task = {
                 "request_intake_agent": {
-                "id": task_id,
-                "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
-                "role" : "request-intake-agent",
-                "messages": [
-                    task_request.get("message", {}),
-                    {
-                        "role": "request-intake-agent",
-                        "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+                    "id": task_id,
+                    "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
+                    "role" : "request-intake-agent",
+                    "messages": [
+                            task_request.get("message", {}),
+                            {
+                                "role": "request-intake-agent",
+                                "error": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+                            }
+                        ]
                     }
-                ]
-                }
             }
             return jsonify(error_response_task), 502
     
@@ -234,17 +234,17 @@ def handle_task():
         print(f"Agent error: {e}")
         error_response_task ={
             "request_intake_agent":  {
-            "id": task_id,
-            "status": {"state": "failed", "reason": f"Agent processing failed: {e}"},
-            "role": "request-intake-agent",
-            "messages": [
-                task_request.get("message", {}),
-                {
-                    "role": "request-intake-agent",
-                    "parts": [{"text": f"RAG agent failed. Details: {e}"}]
+                "id": task_id,
+                "status": {"state": "failed", "reason": f"Agent processing failed: {e}"},
+                "role": "request-intake-agent",
+                "messages": [
+                    task_request.get("message", {}),
+                    {
+                        "role": "request-intake-agent",
+                        "error": [{"text": f"RAG agent failed. Details: {e}"}]
+                    }
+                ]
                 }
-            ]
-            }
         }
         return jsonify(error_response_task), 500
 

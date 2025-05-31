@@ -70,15 +70,19 @@ async def handle_task():
 
         # Formulate A2A response Task
         response_task = {
-            "id": task_id,
-            "status": {"state": "completed"},
-            "messages": [
-                task_request.get("message", {}),  # include original user message
-                {
-                    "role": "agent",
-                    "parts": [{"text": response_text}]
-                }
-            ]
+            "rag_agent":{
+                "id": task_id,
+                "status": "rag-agent-completed",
+                "agent": "rag-agent",
+                "initial_request": task_request.get("message",{}),
+                "messages": [
+                    task_request.get("message", {}),  # include original user message
+                    {
+                        "role": "agent",
+                        "parts": [{"text": response_text}]
+                    }
+                ]
+            }
         }
         return jsonify(response_task)
 

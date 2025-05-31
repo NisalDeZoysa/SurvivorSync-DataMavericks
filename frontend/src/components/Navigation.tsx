@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect} from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AlertTriangle, LogOut, User, UserCheck, Users, Menu, X, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,12 @@ const Navigation: React.FC = () => {
   const { currentUser, logout } = useAuth();
   const location = useLocation();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-
   const isActive = (path: string) => location.pathname === path;
+
+  useEffect(() => {
+    console.log("")
+  }, [location.pathname]);
+
 
   if (!currentUser) {
     return (

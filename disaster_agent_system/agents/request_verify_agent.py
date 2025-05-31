@@ -260,16 +260,18 @@ def handle_task():
         # except requests.exceptions.RequestException as e:
         #     print(f"Error forwarding task {task_id}: {e}")
         #     error_response_task = {
-        #         "id": task_id,
-        #         "agent": "request-verify-agent",
-        #         "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
-        #         "messages": [
-        #             task_request.get("message", {}),
-        #             {
-        #                 "role": "request-verify-agent",
-        #                 "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
-        #             }
-        #         ]
+        #         "request-verify-agent": {
+        #             "id": task_id,
+        #             "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
+        #             "role": "request-verify-agent",
+        #             "messages": [
+        #                 task_request.get("message", {}),
+        #                 {
+        #                     "role": "request-verify-agent",
+        #                     "error": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+        #                 }
+        #             ]
+        #         }
         #     }
         #     return jsonify(error_response_task), 502
 
@@ -278,16 +280,18 @@ def handle_task():
     except Exception as e:
         print(f"Request Verify Agent error: {e}")
         error_response_task = {
-            "id": task_id,
-            "agent": "request-verify-agent",
-            "status": {"state": "failed", "reason": f"Agent processing failed: {e}"},
-            "messages": [
-                task_request.get("message", {}),
-                {
-                    "role": "request-verify-agent",
-                    "parts": [{"text": f"RAG agent failed. Details: {e}"}]
-                }
-            ]
+            "request-verify-agent": {
+                "id": task_id,
+                "status": {"state": "failed", "reason": f"Agent processing failed: {e}"},
+                "role": "request-verify-agent",
+                "messages": [
+                    task_request.get("message", {}),
+                    {
+                        "role": "request-verify-agent",
+                        "error": [{"text": f"RAG agent failed. Details: {e}"}]
+                    }
+                ]
+            }
         }
         return jsonify(error_response_task), 500
 

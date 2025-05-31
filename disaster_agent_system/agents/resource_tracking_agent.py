@@ -94,7 +94,7 @@ class ResourceTrackingAgent:
 def get_agent_card():
     return jsonify(ResourceTrackingAgent.AGENT_CARD)
 
-async def process_task(task_request: Dict[str, Any], task_id: str) -> Dict[str, Any]:
+async def get_agent_response(task_request, task_id):
     try:
         # Extract verified disaster data from previous agent
         verified_data = task_request.get("request-verify-agent-response", {})
@@ -133,19 +133,96 @@ async def process_task(task_request: Dict[str, Any], task_id: str) -> Dict[str, 
 
 @app.post("/tasks/send")
 def handle_task():
+    REQUEST_ASSIGN_AGENT = ""
     task_request = request.get_json()
     if not task_request:
         return jsonify({"error": "Invalid request"}), 400
 
     task_id = task_request.get("id", str(uuid.uuid4()))
-    response = asyncio.run(process_task(task_request, task_id))
-    
-    # Add additional processing if needed
-    response["task_id"] = task_id
-    response["agent"] = "ResourceTrackingAgent"
-    
+
+    try:
+        response = asyncio.run(get_agent_response(task_request, task_id))
+        response_format = response['content']
+        response_format_dict = response_format.model_dump()
+        
+        # Add additional processing if needed
+        response["task_id"] = task_id
+        response["agent"] = "ResourceTrackingAgent"
+
+        response_task = {
+            "resource_tracking_agent": {
+                "id": task_id,
+                "status": "resource-tracking-agent-completed",
+                "agent": "resource-tracking-agent",
+                "initial_request": task_request.get("message", {}),
+                "next-agent": "resource-assign-agent",
+                "message": "",
+                "resource-tracking-agent-response": [
+                    {
+                        "role": "resource-tracking-agent",
+                        "response": response_format_dict,
+                    }
+
+                ]
+                # "messages": [
+                #     task_request.get("message", {}),
+                #     {
+                #         "role": "agent",
+                #         "parts": [{"text": response_format_dict}]
+                #     }
+                # ]
+            }
+        }
+
+        print(f"Forwarding task {task_id} response is {response_task}")
+        target_agent_url = REQUEST_ASSIGN_AGENT
+        target_send_url = f"{target_agent_url}/tasks/send"
+
+        try:
+            response = requests.post(target_send_url, json=response_task, timeout=60)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(f"Error forwarding task {task_id}: {e}")
+            error_response_task = {
+                "request-verify-agent": {
+                    "id": task_id,
+                    "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
+                    "role": "request-trackingg-agent",
+                    "messages": [
+                        task_request.get("message", {}),
+                        {
+                            "role": "request-tracking-agent",
+                            "error": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+                        }
+                    ]
+                }
+            }
+            return jsonify(error_response_task), 502
+
+        return jsonify(response_task.json())
+
+
+    except Exception as e:
+        print(f"Error tracking agent {task_id}: {e}")
+        error_response_task = {
+            "request-tracking-agent": {
+                "id": task_id,
+                "status": {"state": "failed", "reason": f"Agent processing failed: {e}"},
+                "role": "request-tracking-agent",
+                "messages": [
+                    task_request.get("message", {}),
+                    {
+                        "role": "request-tracking-agent",
+                        "error": [{"text": f"RAG agent failed. Details: {e}"}]
+                    }
+                ]
+            }
+        }
+        return jsonify(error_response_task), 500
+
     return jsonify(response)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5012))
+    print(f"Request Tracking Agent server starting on port {port}")
     app.run(host="0.0.0.0", port=port)
