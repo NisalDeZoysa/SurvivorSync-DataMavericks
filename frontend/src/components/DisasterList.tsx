@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { AlertTriangle, Search,MapPin, Filter, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertTriangle, Search, MapPin, Filter, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -15,81 +14,116 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// Mock data for demonstration
-const mockDisasters: Disaster[] = [
-  {
-    id: '1',
-    location: {
-      latitude: 7.8731,
-      longitude: 80.7718,
-      address: 'Colombo 03, Sri Lanka'
-    },
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-    type: DisasterType.FLOOD,
-    name: 'Flood in Colombo',
-    severity: DisasterSeverity.HIGH,
-    details: 'Severe flooding reported in downtown area following heavy rains. Multiple streets underwater.',
-    affectedCount: 120,
-    contactNo: '555-123-4567',
-    status: 'pending'
-  },
-  {
-    id: '2',
-    location: {
-      latitude: 6.9271,
-      longitude: 79.8612,
-      address: 'Kandy, Sri Lanka'
-    },
-    timestamp: new Date(Date.now() - 7200000).toISOString(),
-    type: DisasterType.FLOOD,
-    name: 'Building Fire in Kandy',
-    severity: DisasterSeverity.CRITICAL,
-    details: 'Commercial building on fire. Fire department dispatched. Nearby buildings evacuated.',
-    affectedCount: 45,
-    contactNo: '555-987-6543',
-    status: 'in-progress'
-  },
-  {
-    id: '3',
-    location: {
-      latitude: 6.0535,
-      longitude: 80.2210,
-      address: 'Galle, Sri Lanka'
-    },
-    timestamp: new Date(Date.now() - 14400000).toISOString(),
-    type: DisasterType.EARTHQUAKE,
-    name: 'Landslide Warning in Galle',
-    severity: DisasterSeverity.MEDIUM,
-    details: 'Potential landslide risk following persistent rainfall. Residents advised to be on alert.',
-    affectedCount: 75,
-    contactNo: '555-222-3333',
-    status: 'pending'
-  },
-  {
-    id: '4',
-    location: {
-      latitude: 9.6615,
-      longitude: 80.0255,
-      address: 'Jaffna, Sri Lanka'
-    },
-    timestamp: new Date(Date.now() - 28800000).toISOString(),
-    type: DisasterType.TORNADO,
-    name: 'Tsunami Warning in Jaffna',
-    severity: DisasterSeverity.HIGH,
-    details: 'Tsunami warning issued after offshore earthquake. Coastal evacuation recommended.',
-    affectedCount: 500,
-    contactNo: '555-444-5555',
-    status: 'resolved'
-  }
-];
+// Define types based on your API response
+interface ApiDisaster {
+  id: number;
+  name: string;
+  userId: number;
+  disasterId: number;
+  severity: string;
+  status: string;
+  details: string;
+  affectedCount: number;
+  contactNo: string;
+  latitude: string;
+  longitude: string;
+  district: string;
+  province: string;
+  image: string | null;
+  voice: string | null;
+  isVerified: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// interface Location {
+//   latitude: number;
+//   longitude: number;
+//   address: string;
+// }
+
+// interface Disaster {
+//   id: string;
+//   location: Location;
+//   timestamp: string;
+//   type: DisasterType;
+//   name: string;
+//   severity: DisasterSeverity;
+//   details: string;
+//   affectedCount: number;
+//   contactNo: string;
+//   status: string;
+// }
 
 const DisasterList: React.FC = () => {
-  const [disasters, setDisasters] = useState<Disaster[]>(mockDisasters);
+  const [disasters, setDisasters] = useState<Disaster[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch disasters from API
+  useEffect(() => {
+    const fetchDisasters = async () => {
+      try {
+        const token = localStorage.getItem('token'); // Get auth token
+        const response = await fetch('http://localhost:7000/api/requests', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch disasters');
+        }
+        
+        const apiData: ApiDisaster[] = await response.json();
+        
+        // Transform API data to match frontend Disaster type
+        const transformedData: Disaster[] = apiData.map(item => ({
+          id: item.id.toString(),
+          location: {
+            latitude: parseFloat(item.latitude),
+            longitude: parseFloat(item.longitude),
+            address: `${item.district}, ${item.province}`
+          },
+          timestamp: item.created_at,
+          type: mapDisasterType(item.disasterId),
+          name: item.name,
+          severity: item.severity as DisasterSeverity,
+          details: item.details,
+          affectedCount: item.affectedCount,
+          contactNo: item.contactNo,
+          status: item.status.toLowerCase()
+        }));
+        
+        setDisasters(transformedData);
+      } catch (err) {
+        setError(err.message || 'An error occurred while fetching data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDisasters();
+  }, []);
+
+  // Map backend disasterId to DisasterType
+  const mapDisasterType = (disasterId: number): DisasterType => {
+    const map: Record<number, DisasterType> = {
+      1: DisasterType.FLOOD,
+      2: DisasterType.EARTHQUAKE,
+      3: DisasterType.HOUSEHOLDFIRE,
+      4: DisasterType.WILDFIRE,
+      5: DisasterType.TSUNAMI,
+      6: DisasterType.OTHER
+    };
+    
+    return map[disasterId] || DisasterType.OTHER;
+  };
 
   const filteredDisasters = disasters
     .filter(disaster => {
@@ -97,12 +131,12 @@ const DisasterList: React.FC = () => {
       const searchFilter = searchTerm ? 
         disaster.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         disaster.details.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        disaster.location.address?.toLowerCase().includes(searchTerm.toLowerCase()) :
+        disaster.location.address.toLowerCase().includes(searchTerm.toLowerCase()) :
         true;
       
       // Type filter
       const typeFilter = filterType !== 'all' ? 
-        disaster.type === filterType : 
+        String(disaster.type) === filterType : 
         true;
       
       // Status filter
@@ -155,22 +189,60 @@ const DisasterList: React.FC = () => {
     }
   };
 
-    const getTypeIcon = (type: DisasterType) => {
-      switch (type) {
-        case DisasterType.HOUSEHOLDFIRE:
-          return "🔥";
-        case DisasterType.FLOOD:
-          return "🌊";
-        case DisasterType.WILDFIRE:
-          return "⛰️";
-        case DisasterType.OTHER:
-          return "🌊";
-        case DisasterType.EARTHQUAKE:
-          return "🏚️";
-        default:
-          return "⚠️";
-      }
-    };
+  // Helper to get disaster type name
+  const getDisasterTypeName = (type: DisasterType): string => {
+    switch (type) {
+      case DisasterType.FLOOD: return "Flood";
+      case DisasterType.EARTHQUAKE: return "Earthquake";
+      case DisasterType.HOUSEHOLDFIRE: return "Household Fire";
+      case DisasterType.WILDFIRE: return "Wildfire";
+      case DisasterType.TSUNAMI: return "Tsunami";
+      case DisasterType.OTHER: return "Other";
+      default: return "Unknown";
+    }
+  };
+
+  const getTypeIcon = (type: DisasterType) => {
+    switch (type) {
+      case DisasterType.HOUSEHOLDFIRE:
+        return "🔥🏚️";
+      case DisasterType.FLOOD:
+        return "🌊";
+      case DisasterType.WILDFIRE:
+        return "🔥";
+      case DisasterType.TSUNAMI:
+        return "🌊";
+      case DisasterType.EARTHQUAKE:
+        return "⛰️";
+      default:
+        return "⚠️";
+    }
+  };
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emergency-500"></div>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="bg-red-50 border-l-4 border-red-500 p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <AlertCircle className="h-5 w-5 text-red-500" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-red-700">
+              {error}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="space-y-6">
@@ -197,13 +269,13 @@ const DisasterList: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value={DisasterType.FLOOD}>Flood</SelectItem>
-                <SelectItem value={DisasterType.EARTHQUAKE}>Fire</SelectItem>
-                <SelectItem value={DisasterType.HOUSEHOLDFIRE}>Earthquake</SelectItem>
-                <SelectItem value={DisasterType.WILDFIRE}>Landslide</SelectItem>
-                <SelectItem value={DisasterType.TORNADO}>Tsunami</SelectItem>
-                <SelectItem value={DisasterType.TORNADO}>Hurricane</SelectItem>
-                <SelectItem value={DisasterType.OTHER}>Other</SelectItem>
+                <SelectItem value={DisasterType.FLOOD.toString()}>Flood</SelectItem>
+                <SelectItem value={DisasterType.EARTHQUAKE.toString()}>Earthquake</SelectItem>
+                <SelectItem value={DisasterType.HOUSEHOLDFIRE.toString()}>Household Fire</SelectItem>
+                <SelectItem value={DisasterType.WILDFIRE.toString()}>Wild Fire</SelectItem>
+                <SelectItem value={DisasterType.TSUNAMI.toString()}>Tsunami</SelectItem>
+                {/* <SelectItem value={DisasterType.TORNADO.toString()}>Hurricane</SelectItem> */}
+                <SelectItem value={DisasterType.OTHER.toString()}>Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -261,7 +333,10 @@ const DisasterList: React.FC = () => {
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-lg">{disaster.name}</CardTitle>
+                      <CardTitle className="text-lg">
+                        <span>{getTypeIcon(disaster.type)} </span>
+                        <span> {getDisasterTypeName(disaster.type)}</span>
+                        </CardTitle>
                       <CardDescription>{disaster.location.address || "No address provided"}</CardDescription>
                     </div>
                     <Badge className={getSeverityColor(disaster.severity)}>
@@ -302,8 +377,8 @@ const DisasterList: React.FC = () => {
                       size="sm" 
                       variant="outline"
                       onClick={() => setSelectedDisaster(disaster)}
-                      >
-                    View Details
+                    >
+                      View Details
                     </Button>
                   </div>
                 </CardFooter>
@@ -313,7 +388,7 @@ const DisasterList: React.FC = () => {
         )}
       </div>
 
-        {/* Detailed View Dialog */}
+      {/* Detailed View Dialog */}
       <Dialog open={!!selectedDisaster} onOpenChange={() => setSelectedDisaster(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           {selectedDisaster && (
@@ -381,7 +456,6 @@ const DisasterList: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-
     </div>
   );
 };

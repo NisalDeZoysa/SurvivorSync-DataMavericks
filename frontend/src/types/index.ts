@@ -33,7 +33,7 @@ export enum DisasterType {
   EARTHQUAKE = 2,
   HOUSEHOLDFIRE = 3,
   WILDFIRE = 4,
-  TORNADO = 5,
+  TSUNAMI = 5,
   OTHER = 6
 }
 
@@ -44,13 +44,36 @@ export enum DisasterSeverity {
   CRITICAL = "CRITICAL"
 }
 
-export interface Disaster {
-  id: string;
-  location: {
+interface Location {
     latitude: number;
     longitude: number;
-    address?: string;
-  };
+    address: string;
+}
+
+// export interface Disaster {
+//   id: string;
+//   location: {
+//     latitude: number;
+//     longitude: number;
+//     address?: string;
+//   };
+//   timestamp: string;
+//   type: DisasterType;
+//   name: string;
+//   severity: DisasterSeverity;
+//   details: string;
+//   affectedCount: number;
+//   contactNo?: string;
+//   images?: string[];
+//   audioRecording?: string;
+//   reportedBy?: string; // User ID if logged in, otherwise null for anonymous
+//   status: "pending" | "in-progress" | "resolved";
+// }
+
+
+export interface Disaster {
+  id: string;
+  location: Location;
   timestamp: string;
   type: DisasterType;
   name: string;
@@ -61,7 +84,7 @@ export interface Disaster {
   images?: string[];
   audioRecording?: string;
   reportedBy?: string; // User ID if logged in, otherwise null for anonymous
-  status: "pending" | "in-progress" | "resolved";
+  status: string;
 }
 
 

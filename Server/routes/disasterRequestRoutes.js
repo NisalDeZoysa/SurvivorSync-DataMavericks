@@ -16,7 +16,7 @@ const router = express.Router();
 
 router.post('/requests', userRequestUpload, createUserRequest);
 router.get('/requests',  getAllRequests);
-router.get('/requests/:id', getRequestById);
+router.get('/requests/userId', getRequestById);
 router.delete('/requests/:id',deleteRequest);
 router.put('/requests/:id', userRequestUpload, updateRequest);
 router.get('/disaster-stats', exportDisasterStats);

@@ -152,13 +152,38 @@ export const getAllRequests = async (req, res) => {
   }
 };
 
+// export const getRequestById = async (req, res) => {
+//   try {
+//     const request = await DisasterRequest.findOne({
+//       where: { id: req.params.id, userId: req.user.id },
+//     });
+
+//     if (!request) return res.status(404).json({ error: "Request not found" });
+//     res.json(request);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 export const getRequestById = async (req, res) => {
   try {
-    const request = await DisasterRequest.findOne({
-      where: { id: req.params.id, userId: req.user.id },
+    // Correct extraction methods:
+    const id = req.query.id;
+    
+    if (!id) {
+      return res.status(400).json({ error: "Request ID is required" });
+    }
+
+    const request = await DisasterRequest.findAll({
+      where: { 
+        userId: id
+      }
     });
 
-    if (!request) return res.status(404).json({ error: "Request not found" });
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+    
     res.json(request);
   } catch (error) {
     res.status(500).json({ error: error.message });

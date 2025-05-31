@@ -141,7 +141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: response.data.user.id,
         name: response.data.user.name,
         email: response.data.user.email,
-        role: UserRole.VOLUNTEERS, // by changing the role can navigate to different pages
+        role: UserRole.USER, // by changing the role can navigate to different pages
       };
       
       // Store user data and token

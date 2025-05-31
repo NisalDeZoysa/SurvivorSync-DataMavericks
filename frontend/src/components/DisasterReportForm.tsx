@@ -335,7 +335,7 @@ const DisasterReportForm: React.FC = () => {
                       <SelectItem value={DisasterType.EARTHQUAKE.toString()}>Earthquake</SelectItem>
                       <SelectItem value={DisasterType.HOUSEHOLDFIRE.toString()}>Household Fire</SelectItem>
                       <SelectItem value={DisasterType.WILDFIRE.toString()}>Wild Fire</SelectItem>
-                      <SelectItem value={DisasterType.TORNADO.toString()}>Tornado</SelectItem>
+                      <SelectItem value={DisasterType.TSUNAMI.toString()}>Tsunami</SelectItem>
                       <SelectItem value={DisasterType.OTHER.toString()}>Other</SelectItem>
                     </SelectContent>
                   </Select>
