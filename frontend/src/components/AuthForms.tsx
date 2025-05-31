@@ -112,7 +112,7 @@ const AuthForms: React.FC = () => {
     // ✅ 2. Submit registration request
     const res = await axios.post('http://localhost:5000/api/users/register', {
       name: data.name,
-      NIC: data.nic,
+      nic: data.nic,
       address: data.address,
       contactNumber: data.contactNo,
       email: data.email,

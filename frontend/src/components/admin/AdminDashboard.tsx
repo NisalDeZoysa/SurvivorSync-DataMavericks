@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -33,62 +34,62 @@ const AdminDashboard = () => {
   const [resourceCenterCount, setResourceCenterCount] = useState(0);
 
   useEffect(() => {
-    // Fetch all required data
-    const fetchData = async () => {
-      try {
-        // 1. Yearly Disaster Data
-        const yearRes = await fetch('http://localhost:5000/api/disasters/count/by-type/year');
-        const yearData = await yearRes.json();
-        const formattedYearData = Object.entries(yearData).map(([year, values]) => {
-          const v = values as { flood?: number; fire?: number; earthquake?: number; landslide?: number; other?: number };
-          return {
-            year: parseInt(year),
-            flood: v.flood || 0,
-            fire: v.fire || 0,
-            earthquake: v.earthquake || 0,
-            landslide: v.landslide || 0,
-            other: v.other || 0,
-          };
-        });
-        setYearlyDisasterData(formattedYearData);
+  const fetchData = async () => {
+    try {
+      // 1. Yearly Disaster Data
+      /*const yearRes = await axios.get('http://localhost:5000/api/disasters/count/by-type/year');
+      const yearData = yearRes.data;
+      const formattedYearData = Object.entries(yearData).map(([year, values]) => {
+        const v = values as { flood?: number; fire?: number; earthquake?: number; landslide?: number; other?: number };
+        return {
+          year: parseInt(year),
+          flood: v.flood || 0,
+          fire: v.fire || 0,
+          earthquake: v.earthquake || 0,
+          landslide: v.landslide || 0,
+          other: v.other || 0,
+        };
+      });
+      setYearlyDisasterData(formattedYearData);
 
-        // 2. Current Year Stats (use last year in API response)
-        const currentYear = Math.max(...Object.keys(yearData).map(Number));
-        const current = yearData[currentYear];
-        const formattedCurrentStats = [
-          { type: 'Flood', count: current.flood || 0, color: '#3B82F6' },
-          { type: 'Fire', count: current.fire || 0, color: '#EF4444' },
-          { type: 'Earthquake', count: current.earthquake || 0, color: '#8B5CF6' },
-          { type: 'Landslide', count: current.landslide || 0, color: '#F59E0B' },
-          { type: 'Other', count: current.other || 0, color: '#10B981' },
-        ];
-        setCurrentYearStats(formattedCurrentStats);
+      // 2. Current Year Stats (use last year in API response)
+      const currentYear = Math.max(...Object.keys(yearData).map(Number));
+      const current = yearData[currentYear];
+      const formattedCurrentStats = [
+        { type: 'Flood', count: current.flood || 0, color: '#3B82F6' },
+        { type: 'Fire', count: current.fire || 0, color: '#EF4444' },
+        { type: 'Earthquake', count: current.earthquake || 0, color: '#8B5CF6' },
+        { type: 'Landslide', count: current.landslide || 0, color: '#F59E0B' },
+        { type: 'Other', count: current.other || 0, color: '#10B981' },
+      ];
+      setCurrentYearStats(formattedCurrentStats);*/
 
-        // 3. Total Disasters
-        const totalRes = await fetch('http://localhost:5000/api/disasters/count');
-        const totalData = await totalRes.json();
-        console.log('Total Disasters Data:', totalData);
-        setTotalDisasters(totalData.totalDisasters || 0);
+      // 3. Total Disasters
+      const totalRes = await axios.get('http://localhost:5000/api/disasters/count');
+      const totalData = totalRes.data;
+      console.log('Total Disasters Data:', totalData);
+      setTotalDisasters(totalData.totalDisasters || 0);
 
-        // 4. Volunteers & Victims
-        const usersRes = await fetch('http://localhost:5000/api/users/count/volunteers-victims');
-        const usersData = await usersRes.json();
-        console.log('Users Count Data:', usersData);
-        setVolunteerCount(usersData.volunteerCount || 0);
-        setVictimCount(usersData.victimCount || 0);
+      // 4. Volunteers & Victims
+      const usersRes = await axios.get('http://localhost:5000/api/users/count/volunteers-victims');
+      const usersData = usersRes.data;
+      console.log('Users Count Data:', usersData);
+      setVolunteerCount(usersData.volunteerCount || 0);
+      setVictimCount(usersData.victimCount || 0);
 
-        // 5. Resource Centers
-        const resCenterRes = await fetch('http://localhost:5000/api/resource-centers/count');
-        const resCenterData = await resCenterRes.json();
-        console.log('Resource Center Data:', resCenterData);
-        setResourceCenterCount(resCenterData.totalResourceCenters || 0);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      }
-    };
+      // 5. Resource Centers
+      const resCenterRes = await axios.get('http://localhost:5000/api/resource-centers/count');
+      const resCenterData = resCenterRes.data;
+      console.log('Resource Center Data:', resCenterData);
+      setResourceCenterCount(resCenterData.totalResourceCenters || 0);
 
-    fetchData();
-  }, []);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
+  };
+
+  fetchData();
+}, []);
 
   return (
     <div className="space-y-6">
