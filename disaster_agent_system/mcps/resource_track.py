@@ -28,28 +28,25 @@ def track_resources(lat: float, long: float, disasterId: int) -> list:
         
         disaster = """SELECT * FROM disasters WHERE id = %s"""
         cursor.execute(disaster, (disasterId,))
+        disaster_data = cursor.fetchone()
 
         resources = """
             SELECT * FROM resource_centers
-            WHERE disasterId = %s
-            AND created_at >= %s AND created_at < %s
-            AND ST_Distance_Sphere(
+            WHERE ST_Distance_Sphere(
                 POINT(longitude, latitude),
                 POINT(%s, %s)
             ) <= 10000
             """
 
         cursor.execute(resources, (disasterId, today_start, tomorrow_start, long, lat))
-        rows = cursor.fetchall()
-
-        print(f"Fetched {len(rows)} rows:")
-        for row in rows:
-            print(row)
-
+        resources_data = cursor.fetchall()
         cursor.close()
         conn.close()
 
-        return rows
+        return {
+            "disaster": disaster_data,
+            "resources": resources_data
+        }
     except mysql.connector.Error as err:
         print(f"Database error: {err}")
         return []
