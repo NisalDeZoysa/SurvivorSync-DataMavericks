@@ -54,7 +54,7 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
         description: "Welcome back to the emergency response system.",
       });
       onClose();
-      navigate("/admin");
+      navigate("/");
       
     } catch (error) {
       toast({

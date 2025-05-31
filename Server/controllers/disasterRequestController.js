@@ -96,35 +96,35 @@ export const createUserRequest = async (req, res) => {
       district,
       province
     });
-    // call gateway_server to get a response
-    const messageText = `
-      User ID: ${request.userId}
-      Disaster Id: ${request.disasterId}
-      Severity: ${request.severity}
-      Details: ${request.details}
-      Affected Count: ${request.affectedCount}
-      Contact No: ${request.contactNo}
-      Location: Latitude ${request.latitude}, Longitude ${request.longitude}
-      District: ${request.district}
-      Province: ${request.province}
-      Address: ${request.address}
-      `;
+    // // call gateway_server to get a response
+    // const messageText = `
+    //   User ID: ${request.userId}
+    //   Disaster Id: ${request.disasterId}
+    //   Severity: ${request.severity}
+    //   Details: ${request.details}
+    //   Affected Count: ${request.affectedCount}
+    //   Contact No: ${request.contactNo}
+    //   Location: Latitude ${request.latitude}, Longitude ${request.longitude}
+    //   District: ${request.district}
+    //   Province: ${request.province}
+    //   Address: ${request.address}
+    //   `;
     
-     // Call gateway server
-    const gatewayResponse = await fetch('http://127.0.0.1:5005/tasks/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: messageText.trim() }),
-    });
+    //  // Call gateway server
+    // const gatewayResponse = await fetch('http://127.0.0.1:5005/tasks/send', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({ message: messageText.trim() }),
+    // });
 
-    // Handle gateway response
-    if (!gatewayResponse.ok) {
-      const errorText = await gatewayResponse.text();
-      throw new Error(`Gateway error: ${gatewayResponse.status} - ${errorText}`);
-    }
+    // // Handle gateway response
+    // if (!gatewayResponse.ok) {
+    //   const errorText = await gatewayResponse.text();
+    //   throw new Error(`Gateway error: ${gatewayResponse.status} - ${errorText}`);
+    // }
 
-    const gatewayData = await gatewayResponse.json();
-    console.log('Full gateway response:', gatewayData);
+    // const gatewayData = await gatewayResponse.json();
+    // console.log('Full gateway response:', gatewayData);
 
 
     // Include gateway response in your final output if needed
@@ -132,9 +132,9 @@ export const createUserRequest = async (req, res) => {
       message: 'User request created',
       success: true,
       request,
-      gatewayResponse: {
-        gatewayData
-      }
+      // gatewayResponse: {
+      //   gatewayData
+      // }
     });
 
   } catch (error) {

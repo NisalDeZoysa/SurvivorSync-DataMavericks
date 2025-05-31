@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: response.data.admin.id,
         name: response.data.admin.name,
         email: response.data.admin.email,
-        role: UserRole.ADMIN
+        role: UserRole.FIRST_RESPONDER
       };
       
       // Store user data and token
@@ -141,7 +141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: response.data.user.id,
         name: response.data.user.name,
         email: response.data.user.email,
-        role: userType, // by changing the role can navigate to different pages
+        role: UserRole.VOLUNTEERS, // by changing the role can navigate to different pages
       };
       
       // Store user data and token

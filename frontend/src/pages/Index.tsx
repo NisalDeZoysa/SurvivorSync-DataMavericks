@@ -34,6 +34,7 @@ const Index = () => {
       // If not logged in, we stay on this page but don't redirect
       // as anonymous users can still view a landing page
     }
+    console.log("This is current User"+currentUser)
   }, [currentUser, isLoading, navigate]);
 
   if (isLoading) {
@@ -403,14 +404,16 @@ const Index = () => {
 
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">
-          {currentUser.role === UserRole.ADMIN || currentUser.role === UserRole.FIRST_RESPONDER
+          {currentUser.role === UserRole.ADMIN
             ? "Admin Dashboard"
+            : currentUser.role === UserRole.FIRST_RESPONDER
+            ? "First Responder Dashboard"
             : currentUser.role === UserRole.VOLUNTEERS
             ? "Volunteers Dashboard"
             : "User Dashboard"}
         </h1>
 
-        {currentUser.role === UserRole.USER || currentUser.role === UserRole.VOLUNTEERS  && (
+        {(currentUser.role === UserRole.USER || currentUser.role === UserRole.VOLUNTEERS) && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
               <h2 className="text-l text-gray-500 font-semibold mb-4">Report Emergency</h2>
@@ -445,8 +448,7 @@ const Index = () => {
 
         {currentUser.role === UserRole.ADMIN && (
           <div>
-            <Admin/>
-            
+            <Admin/>            
           </div>
         )}
       </main>

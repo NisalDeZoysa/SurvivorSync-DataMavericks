@@ -41,7 +41,7 @@ const mockDisasters: Disaster[] = [
       address: 'Kandy, Sri Lanka'
     },
     timestamp: new Date(Date.now() - 7200000).toISOString(),
-    type: DisasterType.FIRE,
+    type: DisasterType.FLOOD,
     name: 'Building Fire in Kandy',
     severity: DisasterSeverity.CRITICAL,
     details: 'Commercial building on fire. Fire department dispatched. Nearby buildings evacuated.',
@@ -57,7 +57,7 @@ const mockDisasters: Disaster[] = [
       address: 'Galle, Sri Lanka'
     },
     timestamp: new Date(Date.now() - 14400000).toISOString(),
-    type: DisasterType.LANDSLIDE,
+    type: DisasterType.EARTHQUAKE,
     name: 'Landslide Warning in Galle',
     severity: DisasterSeverity.MEDIUM,
     details: 'Potential landslide risk following persistent rainfall. Residents advised to be on alert.',
@@ -73,7 +73,7 @@ const mockDisasters: Disaster[] = [
       address: 'Jaffna, Sri Lanka'
     },
     timestamp: new Date(Date.now() - 28800000).toISOString(),
-    type: DisasterType.TSUNAMI,
+    type: DisasterType.TORNADO,
     name: 'Tsunami Warning in Jaffna',
     severity: DisasterSeverity.HIGH,
     details: 'Tsunami warning issued after offshore earthquake. Coastal evacuation recommended.',
@@ -157,13 +157,13 @@ const DisasterList: React.FC = () => {
 
     const getTypeIcon = (type: DisasterType) => {
       switch (type) {
-        case DisasterType.FIRE:
+        case DisasterType.HOUSEHOLDFIRE:
           return "🔥";
         case DisasterType.FLOOD:
           return "🌊";
-        case DisasterType.LANDSLIDE:
+        case DisasterType.WILDFIRE:
           return "⛰️";
-        case DisasterType.TSUNAMI:
+        case DisasterType.OTHER:
           return "🌊";
         case DisasterType.EARTHQUAKE:
           return "🏚️";
@@ -198,11 +198,11 @@ const DisasterList: React.FC = () => {
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value={DisasterType.FLOOD}>Flood</SelectItem>
-                <SelectItem value={DisasterType.FIRE}>Fire</SelectItem>
-                <SelectItem value={DisasterType.EARTHQUAKE}>Earthquake</SelectItem>
-                <SelectItem value={DisasterType.LANDSLIDE}>Landslide</SelectItem>
-                <SelectItem value={DisasterType.TSUNAMI}>Tsunami</SelectItem>
-                <SelectItem value={DisasterType.HURRICANE}>Hurricane</SelectItem>
+                <SelectItem value={DisasterType.EARTHQUAKE}>Fire</SelectItem>
+                <SelectItem value={DisasterType.HOUSEHOLDFIRE}>Earthquake</SelectItem>
+                <SelectItem value={DisasterType.WILDFIRE}>Landslide</SelectItem>
+                <SelectItem value={DisasterType.TORNADO}>Tsunami</SelectItem>
+                <SelectItem value={DisasterType.TORNADO}>Hurricane</SelectItem>
                 <SelectItem value={DisasterType.OTHER}>Other</SelectItem>
               </SelectContent>
             </Select>
@@ -274,7 +274,7 @@ const DisasterList: React.FC = () => {
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
                         <span className="font-medium text-gray-500">Type:</span>
-                        <span className="ml-1">{disaster.type.charAt(0).toUpperCase() + disaster.type.slice(1)}</span>
+                        <span className="ml-1">{String(disaster.type).charAt(0).toUpperCase() + String(disaster.type).slice(1)}</span>
                       </div>
                       <div>
                         <span className="font-medium text-gray-500">Affected:</span>

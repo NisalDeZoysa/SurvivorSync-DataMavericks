@@ -77,7 +77,7 @@ const Navigation: React.FC = () => {
 
   let navItems = [
     { path: '/', label: 'Dashboard', access: [UserRole.USER, UserRole.VOLUNTEERS] },
-    { path: '/admin', label: 'Admin Dashboard', access: [UserRole.ADMIN] },
+    // { path: '/admin', label: 'Admin Dashboard', access: [UserRole.ADMIN] },
     {path: '/first_responder', label: 'First Responder', access: [UserRole.ADMIN]},
     { path: '/news', label: 'News', access: [UserRole.USER, UserRole.FIRST_RESPONDER, UserRole.ADMIN] },
     { path: '/report', label: 'Report Emergency', access: [UserRole.USER] },
