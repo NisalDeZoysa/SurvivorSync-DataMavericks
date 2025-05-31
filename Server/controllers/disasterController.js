@@ -9,7 +9,7 @@ export const createDisaster = async (req, res) => {
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
-};
+  };
 
 export const getAllDisasters = async (req, res) => {
   try {
