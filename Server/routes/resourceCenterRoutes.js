@@ -17,7 +17,7 @@ const router = express.Router();
 
 router.post('/', authenticateToken, createResourceCenter);
 router.get('/', authenticateToken, getAllResourceCenters);
-router.get('/count', authenticateToken, getResourceCenterCount);
+router.get('/count', getResourceCenterCount);
 router.get('/:id', authenticateToken, getResourceCenterById);
 router.put('/:id', authenticateToken, updateResourceCenter);
 router.delete('/:id', authenticateToken, deleteResourceCenter);

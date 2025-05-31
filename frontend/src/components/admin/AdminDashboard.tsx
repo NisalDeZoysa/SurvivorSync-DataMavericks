@@ -2,101 +2,150 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { AlertTriangle, Users, MapPin, Calendar } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import {
+  AlertTriangle,
+  Users,
+  MapPin,
+  Calendar,
+} from 'lucide-react';
 
 const chartConfig = {
-  flood: { label: 'Flood', color: '#3B82F6' },
-  fire: { label: 'Fire', color: '#EF4444' },
-  earthquake: { label: 'Earthquake', color: '#8B5CF6' },
-  landslide: { label: 'Landslide', color: '#F59E0B' },
-  other: { label: 'Other', color: '#10B981' },
+  flood: { color: '#3B82F6' },
+  earthquake: { color: '#EF4444' },
+  householdFire: { color: '#F59E0B' },
+  wildfire: { color: '#10B981' },
+  powerOutage: { color: '#8B5CF6' },
+  landslide: { color: '#A855F7' },  // added a color for landslide
+  other: { color: '#6B7280' },
 };
 
-// Static district data
-const districtData = [
-  { district: 'Colombo', flood: 15, fire: 8, earthquake: 3, landslide: 2, other: 5 },
-  { district: 'Kandy', flood: 12, fire: 6, earthquake: 2, landslide: 8, other: 4 },
-  { district: 'Galle', flood: 10, fire: 4, earthquake: 1, landslide: 3, other: 3 },
-  { district: 'Jaffna', flood: 8, fire: 7, earthquake: 2, landslide: 1, other: 6 },
-  { district: 'Matara', flood: 6, fire: 3, earthquake: 1, landslide: 4, other: 2 },
-];
+
 
 const AdminDashboard = () => {
-  console.log('AdminDashboard component rendered');
   const [yearlyDisasterData, setYearlyDisasterData] = useState([]);
   const [currentYearStats, setCurrentYearStats] = useState([]);
+  const [districtData, setDistrictData] = useState([]);
   const [totalDisasters, setTotalDisasters] = useState(0);
   const [volunteerCount, setVolunteerCount] = useState(0);
   const [victimCount, setVictimCount] = useState(0);
   const [resourceCenterCount, setResourceCenterCount] = useState(0);
 
+
+
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      // 1. Yearly Disaster Data
-      /*const yearRes = await axios.get('http://localhost:5000/api/disasters/count/by-type/year');
-      const yearData = yearRes.data;
-      const formattedYearData = Object.entries(yearData).map(([year, values]) => {
-        const v = values as { flood?: number; fire?: number; earthquake?: number; landslide?: number; other?: number };
-        return {
-          year: parseInt(year),
-          flood: v.flood || 0,
-          fire: v.fire || 0,
-          earthquake: v.earthquake || 0,
-          landslide: v.landslide || 0,
-          other: v.other || 0,
-        };
-      });
-      setYearlyDisasterData(formattedYearData);
+    const fetchData = async () => {
+      try {
+        //current year
+        const disasterStatsRes = await axios.get('http://localhost:7000/api/disaster-stats');
+        const statsData = disasterStatsRes.data;
 
-      // 2. Current Year Stats (use last year in API response)
-      const currentYear = Math.max(...Object.keys(yearData).map(Number));
-      const current = yearData[currentYear];
-      const formattedCurrentStats = [
-        { type: 'Flood', count: current.flood || 0, color: '#3B82F6' },
-        { type: 'Fire', count: current.fire || 0, color: '#EF4444' },
-        { type: 'Earthquake', count: current.earthquake || 0, color: '#8B5CF6' },
-        { type: 'Landslide', count: current.landslide || 0, color: '#F59E0B' },
-        { type: 'Other', count: current.other || 0, color: '#10B981' },
-      ];
-      setCurrentYearStats(formattedCurrentStats);*/
+        // Get the current year
+        const currentYear = new Date().getFullYear().toString();
 
-      // 3. Total Disasters
-      const totalRes = await axios.get('http://localhost:5000/api/disasters/count');
-      const totalData = totalRes.data;
-      console.log('Total Disasters Data:', totalData);
-      setTotalDisasters(totalData.totalDisasters || 0);
+        if (statsData[currentYear]) {
+          const rawData = statsData[currentYear];
+          const formattedCurrentYearStats = Object.entries(rawData).map(([type, count]) => ({
+            type,
+            count,
+            color: chartConfig[type.replace(/\s/g, '').charAt(0).toLowerCase() + type.replace(/\s/g, '').slice(1)]?.color || '#999999',
+          })).filter(entry => Number(entry.count) > 0); // Optionally filter 0 counts
 
-      // 4. Volunteers & Victims
-      const usersRes = await axios.get('http://localhost:5000/api/users/count/volunteers-victims');
-      const usersData = usersRes.data;
-      console.log('Users Count Data:', usersData);
-      setVolunteerCount(usersData.volunteerCount || 0);
-      setVictimCount(usersData.victimCount || 0);
+          setCurrentYearStats(formattedCurrentYearStats);
+        }
 
-      // 5. Resource Centers
-      const resCenterRes = await axios.get('http://localhost:5000/api/resource-centers/count');
-      const resCenterData = resCenterRes.data;
-      console.log('Resource Center Data:', resCenterData);
-      setResourceCenterCount(resCenterData.totalResourceCenters || 0);
+        // Yearly disaster summary
+        const yearlyRes1 = await axios.get('http://localhost:7000/api/disaster-stats');
+        const yearlyData = yearlyRes1.data;
 
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    }
-  };
+        const formattedYearlyData = Object.entries(yearlyData).map(([year, counts]) => ({
+          year,
+          flood: counts['Flood'] || 0,
+          earthquake: counts['Earthquake'] || 0,
+          householdFire: counts['Household Fire'] || 0,
+          wildfire: counts['Wildfire'] || 0,
+          powerOutage: counts['Power Outage'] || 0,
+          other: counts['Other'] || 0,
+        }));
+        setYearlyDisasterData(formattedYearlyData);
+            
 
-  fetchData();
-}, []);
+        // District disaster data
+        const districtRes = await axios.get('http://localhost:7000/api/district-disaster-summary');
+        const rawDistrictData = districtRes.data;
+
+        const transformedData = Object.entries(rawDistrictData).map(
+          ([districtName, disasterCounts]) => ({
+          district: districtName.replace(' District', ''),
+          flood: disasterCounts['Flood'] || 0,
+          earthquake: disasterCounts['Earthquake'] || 0,
+          householdFire: disasterCounts['Household Fire'] || 0,
+          wildfire: disasterCounts['Wildfire'] || 0,
+          powerOutage: disasterCounts['Power Outage'] || 0,
+          landslide: disasterCounts['Landslide'] || 0,
+          other: disasterCounts['Other'] || 0,
+          })
+        );
+        setDistrictData(transformedData);
+
+        // Total disasters
+        const totalRes = await axios.get('http://localhost:7000/api/disasters/count');
+        setTotalDisasters(totalRes.data.totalDisasters || 0);
+
+        // Users: volunteers & victims
+        const usersRes = await axios.get('http://localhost:7000/api/users/count/volunteers-victims');
+        const usersData = usersRes.data;
+        setVolunteerCount(usersData.volunteerCount || 0);
+        setVictimCount(usersData.victimCount || 0);
+
+        // Resource centers
+        const resCenterRes = await axios.get('http://localhost:7000/api/resource-centers/count');
+        setResourceCenterCount(resCenterRes.data.totalResourceCenters || 0);
+
+        // Optional: fetch yearly and current year chart data
+        const yearlyRes = await axios.get('http://localhost:7000/api/disasters/yearly-summary');
+        setYearlyDisasterData(yearlyRes.data || []);
+
+        const currentRes = await axios.get('http://localhost:7000/api/disasters/current-year-stats');
+        setCurrentYearStats(currentRes.data || []);
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="space-y-6">
       {/* Statistic Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total Disasters */}
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex justify-between items-center pb-2">
             <CardTitle className="text-sm font-medium text-blue-800">Total Disasters (2025)</CardTitle>
             <AlertTriangle className="h-4 w-4 text-blue-600" />
           </CardHeader>
@@ -106,8 +155,9 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
+        {/* Volunteers */}
         <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex justify-between items-center pb-2">
             <CardTitle className="text-sm font-medium text-green-800">Active Volunteers</CardTitle>
             <Users className="h-4 w-4 text-green-600" />
           </CardHeader>
@@ -117,8 +167,9 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
+        {/* Resource Centers */}
         <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex justify-between items-center pb-2">
             <CardTitle className="text-sm font-medium text-purple-800">Resource Centers</CardTitle>
             <MapPin className="h-4 w-4 text-purple-600" />
           </CardHeader>
@@ -128,8 +179,9 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
+        {/* Victims */}
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex justify-between items-center pb-2">
             <CardTitle className="text-sm font-medium text-orange-800">Active Victims</CardTitle>
             <Calendar className="h-4 w-4 text-orange-600" />
           </CardHeader>
@@ -140,13 +192,13 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Charts Section */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Yearly Disaster Trends */}
+        {/* Bar Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Disaster Trends by Year</CardTitle>
-            <CardDescription>Historical data showing disaster occurrences by type over the past 5 years</CardDescription>
+            <CardDescription>Past 5 years by disaster type</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px]">
@@ -155,11 +207,11 @@ const AdminDashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="year" />
                   <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar dataKey="flood" stackId="a" fill="#3B82F6" />
-                  <Bar dataKey="fire" stackId="a" fill="#EF4444" />
                   <Bar dataKey="earthquake" stackId="a" fill="#8B5CF6" />
-                  <Bar dataKey="landslide" stackId="a" fill="#F59E0B" />
+                  <Bar dataKey="householdFire" stackId="a" fill="#F97316" />
+                  <Bar dataKey="wildfire" stackId="a" fill="#DC2626" />
+                  <Bar dataKey="powerOutage" stackId="a" fill="#FACC15" />
                   <Bar dataKey="other" stackId="a" fill="#10B981" />
                 </BarChart>
               </ResponsiveContainer>
@@ -167,11 +219,11 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Current Year Distribution */}
+        {/* Pie Chart */}
         <Card>
           <CardHeader>
             <CardTitle>2025 Disaster Distribution</CardTitle>
-            <CardDescription>Breakdown of disaster types for the current year</CardDescription>
+            <CardDescription>Current year by disaster type</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px]">
@@ -202,7 +254,7 @@ const AdminDashboard = () => {
       <Card>
         <CardHeader>
           <CardTitle>District-wise Disaster Statistics (2025)</CardTitle>
-          <CardDescription>Detailed breakdown of disasters by district and type</CardDescription>
+          <CardDescription>Breakdown by district and type</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -211,28 +263,35 @@ const AdminDashboard = () => {
                 <tr className="border-b border-gray-200">
                   <th className="text-left p-3 font-semibold text-gray-900">District</th>
                   <th className="text-center p-3 font-semibold text-blue-600">Flood</th>
-                  <th className="text-center p-3 font-semibold text-red-600">Fire</th>
                   <th className="text-center p-3 font-semibold text-purple-600">Earthquake</th>
-                  <th className="text-center p-3 font-semibold text-yellow-600">Landslide</th>
+                  <th className="text-center p-3 font-semibold text-orange-600">Household Fire</th>
+                  <th className="text-center p-3 font-semibold text-red-600">Wildfire</th>
+                  <th className="text-center p-3 font-semibold text-yellow-600">Power Outage</th>
+                  <th className="text-center p-3 font-semibold text-pink-600">Landslide</th>
                   <th className="text-center p-3 font-semibold text-green-600">Other</th>
-                  <th className="text-center p-3 font-semibold text-gray-900">Total</th>
+                  <th className="text-center p-3 font-semibold text-gray-800">Total</th>
                 </tr>
               </thead>
               <tbody>
                 {districtData.map((district, index) => {
                   const total =
                     district.flood +
-                    district.fire +
                     district.earthquake +
+                    district.householdFire +
+                    district.wildfire +
+                    district.powerOutage +
                     district.landslide +
                     district.other;
+
                   return (
                     <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="p-3 font-medium">{district.district}</td>
                       <td className="p-3 text-center text-blue-600">{district.flood}</td>
-                      <td className="p-3 text-center text-red-600">{district.fire}</td>
                       <td className="p-3 text-center text-purple-600">{district.earthquake}</td>
-                      <td className="p-3 text-center text-yellow-600">{district.landslide}</td>
+                      <td className="p-3 text-center text-orange-600">{district.householdFire}</td>
+                      <td className="p-3 text-center text-red-600">{district.wildfire}</td>
+                      <td className="p-3 text-center text-yellow-600">{district.powerOutage}</td>
+                      <td className="p-3 text-center text-pink-600">{district.landslide}</td>
                       <td className="p-3 text-center text-green-600">{district.other}</td>
                       <td className="p-3 text-center font-semibold">{total}</td>
                     </tr>
@@ -241,6 +300,7 @@ const AdminDashboard = () => {
               </tbody>
             </table>
           </div>
+
         </CardContent>
       </Card>
     </div>

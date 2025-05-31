@@ -18,7 +18,10 @@ Disaster.hasMany(SafetyPrecaution, { foreignKey: 'disasterId' });
 DisasterRequest.hasMany(AllocatedResource, { foreignKey: 'disasterRequestId', onDelete: 'CASCADE' });
 AllocatedResource.hasOne(ResourceCenter, { foreignKey: 'resourceCenterId' });
 
-DisasterRequest.hasOne(Disaster, { foreignKey: 'disasterId' });
+//DisasterRequest.hasOne(Disaster, { foreignKey: 'disasterId' });
+//DisasterRequest.belongsTo(Disaster, { foreignKey: 'disasterId' });
+DisasterRequest.belongsTo(Disaster, { foreignKey: 'disasterId' });
+Disaster.hasMany(DisasterRequest, { foreignKey: 'disasterId' });
 
 Resource.hasMany(ResourceCenter, { foreignKey: 'resourceId', onDelete: 'CASCADE' });
 ResourceCenter.belongsTo(Resource, { foreignKey: 'resourceId' });

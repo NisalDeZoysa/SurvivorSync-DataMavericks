@@ -6,7 +6,6 @@ import {
   updateDisaster,
   deleteDisaster,
   getDisasterCount,
-  getDisasterTypeCountsFiveYears
 } from '../controllers/disasterController.js';
 
 
@@ -23,6 +22,5 @@ router.get('/count', getDisasterCount); // public or authenticated as needed
 router.get('/:id', getDisasterById);
 router.put('/:id', authenticateToken, updateDisaster);
 router.delete('/:id', authenticateToken, deleteDisaster);
-router.get('/count/by-type/year', getDisasterTypeCountsFiveYears);
 
 export default router;

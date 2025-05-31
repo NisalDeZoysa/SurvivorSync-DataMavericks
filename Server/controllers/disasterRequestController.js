@@ -1,4 +1,7 @@
-import { DisasterRequest, User } from "../models/index.js";
+import { DisasterRequest, Disaster, User } from "../models/index.js";
+import Sequelize from 'sequelize';
+
+
 
 export const createUserRequest = async (req, res) => {
   try {
@@ -94,28 +97,28 @@ export const createUserRequest = async (req, res) => {
       province
     });
     // call gateway_server to get a response
-    const messageText = `
-      User ID: ${request.userId}
-      Disaster Id: ${request.disasterId}
-      Severity: ${request.severity}
-      Details: ${request.details}
-      Affected Count: ${request.affectedCount}
-      Contact No: ${request.contactNo}
-      Location: Latitude ${request.latitude}, Longitude ${request.longitude}
-      District: ${request.district}
-      Province: ${request.province}
-      Address: ${request.address}
-      `;
-    const response = await fetch('http://127.0.0.1:5005/tasks/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: messageText.trim(),
-      }),
-    });
-    console.log('Response from gateway_server:', response);
+    // const messageText = `
+    //   User ID: ${request.userId}
+    //   Disaster Id: ${request.disasterId}
+    //   Severity: ${request.severity}
+    //   Details: ${request.details}
+    //   Affected Count: ${request.affectedCount}
+    //   Contact No: ${request.contactNo}
+    //   Location: Latitude ${request.latitude}, Longitude ${request.longitude}
+    //   District: ${request.district}
+    //   Province: ${request.province}
+    //   Address: ${request.address}
+    //   `;
+    // const response = await fetch('http://127.0.0.1:5005/tasks/send', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({
+    //     message: messageText.trim(),
+    //   }),
+    // });
+    // console.log('Response from gateway_server:', response);
     res.status(201).json({ message: 'User request created', success: true, request });
   } catch (error) {
     console.error('Create error:', error);
@@ -211,5 +214,164 @@ export const updateRequest = async (req, res) => {
   } catch (error) {
     console.error("Update error:", error);
     res.status(400).json({ error: error.message });
+  }
+  
+};
+
+export const exportDisasterStats = async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 4;
+
+    // Fetch disaster requests joined with Disaster to get name and year
+    const rawData = await DisasterRequest.findAll({
+      attributes: [
+        [Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), 'year'],
+        [Sequelize.col('Disaster.name'), 'disasterName'],
+        [Sequelize.fn('COUNT', Sequelize.col('DisasterRequest.id')), 'count']
+      ],
+      include: [{
+        model: Disaster,
+        attributes: [],
+      }],
+      where: Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), '>=', startYear),
+      group: ['year', 'disasterName'],
+      order: [['year', 'DESC']],
+      raw: true,
+    });
+
+    // Format the output as requested
+    const result = {};
+
+    for (let i = currentYear; i >= startYear; i--) {
+      result[i] = {
+        "Flood": 0,
+        "Earthquake": 0,
+        "Household Fire": 0,
+        "Wildfire": 0,
+        "Power Outage": 0,
+        "Other": 0
+      };
+    }
+
+    rawData.forEach(({ year, disasterName, count }) => {
+      if (result[year] && result[year][disasterName] !== undefined) {
+        result[year][disasterName] = parseInt(count);
+      }
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error exporting stats:", error);
+    res.status(500).json({ error: "Failed to export disaster statistics" });
+  }
+};
+
+export const getDistrictDisasterSummary = async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+
+    const rawData = await DisasterRequest.findAll({
+      attributes: [
+        'district',
+        [Sequelize.col('Disaster.name'), 'disasterName'],
+        [Sequelize.fn('COUNT', Sequelize.col('DisasterRequest.id')), 'count'],
+      ],
+      include: [{
+        model: Disaster,
+        attributes: [],
+      }],
+      where: Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), currentYear),
+      group: ['district', 'disasterName'],
+      raw: true,
+    });
+
+    // Initialize a map to hold district -> disasterName -> count
+    const districtData = {};
+
+    // Disaster types to include in every district
+    const disasterTypes = ["Flood", "Earthquake", "Household Fire", "Wildfire", "Power Outage", "Other"];
+
+    // Populate the raw data
+    rawData.forEach(({ district, disasterName, count }) => {
+      if (!district) return; // skip undefined districts
+      if (!districtData[district]) {
+        districtData[district] = {};
+        disasterTypes.forEach(type => districtData[district][type] = 0);
+      }
+      if (districtData[district][disasterName] !== undefined) {
+        districtData[district][disasterName] = parseInt(count);
+      }
+    });
+
+    // Compute total for sorting
+    const sortedDistricts = Object.entries(districtData)
+      .map(([district, disasters]) => {
+        const total = Object.values(disasters).reduce((sum, val) => sum + val, 0);
+        return { district, disasters, total };
+      })
+      .sort((a, b) => b.total - a.total); // Descending order by total
+
+    // Final output
+    const result = {};
+    sortedDistricts.forEach(({ district, disasters }) => {
+      result[district] = disasters;
+    });
+
+    res.json(result);
+
+  } catch (error) {
+    console.error("Error fetching district summary:", error);
+    res.status(500).json({ error: "Failed to fetch district disaster summary" });
+  }
+};
+
+export const getCurrentYearDisasterTotals = async (req, res) => {
+  try {
+    const currentYear = new Date().getFullYear();
+
+    const disasterTypes = [
+      "Flood",
+      "Earthquake",
+      "Household Fire",
+      "Wildfire",
+      "Power Outage",
+      "Other"
+    ];
+
+    const rawData = await DisasterRequest.findAll({
+      attributes: [
+        [Sequelize.col('Disaster.name'), 'disasterName'],
+        [Sequelize.fn('COUNT', Sequelize.col('DisasterRequest.id')), 'count']
+      ],
+      include: [{
+        model: Disaster,
+        attributes: [],
+      }],
+      where: Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), currentYear),
+      group: ['disasterName'],
+      raw: true,
+    });
+
+    const yearSummary = {};
+    yearSummary[currentYear] = {};
+
+    // Initialize all to 0
+    disasterTypes.forEach(type => {
+      yearSummary[currentYear][type] = 0;
+    });
+
+    // Fill with counts
+    rawData.forEach(({ disasterName, count }) => {
+      if (yearSummary[currentYear][disasterName] !== undefined) {
+        yearSummary[currentYear][disasterName] = parseInt(count);
+      }
+    });
+
+    res.json(yearSummary);
+
+  } catch (error) {
+    console.error("Error getting current year disaster totals:", error);
+    res.status(500).json({ error: "Failed to fetch current year disaster totals" });
   }
 };

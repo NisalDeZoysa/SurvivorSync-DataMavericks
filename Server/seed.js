@@ -10,12 +10,12 @@ async function seedDatabase() {
     { name: 'Earthquake', type: 'natural', severity: 'critical', details: 'Strong earthquake causing widespread damage' },
     { name: 'Household Fire', type: 'man-made', severity: 'medium', details: 'Fire incident in residential buildings' },
     { name: 'Wildfire', type: 'natural', severity: 'high', details: 'Forest fire spreading rapidly due to dry conditions' },
-    { name: 'Tornado', type: 'natural', severity: 'high', details: 'Tornado causing destruction in affected areas' },
-    { name: 'Chemical Spill', type: 'man-made', severity: 'critical', details: 'Hazardous chemical leakage in industrial zone' },
+    //{ name: 'Tornado', type: 'natural', severity: 'high', details: 'Tornado causing destruction in affected areas' },
+    //{ name: 'Chemical Spill', type: 'man-made', severity: 'critical', details: 'Hazardous chemical leakage in industrial zone' },
     { name: 'Power Outage', type: 'man-made', severity: 'medium', details: 'Extended blackout due to grid failure' },
-    { name: 'Cyber Attack', type: 'man-made', severity: 'high', details: 'Malicious cyber attack on critical infrastructure' },
-    { name: 'Landslide', type: 'natural', severity: 'medium', details: 'Landslide blocking roads and damaging property' },
-    { name: 'Industrial Fire', type: 'man-made', severity: 'high', details: 'Fire outbreak in factory or industrial plant' },
+    //{ name: 'Cyber Attack', type: 'man-made', severity: 'high', details: 'Malicious cyber attack on critical infrastructure' },
+    { name: 'Other', type: 'natural', severity: 'medium', details: 'other' },
+    //{ name: 'Industrial Fire', type: 'man-made', severity: 'high', details: 'Fire outbreak in factory or industrial plant' },
   ]);
 
   // Insert resources

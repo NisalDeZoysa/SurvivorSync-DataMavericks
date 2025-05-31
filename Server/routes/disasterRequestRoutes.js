@@ -3,7 +3,11 @@ import {
   createUserRequest,
   getAllRequests,
   getRequestById,
-  deleteRequest
+  deleteRequest,
+  exportDisasterStats,
+  getDistrictDisasterSummary,
+  getCurrentYearDisasterTotals
+
 } from '../controllers/disasterRequestController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 import { userRequestUpload } from '../middleware/upload.js';
@@ -15,5 +19,9 @@ router.get('/requests',  getAllRequests);
 router.get('/requests/:id', getRequestById);
 router.delete('/requests/:id',deleteRequest);
 router.put('/requests/:id', userRequestUpload, updateRequest);
+router.get('/disaster-stats', exportDisasterStats);
+router.get('/district-disaster-summary', getDistrictDisasterSummary);
+router.get('/disasters/totals/current-year', getCurrentYearDisasterTotals);
+
 
 export default router;

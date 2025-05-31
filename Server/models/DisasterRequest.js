@@ -22,11 +22,12 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
   },
   disasterId: {
     type: DataTypes.INTEGER,
+
     references: {
       model: 'disasters', 
       key: 'id',
     },
-    allowNull: false,
+    allowNull: true,
   },
   severity: {
     type: DataTypes.ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL'),
