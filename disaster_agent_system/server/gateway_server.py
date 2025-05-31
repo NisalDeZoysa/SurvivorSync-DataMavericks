@@ -11,8 +11,7 @@ load_dotenv()
 
 # Setup the Ollama Qwen3:4b model
 llm = ChatOllama(
-    # model="llama3.1:8b",
-    model="llama3:latest",
+    model="llama3.1:8b",
     temperature = 0.2,
     num_predict = 256,
     # You can add more params here if needed
@@ -111,7 +110,9 @@ def handle_task():
     target_send_url = f"{target_agent_url}/tasks/send"
     try:
         response = requests.post(target_send_url, json=task_request, timeout=60)
-        response.raise_for_status()
+        # response.raise_for_status()
+        print("This is from intake agent", response.json())
+       
     except requests.exceptions.RequestException as e:
         print(f"Error forwarding task {task_id} to {target_agent_url}: {e}") # Log error
         # Return an error task response to the original client
@@ -130,7 +131,7 @@ def handle_task():
         return jsonify(error_response_task), 502 # Bad Gateway
     
     # Return the response from the downstream agent
-    print(f"Received response for task {task_id} from {target_agent_url}")
+    print(f"Received response for task {task_id} from {target_agent_url} and this is response: {response.json()}")
     return jsonify(response.json())
 
 

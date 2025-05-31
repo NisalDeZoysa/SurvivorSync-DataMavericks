@@ -106,17 +106,34 @@ export const createUserRequest = async (req, res) => {
       Province: ${request.province}
       Address: ${request.address}
       `;
-    const response = await fetch('http://127.0.0.1:5005/tasks/send', {
+    
+     // Call gateway server
+    const gatewayResponse = await fetch('http://127.0.0.1:5005/tasks/send', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: messageText.trim(),
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: messageText.trim() }),
     });
-    console.log('Response from gateway_server:', response);
-    res.status(201).json({ message: 'User request created', success: true, request });
+
+    // Handle gateway response
+    if (!gatewayResponse.ok) {
+      const errorText = await gatewayResponse.text();
+      throw new Error(`Gateway error: ${gatewayResponse.status} - ${errorText}`);
+    }
+
+    const gatewayData = await gatewayResponse.json();
+    console.log('Full gateway response:', gatewayData);
+
+
+    // Include gateway response in your final output if needed
+    res.status(201).json({
+      message: 'User request created',
+      success: true,
+      request,
+      gatewayResponse: {
+        gatewayData
+      }
+    });
+
   } catch (error) {
     console.error('Create error:', error);
     res.status(400).json({ error: error.message });

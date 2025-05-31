@@ -56,8 +56,7 @@ class RequestIntakeAgent:
     )
     def __init__(self,tools):
         self.llm = ChatOllama(
-            # model="llama3.1:8b"
-            model="llama3:latest"
+            model="llama3.1:8b"
             ,temperature=0.8)
         self.tools = tools
 
@@ -173,7 +172,7 @@ def handle_task():
         response_format_dict = response_format.model_dump()
 
         # Formulate A2A response Task
-        response_task = {
+        full_response_task = {
             "request_intake_agent":{
                 "id": task_id,
                 "status": "request-intake-agent-completed",
@@ -182,44 +181,54 @@ def handle_task():
                 "next-agent": "request-verify-agent",
                 "message": "Please analyze the request details and verify the request using the tools.",
                 "request-intake-agent-response": [
-                {
-                    "role": "request-intake-agent",
-                    "response": response_format_dict,
-                }
-            ]
+                    {
+                        "role": "request-intake-agent",
+                        "response": response_format_dict,
+                    }
+                ]
             }
         }
-        print(f"Forwarding task {task_id} response is {response_task}")
+        print(f"Forwarding task {task_id} response is {full_response_task}")
         target_agent_url = REQUEST_VERIFY_AGENT
         target_send_url = f"{target_agent_url}/tasks/send"
 
-        # try:
-        #     if response_task.get("request_intake_agent", {}).get("next-agent") == "request-verify-agent":
-        #        response = requests.post(target_send_url, json=response_task, timeout=60)
-        #        response.raise_for_status()
-        #     else:
-        #         print(f"Next agent is not request-verify-agent, skipping forwarding to {target_agent_url}")
-        #         return jsonify(response_task), 200 
+        try:
+            if full_response_task.get("request_intake_agent", {}).get("next-agent") == "request-verify-agent":
+               response_from_verify_agent = requests.post(target_send_url, json=full_response_task, timeout=60)
+               
+               print("from verify Agent"+ response_from_verify_agent.json())
+            #    response.raise_for_status()
+            else:
+                print(f"Next agent is not request-verify-agent, skipping forwarding to {target_agent_url}")
+                return jsonify(full_response_task), 200 
             
-        # except requests.exceptions.RequestException as e:
-        #     print(f"Error forwarding task {task_id}: {e}")
-        #     error_response_task = {
-        #         "request_intake_agent": {
-        #         "id": task_id,
-        #         "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
-        #         "role" : "request-intake-agent",
-        #         "messages": [
-        #             task_request.get("message", {}),
-        #             {
-        #                 "role": "request-intake-agent",
-        #                 "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
-        #             }
-        #         ]
-        #         }
-        #     }
-        #     return jsonify(error_response_task), 502
+        except requests.exceptions.RequestException as e:
+            print(f"Error forwarding task {task_id}: {e}")
+            error_response_task = {
+                "request_intake_agent": {
+                "id": task_id,
+                "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
+                "role" : "request-intake-agent",
+                "messages": [
+                    task_request.get("message", {}),
+                    {
+                        "role": "request-intake-agent",
+                        "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+                    }
+                ]
+                }
+            }
+            return jsonify(error_response_task), 502
+    
+        
+        # Add the response from the target agent to the full response task
+        if response_from_verify_agent.status_code != 200:
+            print(f"Error from target agent {target_agent_url}: {response.text}")
+            return jsonify({"error": "Failed to forward task to target agent"}), 502
+        print(f"Received response from target agent {target_agent_url}: {response.json()}")
+        full_response_task["request_intake_agent"]["next-agent-response"] = response.json()
 
-        return jsonify(response_task.json())
+        return jsonify(full_response_task.json())
 
     except Exception as e:
         print(f"Agent error: {e}")
