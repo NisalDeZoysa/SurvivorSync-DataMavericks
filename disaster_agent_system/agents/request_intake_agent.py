@@ -55,7 +55,10 @@ class RequestIntakeAgent:
             }'''
     )
     def __init__(self,tools):
-        self.llm = ChatOllama(model="llama3.1:8b",temperature=0.8)
+        self.llm = ChatOllama(
+            # model="llama3.1:8b"
+            model="llama3:latest"
+            ,temperature=0.8)
         self.tools = tools
 
         self.graph = create_react_agent(
@@ -190,44 +193,49 @@ def handle_task():
         target_agent_url = REQUEST_VERIFY_AGENT
         target_send_url = f"{target_agent_url}/tasks/send"
 
-        try:
-            if response_task.get("request_intake_agent", {}).get("next-agent") == "request-verify-agent":
-               response = requests.post(target_send_url, json=response_task, timeout=60)
-               response.raise_for_status()
-            else:
-                print(f"Next agent is not request-verify-agent, skipping forwarding to {target_agent_url}")
-                return jsonify(response_task), 200 
+        # try:
+        #     if response_task.get("request_intake_agent", {}).get("next-agent") == "request-verify-agent":
+        #        response = requests.post(target_send_url, json=response_task, timeout=60)
+        #        response.raise_for_status()
+        #     else:
+        #         print(f"Next agent is not request-verify-agent, skipping forwarding to {target_agent_url}")
+        #         return jsonify(response_task), 200 
             
-        except requests.exceptions.RequestException as e:
-            print(f"Error forwarding task {task_id}: {e}")
-            error_response_task = {
-                "id": task_id,
-                "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
-                
-                "messages": [
-                    task_request.get("message", {}),
-                    {
-                        "role": "agent",
-                        "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
-                    }
-                ]
-            }
-            return jsonify(error_response_task), 502
+        # except requests.exceptions.RequestException as e:
+        #     print(f"Error forwarding task {task_id}: {e}")
+        #     error_response_task = {
+        #         "request_intake_agent": {
+        #         "id": task_id,
+        #         "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
+        #         "role" : "request-intake-agent",
+        #         "messages": [
+        #             task_request.get("message", {}),
+        #             {
+        #                 "role": "request-intake-agent",
+        #                 "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+        #             }
+        #         ]
+        #         }
+        #     }
+        #     return jsonify(error_response_task), 502
 
-        return jsonify(response.json())
+        return jsonify(response_task.json())
 
     except Exception as e:
         print(f"Agent error: {e}")
-        error_response_task = {
+        error_response_task ={
+            "request_intake_agent":  {
             "id": task_id,
             "status": {"state": "failed", "reason": f"Agent processing failed: {e}"},
+            "role": "request-intake-agent",
             "messages": [
                 task_request.get("message", {}),
                 {
-                    "role": "agent",
+                    "role": "request-intake-agent",
                     "parts": [{"text": f"RAG agent failed. Details: {e}"}]
                 }
             ]
+            }
         }
         return jsonify(error_response_task), 500
 

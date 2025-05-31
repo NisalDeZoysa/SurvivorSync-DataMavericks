@@ -11,7 +11,8 @@ load_dotenv()
 
 # Setup the Ollama Qwen3:4b model
 llm = ChatOllama(
-    model="llama3.1:8b",
+    # model="llama3.1:8b",
+    model="llama3:latest",
     temperature = 0.2,
     num_predict = 256,
     # You can add more params here if needed
