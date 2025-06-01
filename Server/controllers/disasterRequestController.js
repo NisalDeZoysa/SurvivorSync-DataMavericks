@@ -65,13 +65,6 @@ export const createUserRequest = async (req, res) => {
     }
 
     console.log("Request body:", req.body);
-
-    if (typeof address === "object") {
-      address = Array.isArray(address)
-        ? address.join(", ")
-        : Object.values(address).join(", ");
-    }
-
     console.log('Voice file:', req.files?.voice);
 
     // Since only one image is allowed, pick the first file's path as a string
@@ -96,7 +89,15 @@ export const createUserRequest = async (req, res) => {
       district,
       province
     });
-    // // call gateway_server to get a response
+
+    const io = req.app.get('io');
+
+    // Fetch updated stats data (not route handler)
+    const updatedStats = await fetchDisasterStatsData();
+
+    // Emit updated stats to clients
+    io.emit('disasterStatsUpdated', updatedStats);
+    // call gateway_server to get a response
     // const messageText = `
     //   User ID: ${request.userId}
     //   Disaster Id: ${request.disasterId}
@@ -108,9 +109,11 @@ export const createUserRequest = async (req, res) => {
     //   District: ${request.district}
     //   Province: ${request.province}
     //   Address: ${request.address}
+    //   Image: ${request.image}
+    //   Voice: ${request.voice}
     //   `;
     
-    //  // Call gateway server
+    // //  // Call gateway server
     // const gatewayResponse = await fetch('http://127.0.0.1:5005/tasks/send', {
     //   method: 'POST',
     //   headers: { 'Content-Type': 'application/json' },
@@ -143,10 +146,84 @@ export const createUserRequest = async (req, res) => {
   }
 };
 
+export const exportDisasterStats = async (req, res) => {
+  try {
+    const stats = await fetchDisasterStatsData();
+    res.json(stats);
+  } catch (error) {
+    console.error("Error exporting stats:", error);
+    res.status(500).json({ error: "Failed to export disaster statistics" });
+  }
+};
+
+export const fetchDisasterStatsData = async () => {
+  const currentYear = new Date().getFullYear();
+  const startYear = currentYear - 4;
+
+  const rawData = await DisasterRequest.findAll({
+    attributes: [
+      [Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), 'year'],
+      [Sequelize.col('Disaster.name'), 'disasterName'],
+      [Sequelize.fn('COUNT', Sequelize.col('DisasterRequest.id')), 'count'],
+    ],
+    include: [{
+      model: Disaster,
+      attributes: [],
+    }],
+    where: Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), '>=', startYear),
+    group: ['year', 'disasterName'],
+    order: [['year', 'DESC']],
+    raw: true,
+  });
+
+  const result = {};
+  for (let i = currentYear; i >= startYear; i--) {
+    result[i] = {
+      Flood: 0,
+      Earthquake: 0,
+      HouseholdFire : 0,
+      Wildfire: 0,
+      Tsunami: 0,
+      Other: 0,
+    };
+  }
+
+  rawData.forEach(({ year, disasterName, count }) => {
+    if (result[year] && result[year][disasterName] !== undefined) {
+      result[year][disasterName] = parseInt(count, 10);
+    }
+  });
+
+  return result;
+};
+
 export const getAllRequests = async (req, res) => {
   try {
     const requests = await DisasterRequest.findAll();
     res.json(requests);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteRequest = async (req, res) => {
+  try {
+    const request = await DisasterRequest.findOne({
+      where: { id: req.params.id},
+    });
+
+    if (!request) return res.status(404).json({ error: "Request not found" });
+
+    await request.destroy();
+    const io = req.app.get('io');
+
+    // Fetch updated stats data (not route handler)
+    const updatedStats = await fetchDisasterStatsData();
+
+    // Emit updated stats to clients
+    io.emit('disasterStatsUpdated', updatedStats);
+
+    res.json({ message: "Request deleted" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -190,20 +267,7 @@ export const getRequestById = async (req, res) => {
   }
 };
 
-export const deleteRequest = async (req, res) => {
-  try {
-    const request = await DisasterRequest.findOne({
-      where: { id: req.params.id, userId: req.user.id },
-    });
 
-    if (!request) return res.status(404).json({ error: "Request not found" });
-
-    await request.destroy();
-    res.json({ message: "Request deleted" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
 
 export const updateRequest = async (req, res) => {
   try {
@@ -260,54 +324,7 @@ export const updateRequest = async (req, res) => {
   
 };
 
-export const exportDisasterStats = async (req, res) => {
-  try {
-    const currentYear = new Date().getFullYear();
-    const startYear = currentYear - 4;
 
-    // Fetch disaster requests joined with Disaster to get name and year
-    const rawData = await DisasterRequest.findAll({
-      attributes: [
-        [Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), 'year'],
-        [Sequelize.col('Disaster.name'), 'disasterName'],
-        [Sequelize.fn('COUNT', Sequelize.col('DisasterRequest.id')), 'count']
-      ],
-      include: [{
-        model: Disaster,
-        attributes: [],
-      }],
-      where: Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), '>=', startYear),
-      group: ['year', 'disasterName'],
-      order: [['year', 'DESC']],
-      raw: true,
-    });
-
-    // Format the output as requested
-    const result = {};
-
-    for (let i = currentYear; i >= startYear; i--) {
-      result[i] = {
-        "Flood": 0,
-        "Earthquake": 0,
-        "Household Fire": 0,
-        "Wildfire": 0,
-        "Power Outage": 0,
-        "Other": 0
-      };
-    }
-
-    rawData.forEach(({ year, disasterName, count }) => {
-      if (result[year] && result[year][disasterName] !== undefined) {
-        result[year][disasterName] = parseInt(count);
-      }
-    });
-
-    res.json(result);
-  } catch (error) {
-    console.error("Error exporting stats:", error);
-    res.status(500).json({ error: "Failed to export disaster statistics" });
-  }
-};
 
 export const getDistrictDisasterSummary = async (req, res) => {
   try {

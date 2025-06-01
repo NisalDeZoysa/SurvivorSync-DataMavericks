@@ -12,7 +12,7 @@ async function seedDatabase() {
     { name: 'Wildfire', type: 'natural', severity: 'high', details: 'Forest fire spreading rapidly due to dry conditions' },
     //{ name: 'Tornado', type: 'natural', severity: 'high', details: 'Tornado causing destruction in affected areas' },
     //{ name: 'Chemical Spill', type: 'man-made', severity: 'critical', details: 'Hazardous chemical leakage in industrial zone' },
-    { name: 'Power Outage', type: 'man-made', severity: 'medium', details: 'Extended blackout due to grid failure' },
+    { name: 'Tsunami', type: 'natural', severity: 'medium', details: 'Severe tsunami causing widespread damage' },
     //{ name: 'Cyber Attack', type: 'man-made', severity: 'high', details: 'Malicious cyber attack on critical infrastructure' },
     { name: 'Other', type: 'natural', severity: 'medium', details: 'other' },
     //{ name: 'Industrial Fire', type: 'man-made', severity: 'high', details: 'Fire outbreak in factory or industrial plant' },

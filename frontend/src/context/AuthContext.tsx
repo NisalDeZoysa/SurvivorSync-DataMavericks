@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: response.data.admin.id,
         name: response.data.admin.name,
         email: response.data.admin.email,
-        role: UserRole.FIRST_RESPONDER
+        role: UserRole.ADMIN
       };
       
       // Store user data and token

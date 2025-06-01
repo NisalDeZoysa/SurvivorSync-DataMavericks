@@ -49,15 +49,14 @@ class RequestIntakeAgent:
             "type": "<string>", # Extract Type of request, e.g., "fire", "medical", "flood"
             "affected_count": <int>, # Extract Number of people affected
             "contact_info": "<string>", # Extract Contact information such as phone number or email
-            "image_description": "<string>", # Extract Description of if images provided else "Not applicable"
-            "voice_description": "<string>", # Extract Description of if voice messages provided else "Not applicable"
+            "image_description": "<string>", # Get image_caption using tools"
+            "voice_description": "<string>", # Get voice_transcript using tools"
             "text_description": "<string>" # Extract Description of if text messages provided else "Not applicable"
             }'''
     )
     def __init__(self,tools):
         self.llm = ChatOllama(
-            # model="llama3.1:8b"
-            model="llama3:latest"
+            model="llama3.1:8b"
             ,temperature=0.8)
         self.tools = tools
 
@@ -143,8 +142,18 @@ async def get_agent_response(task_request,task_id):
         return jsonify({"error": "Bad message format"}), 400
     try:
         # Create a ReAct agent
+        client = MultiServerMCPClient(
+            {
+                "image_voice_caption": {
+                    "transport": "stdio",
+                    "command": "python",
+                    "args": ["disaster_agent_system/mcps/image_voice_caption.py"]
+                }
+            }
+        )
         print("Creating ReAct agent...")
-        tools = []
+        tools = await client.get_tools()
+        print("Tools loaded successfully, initializing RequestIntakeAgent...")
         agent = RequestIntakeAgent(tools)
 
         # Run a prompt that uses the tools
@@ -193,33 +202,33 @@ def handle_task():
         target_agent_url = REQUEST_VERIFY_AGENT
         target_send_url = f"{target_agent_url}/tasks/send"
 
-        # try:
-        #     if response_task.get("request_intake_agent", {}).get("next-agent") == "request-verify-agent":
-        #        response = requests.post(target_send_url, json=response_task, timeout=60)
-        #        response.raise_for_status()
-        #     else:
-        #         print(f"Next agent is not request-verify-agent, skipping forwarding to {target_agent_url}")
-        #         return jsonify(response_task), 200 
+        try:
+            if response_task.get("request_intake_agent", {}).get("next-agent") == "request-verify-agent":
+               response = requests.post(target_send_url, json=response_task, timeout=60)
+               response.raise_for_status()
+            else:
+                print(f"Next agent is not request-verify-agent, skipping forwarding to {target_agent_url}")
+                return jsonify(response_task), 200 
             
-        # except requests.exceptions.RequestException as e:
-        #     print(f"Error forwarding task {task_id}: {e}")
-        #     error_response_task = {
-        #         "request_intake_agent": {
-        #         "id": task_id,
-        #         "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
-        #         "role" : "request-intake-agent",
-        #         "messages": [
-        #             task_request.get("message", {}),
-        #             {
-        #                 "role": "request-intake-agent",
-        #                 "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
-        #             }
-        #         ]
-        #         }
-        #     }
-        #     return jsonify(error_response_task), 502
+        except requests.exceptions.RequestException as e:
+            print(f"Error forwarding task {task_id}: {e}")
+            error_response_task = {
+                "request_intake_agent": {
+                "id": task_id,
+                "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
+                "role" : "request-intake-agent",
+                "messages": [
+                    task_request.get("message", {}),
+                    {
+                        "role": "request-intake-agent",
+                        "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+                    }
+                ]
+                }
+            }
+            return jsonify(error_response_task), 502
 
-        return jsonify(response_task.json())
+        return jsonify(response_task)
 
     except Exception as e:
         print(f"Agent error: {e}")

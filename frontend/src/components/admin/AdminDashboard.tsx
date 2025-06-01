@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
+import io from 'socket.io-client';
 import {
   Card,
   CardContent,
@@ -38,106 +39,124 @@ const chartConfig = {
   householdFire: { color: '#F59E0B' },
   wildfire: { color: '#10B981' },
   powerOutage: { color: '#8B5CF6' },
-  landslide: { color: '#A855F7' },  // added a color for landslide
+  landslide: { color: '#A855F7' },
   other: { color: '#6B7280' },
 };
 
 
 
 const AdminDashboard = () => {
-  const [yearlyDisasterData, setYearlyDisasterData] = useState([]);
+const [yearlyDisasterData, setYearlyDisasterData] = useState([]);
   const [currentYearStats, setCurrentYearStats] = useState([]);
   const [districtData, setDistrictData] = useState([]);
   const [totalDisasters, setTotalDisasters] = useState(0);
   const [volunteerCount, setVolunteerCount] = useState(0);
   const [victimCount, setVictimCount] = useState(0);
   const [resourceCenterCount, setResourceCenterCount] = useState(0);
+  const [socket, setSocket] = useState<any>(null);
 
+  const fetchData = useCallback(async () => {
+    try {
+      // Fetch all data
+      const [
+        disasterStatsRes,
+        yearlyRes1,
+        districtRes,
+        totalRes,
+        usersRes,
+        resCenterRes
+      ] = await Promise.all([
+        axios.get('http://localhost:7000/api/disaster-stats'),
+        axios.get('http://localhost:7000/api/disaster-stats'),
+        axios.get('http://localhost:7000/api/district-disaster-summary'),
+        axios.get('http://localhost:7000/api/disasters/count'),
+        axios.get('http://localhost:7000/api/users/count/volunteers-victims'),
+        axios.get('http://localhost:7000/api/resource-centers/count')
+      ]);
 
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        //current year
-        const disasterStatsRes = await axios.get('http://localhost:7000/api/disaster-stats');
-        const statsData = disasterStatsRes.data;
-
-        // Get the current year
-        const currentYear = new Date().getFullYear().toString();
-
-        if (statsData[currentYear]) {
-          const rawData = statsData[currentYear];
-          const formattedCurrentYearStats = Object.entries(rawData).map(([type, count]) => ({
+      // Current year disaster stats
+      const currentYear = new Date().getFullYear().toString();
+      if (disasterStatsRes.data[currentYear]) {
+        const rawData = disasterStatsRes.data[currentYear];
+        const formattedCurrentYearStats = Object.entries(rawData)
+          .map(([type, count]) => ({
             type,
             count,
-            color: chartConfig[type.replace(/\s/g, '').charAt(0).toLowerCase() + type.replace(/\s/g, '').slice(1)]?.color || '#999999',
-          })).filter(entry => Number(entry.count) > 0); // Optionally filter 0 counts
+            color: chartConfig[type.replace(/\s/g, '').charAt(0).toLowerCase() + 
+                   type.replace(/\s/g, '').slice(1)]?.color || '#999999',
+          }))
+          .filter(entry => Number(entry.count) > 0);
+        
+        setCurrentYearStats(formattedCurrentYearStats);
+      }
 
-          setCurrentYearStats(formattedCurrentYearStats);
-        }
-
-        // Yearly disaster summary
-        const yearlyRes1 = await axios.get('http://localhost:7000/api/disaster-stats');
-        const yearlyData = yearlyRes1.data;
-
-        const formattedYearlyData = Object.entries(yearlyData).map(([year, counts]) => ({
+      // Yearly disaster summary
+      const formattedYearlyData = Object.entries(yearlyRes1.data)
+        .map(([year, counts]) => ({
           year,
           flood: counts['Flood'] || 0,
           earthquake: counts['Earthquake'] || 0,
           householdFire: counts['Household Fire'] || 0,
           wildfire: counts['Wildfire'] || 0,
-          powerOutage: counts['Power Outage'] || 0,
+          tsunami: counts['Tsunami'] || 0,
           other: counts['Other'] || 0,
         }));
-        setYearlyDisasterData(formattedYearlyData);
-            
+      setYearlyDisasterData(formattedYearlyData);
 
-        // District disaster data
-        const districtRes = await axios.get('http://localhost:7000/api/district-disaster-summary');
-        const rawDistrictData = districtRes.data;
-
-        const transformedData = Object.entries(rawDistrictData).map(
-          ([districtName, disasterCounts]) => ({
+      // District disaster data
+      const transformedData = Object.entries(districtRes.data)
+        .map(([districtName, disasterCounts]) => ({
           district: districtName.replace(' District', ''),
           flood: disasterCounts['Flood'] || 0,
           earthquake: disasterCounts['Earthquake'] || 0,
           householdFire: disasterCounts['Household Fire'] || 0,
           wildfire: disasterCounts['Wildfire'] || 0,
-          powerOutage: disasterCounts['Power Outage'] || 0,
+          tsunami: disasterCounts['Tsunami'] || 0,
           landslide: disasterCounts['Landslide'] || 0,
           other: disasterCounts['Other'] || 0,
-          })
-        );
-        setDistrictData(transformedData);
+        }));
+      setDistrictData(transformedData);
 
-        // Total disasters
-        const totalRes = await axios.get('http://localhost:7000/api/disasters/count');
-        setTotalDisasters(totalRes.data.totalDisasters || 0);
+      // Other stats
+      setTotalDisasters(totalRes.data.totalDisasters || 0);
+      setVolunteerCount(usersRes.data.volunteerCount || 0);
+      setVictimCount(usersRes.data.victimCount || 0);
+      setResourceCenterCount(resCenterRes.data.totalResourceCenters || 0);
 
-        // Users: volunteers & victims
-        const usersRes = await axios.get('http://localhost:7000/api/users/count/volunteers-victims');
-        const usersData = usersRes.data;
-        setVolunteerCount(usersData.volunteerCount || 0);
-        setVictimCount(usersData.victimCount || 0);
-
-        // Resource centers
-        const resCenterRes = await axios.get('http://localhost:7000/api/resource-centers/count');
-        setResourceCenterCount(resCenterRes.data.totalResourceCenters || 0);
-
-        // Optional: fetch yearly and current year chart data
-        const yearlyRes = await axios.get('http://localhost:7000/api/disasters/yearly-summary');
-        setYearlyDisasterData(yearlyRes.data || []);
-
-        const currentRes = await axios.get('http://localhost:7000/api/disasters/current-year-stats');
-        setCurrentYearStats(currentRes.data || []);
-
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      }
-    };
-
-    fetchData();
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    }
   }, []);
+
+  useEffect(() => {
+    // Initial data fetch
+    fetchData();
+
+    // Setup socket connection
+    const newSocket = io('http://localhost:7000', {
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+    
+    setSocket(newSocket);
+
+    // Listen for disaster updates
+    newSocket.on('disasterStatsUpdated', () => {
+      console.log('Received update notification - refreshing data...');
+      fetchData();
+    });
+
+    // Error handling
+    newSocket.on('connect_error', (err) => {
+      console.error('Socket connection error:', err.message);
+    });
+
+    // Cleanup on unmount
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [fetchData]);
 
   return (
     <div className="space-y-6">
@@ -192,7 +211,6 @@ const AdminDashboard = () => {
         </Card>
       </div>
 
-      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Bar Chart */}
         <Card>
@@ -211,7 +229,7 @@ const AdminDashboard = () => {
                   <Bar dataKey="earthquake" stackId="a" fill="#8B5CF6" />
                   <Bar dataKey="householdFire" stackId="a" fill="#F97316" />
                   <Bar dataKey="wildfire" stackId="a" fill="#DC2626" />
-                  <Bar dataKey="powerOutage" stackId="a" fill="#FACC15" />
+                  <Bar dataKey="tsunami" stackId="a" fill="#FACC15" />
                   <Bar dataKey="other" stackId="a" fill="#10B981" />
                 </BarChart>
               </ResponsiveContainer>
@@ -266,7 +284,7 @@ const AdminDashboard = () => {
                   <th className="text-center p-3 font-semibold text-purple-600">Earthquake</th>
                   <th className="text-center p-3 font-semibold text-orange-600">Household Fire</th>
                   <th className="text-center p-3 font-semibold text-red-600">Wildfire</th>
-                  <th className="text-center p-3 font-semibold text-yellow-600">Power Outage</th>
+                  <th className="text-center p-3 font-semibold text-yellow-600">Tsunami</th>
                   <th className="text-center p-3 font-semibold text-pink-600">Landslide</th>
                   <th className="text-center p-3 font-semibold text-green-600">Other</th>
                   <th className="text-center p-3 font-semibold text-gray-800">Total</th>
@@ -279,7 +297,7 @@ const AdminDashboard = () => {
                     district.earthquake +
                     district.householdFire +
                     district.wildfire +
-                    district.powerOutage +
+                    district.tsunami +
                     district.landslide +
                     district.other;
 
@@ -290,7 +308,7 @@ const AdminDashboard = () => {
                       <td className="p-3 text-center text-purple-600">{district.earthquake}</td>
                       <td className="p-3 text-center text-orange-600">{district.householdFire}</td>
                       <td className="p-3 text-center text-red-600">{district.wildfire}</td>
-                      <td className="p-3 text-center text-yellow-600">{district.powerOutage}</td>
+                      <td className="p-3 text-center text-yellow-600">{district.tsunami}</td>
                       <td className="p-3 text-center text-pink-600">{district.landslide}</td>
                       <td className="p-3 text-center text-green-600">{district.other}</td>
                       <td className="p-3 text-center font-semibold">{total}</td>
@@ -308,3 +326,5 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
+
