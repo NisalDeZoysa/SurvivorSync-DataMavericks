@@ -64,25 +64,22 @@ async function seedDatabase() {
 
   const resources = await Resource.findAll();
 
-  const resourceCentersData = [];
-  for (let i = 0; i < 10; i++) {
-    const resource = resources[i % resources.length];
-    const { lat, long } = getRandomLatLong(centerLat, centerLong, radiusInKm);
+  const resourceCentersData = [
+    { resourceId: 1, name: "Resource Center 1", lat: 6.9271, long: 79.8612, district: "Colombo", province: "Western", count: 85, contactNumber: "+94-11-5550100", used: 23 },
+    { resourceId: 2, name: "Resource Center 2", lat: 6.0326, long: 80.2170, district: "Galle", province: "Southern", count: 72, contactNumber: "+94-91-5550101", used: 30 },
+    { resourceId: 3, name: "Resource Center 3", lat: 9.6615, long: 80.0255, district: "Jaffna", province: "Northern", count: 64, contactNumber: "+94-21-5550102", used: 15 },
+    { resourceId: 4, name: "Resource Center 4", lat: 7.2906, long: 80.6337, district: "Kandy", province: "Central", count: 88, contactNumber: "+94-81-5550103", used: 40 },
+    { resourceId: 5, name: "Resource Center 5", lat: 6.1390, long: 80.1031, district: "Matara", province: "Southern", count: 49, contactNumber: "+94-41-5550104", used: 20 },
+    { resourceId: 6, name: "Resource Center 6", lat: 6.8449, long: 79.9042, district: "Gampaha", province: "Western", count: 91, contactNumber: "+94-33-5550105", used: 33 },
+    { resourceId: 7, name: "Resource Center 7", lat: 7.8731, long: 80.7718, district: "Anuradhapura", province: "North Central", count: 78, contactNumber: "+94-25-5550106", used: 18 },
+    { resourceId: 8, name: "Resource Center 8", lat: 8.3114, long: 80.4037, district: "Vavuniya", province: "Northern", count: 55, contactNumber: "+94-24-5550107", used: 12 },
+    { resourceId: 9, name: "Resource Center 9", lat: 6.8941, long: 81.0560, district: "Badulla", province: "Uva", count: 67, contactNumber: "+94-55-5550108", used: 21 },
+    { resourceId: 10, name: "Resource Center 10", lat: 7.3336, long: 80.3858, district: "Kurunegala", province: "North Western", count: 95, contactNumber: "+94-37-5550109", used: 45 },
+  ];
 
-    resourceCentersData.push({
-      resourceId: resource.id,
-      name: `Resource Center ${i + 1}`,
-      lat,
-      long,
-      district: `District ${Math.floor(i / 2) + 1}`, // Example districts
-      province: `Province ${Math.floor(i / 3) + 1}`, // Example provinces
-      count: Math.floor(Math.random() * 100) + 1,
-      contactNumber: `+1-555-010${i}`,
-      used: Math.floor(Math.random() * 50), // Randomly used resources
-    });
-  }
 
   await ResourceCenter.bulkCreate(resourceCentersData);
+  
 
   console.log('Seeding completed');
 
