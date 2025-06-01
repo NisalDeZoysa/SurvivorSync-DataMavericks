@@ -12,9 +12,10 @@ def search(query: str) -> dict:
     headers = {
         "Accept": "application/json",
         "Accept-Encoding": "gzip",
-        "X-Subscription-Token": BRAVE_API_KEY
+        "X-Subscription-Token": BRAVE_API_KEY,
+        
     }
-    params = {"q": query}
+    params = {"q": query, "count": 5}
     response = requests.get("https://api.search.brave.com/res/v1/web/search", headers=headers, params=params)
     return response.json()
 

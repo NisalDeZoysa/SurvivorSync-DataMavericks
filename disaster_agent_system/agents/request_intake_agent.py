@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 from typing import Any, AsyncIterable, Dict, Literal
 from flask import Flask, json, request, jsonify
 from dotenv import load_dotenv
@@ -56,7 +57,7 @@ class RequestIntakeAgent:
     )
     def __init__(self,tools):
         self.llm = ChatOllama(
-            model="llama3.1:8b"
+            model="qwen3:4b"
             ,temperature=0.8)
         self.tools = tools
 
@@ -70,61 +71,42 @@ class RequestIntakeAgent:
 
     async def invoke(self, query, sessionId) -> str:
         config = {'configurable': {'thread_id': sessionId}}
-        self.graph.invoke({'messages': [('user', query)]}, config)
-        return self.get_agent_response(config)
+        
+        # Properly invoke the agent and get the final state
+        final_state = await self.graph.ainvoke(
+            {"messages": [("user", query)]},
+            config=config
+        )
+        # Process the final state
+        return self.get_agent_response(final_state, config)
 
-    async def stream(self, query, sessionId) -> AsyncIterable[Dict[str, Any]]:
-        inputs = {'messages': [('user', query)]}
-        config = {'configurable': {'thread_id': sessionId}}
-
-        for item in self.graph.stream(inputs, config, stream_mode='values'):
-            message = item['messages'][-1]
-            if (
-                isinstance(message, AIMessage)
-                and message.tool_calls
-                and len(message.tool_calls) > 0
-            ):
-                yield {
-                    'is_task_complete': False,
-                    'require_user_input': False,
-                    'content': 'Looking up the exchange rates...',
-                }
-            elif isinstance(message, ToolMessage):
-                yield {
-                    'is_task_complete': False,
-                    'require_user_input': False,
-                    'content': 'Processing the exchange rates..',
-                }
-
-        yield self.get_agent_response(config)
-
-    def get_agent_response(self, config):
-        current_state = self.graph.get_state(config)
-        structured_response = current_state.values.get('structured_response')
-        if structured_response and isinstance(
-            structured_response, DisasterRequestResponseFormat
-        ):
-            if structured_response.status == 'pending':
-                return {
-                        'is_task_complete': False,
-                        'content': structured_response,
-                        }
-            elif structured_response.status == 'error':
-                return {
-                        'is_task_complete': False,
-                        'content': structured_response,
-                        }
-            elif structured_response.status == 'completed':
-                return {
-                        'is_task_complete': True,
-                        'content': structured_response,
-                        }
+    def get_agent_response(self, state, config):
+        # Extract the structured response from the final state
+        structured_response = state.get("structured_response")
+        
+        if structured_response and isinstance(structured_response, DisasterRequestResponseFormat):
+            return {
+                'is_task_complete': structured_response.status == 'completed',
+                'content': structured_response,
+            }
+        
+        # Handle cases where no proper response was generated
         return {
-                'is_task_complete': False,
-                'content': 'We are unable to process your request at the moment. Please try again.',
-                }
-
-    SUPPORTED_CONTENT_TYPES = ['text', 'text/plain']
+            'is_task_complete': False,
+            'content': DisasterRequestResponseFormat(
+                status="error",
+                request_id=0,
+                disaster_status="medium",
+                location=[0.0, 0.0],  # Default to zero coordinates
+                time=datetime.datetime.now().isoformat(),  # Current time in ISO format
+                type="unknown",  # Default type
+                affected_count=0,  # Default affected count
+                contact_info="Not applicable",  # Default contact info
+                image_description="Not applicable",  # Default image description
+                voice_description="Not applicable",
+                text_description="Not applicable"
+            )
+        }
 
 # Endpoint to serve the RAG Agent Card
 @app.get("/.well-known/agent.json")
@@ -187,7 +169,7 @@ def handle_task():
                 "id": task_id,
                 "status": "request-intake-agent-completed",
                 "agent": "request-intake-agent",
-                "initial_request": task_request.get("message", {}),
+                "previous_request": task_request.get("message", {}),
                 "next-agent": "request-verify-agent",
                 "message": "Please analyze the request details and verify the request using the tools.",
                 "request-intake-agent-response": [

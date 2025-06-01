@@ -14,7 +14,7 @@ blip_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image
 
 whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-tiny")
 whisper_model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-tiny").to(device)
-mcp = FastMCP("genetic")
+mcp = FastMCP("image-voice-caption")
 
 @mcp.tool()
 def image_voice_caption(image_path: str, voice_path: str) -> dict:

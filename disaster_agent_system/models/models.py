@@ -16,3 +16,11 @@ class DisasterRequestResponseFormat(BaseModel):
     image_description: str
     voice_description: str
     text_description: str
+    
+    
+class TipsResponseFormat(BaseModel):
+    """Respond to the user in this format."""
+
+    status: Literal['pending','completed', 'error'] = 'pending'
+    message: str = Field(..., description="Message containing relevant chatbot response")
+    contact_info: str = Field(..., description="Contact information for further assistance")

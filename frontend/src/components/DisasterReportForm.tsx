@@ -226,6 +226,8 @@ const DisasterReportForm: React.FC = () => {
           'Content-Type': 'multipart/form-data',
         },
         withCredentials: true,
+        // unlimited timeout
+        timeout: 0,
       });
 
       console.log("Submission response:", response.data);

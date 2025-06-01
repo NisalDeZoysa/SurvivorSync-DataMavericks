@@ -88,10 +88,15 @@ SERVERS = {
     # agents
     "request_intake_agent": "disaster_agent_system.agents.request_intake_agent",
     "request_verify_agent": "disaster_agent_system.agents.request_verify_agent",
+    "resource_tracking_agent": "disaster_agent_system.agents.resource_tracking_agent",
+    "resource_assign_agent": "disaster_agent_system.agents.resource_assign_agent",
+    "tips_agent": "disaster_agent_system.agents.tips_agent",
     #mcps
     "math_mcp": "disaster_agent_system.mcps.math",
     "request_count_mcp": "disaster_agent_system.mcps.request_count",
-    "brave_mcp": "disaster_agent_system.mcps.brave_search_mcp_server"
+    "brave_mcp": "disaster_agent_system.mcps.brave_search_mcp_server",
+    "imaage_voice_caption_mcp": "disaster_agent_system.mcps.image_voice_caption",
+    "resource_tracking_mcp": "disaster_agent_system.mcps.resource_track",
 }
 
 processes = {}

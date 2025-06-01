@@ -2,7 +2,7 @@ import datetime
 import mysql.connector
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("request-count")
+mcp = FastMCP("resource-track")
 
 @mcp.tool()
 def track_resources(lat: float, long: float, disasterId: int) -> list:

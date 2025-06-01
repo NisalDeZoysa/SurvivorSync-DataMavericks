@@ -62,7 +62,7 @@ class RequestVerifyAgent:
         }'''
     )
     def __init__(self,tools):
-        self.llm = ChatOllama(model="llama3.1:8b",temperature=0.8)
+        self.llm = ChatOllama(model="qwen3:4b",temperature=0.8)
         self.tools = tools
         self.tool_outputs = []
 
@@ -76,61 +76,35 @@ class RequestVerifyAgent:
 
     async def invoke(self, query, sessionId) -> str:
         config = {'configurable': {'thread_id': sessionId}}
-        # Invoke the graph with the user query
-        self.graph.invoke({'messages': [('user', query)]}, config)
-        return self.get_agent_response(config)
+        
+        # Properly invoke the agent and get the final state
+        final_state = await self.graph.ainvoke(
+            {"messages": [("user", query)]},
+            config=config
+        )
+        # Process the final state
+        return self.get_agent_response(final_state, config)
 
-    async def stream(self, query, sessionId) -> AsyncIterable[Dict[str, Any]]:
-        inputs = {'messages': [('user', query)]}
-        config = {'configurable': {'thread_id': sessionId}}
-
-        for item in self.graph.stream(inputs, config, stream_mode='values'):
-            message = item['messages'][-1]
-            if (
-                isinstance(message, AIMessage)
-                and message.tool_calls
-                and len(message.tool_calls) > 0
-            ):
-                yield {
-                    'is_task_complete': False,
-                    'content': 'Looking up the exchange rates...',
-                }
-            elif isinstance(message, ToolMessage):
-                yield {
-                    'is_task_complete': False,
-                    'content': 'Processing the exchange rates..',
-                }
-
-        yield self.get_agent_response(config)
-
-    def get_agent_response(self, config):
-        current_state = self.graph.get_state(config)
-        structured_response = current_state.values.get('structured_response')
-        if structured_response and isinstance(
-            structured_response, VerifiedtResponseFormat
-        ):
-            if structured_response.status == 'pending':
-                return {
-                        'is_task_complete': False,
-                        'content': structured_response,
-                        }
-            elif structured_response.status == 'error':
-                return {
-                        'is_task_complete': False,
-                        'content': structured_response,
-                        }
-            elif structured_response.status == 'completed':
-                return {
-                        'is_task_complete': True,
-                        'content': structured_response,
-                        }
+    def get_agent_response(self, state, config):
+        # Extract the structured response from the final state
+        structured_response = state.get("structured_response")
+        
+        if structured_response and isinstance(structured_response, VerifiedtResponseFormat):
+            return {
+                'is_task_complete': structured_response.status == 'completed',
+                'content': structured_response,
+            }
+        
+        # Handle cases where no proper response was generated
         return {
-                'is_task_complete': False,
-                'content': 'We are unable to process your request at the moment. Please try again.',
-                }
-
-    SUPPORTED_CONTENT_TYPES = ['text', 'text/plain']
-
+            'is_task_complete': False,
+            'content': VerifiedtResponseFormat(
+                help_needed_requests=[],
+                status="error",
+                verificaion_status="not_verified",
+                verification_message="Failed to generate proper response"
+            )
+        }
 
 
 
@@ -143,11 +117,6 @@ def get_agent_card():
 async def get_agent_response(task_request,task_id):
     # Extract user's message text from the request
     try:
-        # instructions = task_request["request_intake_agent.message"]
-        
-        # previous_agent_response = task_request.get("request-intake-agent-response", {})
-
-        
         intake_data = task_request["request_intake_agent"]
         instructions = intake_data["message"]
         
@@ -180,16 +149,11 @@ async def get_agent_response(task_request,task_id):
         # Run a prompt that uses the tools
         print("Sending prompt to agent...")
         
-        full_instructions = f"{instructions}\n\nPrevious agent response: {json.dumps(previous_agent_response)}"
+        full_instructions = f"{instructions}\n\n Previous agent response: {json.dumps(previous_agent_response)}"
         print(f"Agent instructions: {full_instructions}")
         
         response = await agent.invoke(full_instructions, task_id)
         return response
-    
-        # instructions = f"instructions: {instructions}" + f" Previous agent response: {previous_agent_response}"
-        # print(f"Agent instructions: {instructions}")
-        # response = await agent.invoke(instructions, task_id)
-        # return response
         
     except Exception as e:
         print(f"Error processing task {task_id}: {e}")
@@ -215,14 +179,9 @@ def handle_task():
         task_id = task_request.get("id", str(uuid.uuid4()))
 
     try:
-        # Run the async agent response using asyncio
-        # response = asyncio.run(get_agent_response(task_request, task_id))
-        
         agent_response = asyncio.run(get_agent_response(task_request, task_id))
         
         print(f"Request Verify Agent response for task {task_id}: {agent_response}")
-        # response_format = response['content']
-        # response_format_dict = response_format.model_dump()
         
         response_content = agent_response['content']
         response_format_dict = response_content.model_dump()
@@ -234,8 +193,7 @@ def handle_task():
                 "id": task_id,
                 "status": "request-verify-agent-completed",
                 "agent" : "request-verify-agent",
-                # "initial_request": task_request.get("request-intake-agent-response", {}),
-                "initial_request": task_request["request_intake_agent"].get("message", {}),
+                "previous_request": task_request["request_intake_agent"]["request-intake-agent-response"].get("response", {}),
                 "next-agent": "task-prioritize-agent",
                 "message": "request verify agent has verified the request. now your task is to track the resources and output the available resources list.",
                 "request-verify-agent-response": [
@@ -252,24 +210,23 @@ def handle_task():
         target_agent_url = RESOURCE_TRACKING_AGENT
         target_send_url = f"{target_agent_url}/tasks/send"
 
-        # try:
-        #     response = requests.post(target_send_url, json=response_task, timeout=60)
-        #     response.raise_for_status()
-        # except requests.exceptions.RequestException as e:
-        #     print(f"Error forwarding task {task_id}: {e}")
-        #     error_response_task = {
-        #         "id": task_id,
-        #         "agent": "request-verify-agent",
-        #         "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
-        #         "messages": [
-        #             task_request.get("message", {}),
-        #             {
-        #                 "role": "request-verify-agent",
-        #                 "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
-        #             }
-        #         ]
-        #     }
-        #     return jsonify(error_response_task), 502
+        try:
+            response = requests.post(target_send_url, json=response_task, timeout=60)
+        except requests.exceptions.RequestException as e:
+            print(f"Error forwarding task {task_id}: {e}")
+            error_response_task = {
+                "id": task_id,
+                "agent": "request-verify-agent",
+                "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
+                "messages": [
+                    task_request.get("message", {}),
+                    {
+                        "role": "request-verify-agent",
+                        "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+                    }
+                ]
+            }
+            return jsonify(error_response_task), 502
 
         return jsonify(response_task.json())
 
