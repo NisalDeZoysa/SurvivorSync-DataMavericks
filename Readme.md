@@ -1,6 +1,8 @@
 # SurvivorSync-DataMavericks
 
-![SurvivorSync Logo](https://img.icons8.com/color/48/000000/survivor.png)  
+<!-- get the logo which is inside the project -->
+
+![SurvivorSync Logo](/frontend/src/assets/logonew.png)  
 A robust disaster management platform with modular architecture.
 
 ---
