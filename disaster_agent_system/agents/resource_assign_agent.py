@@ -298,7 +298,7 @@ async def get_agent_response(task_request, task_id):
 @app.post("/tasks/send")
 def handle_task():
     NEXT_AGENT_URL = "http://localhost:5014"  # URL of next agent (e.g., notification agent)
-    
+    target_agent_url = NEXT_AGENT_URL
     task_request = request.get_json()
     if not task_request:
         return jsonify({"error": "Invalid request"}), 400
@@ -352,10 +352,16 @@ def handle_task():
         error_response_task = {
             "resource-assign-agent": {
                 "id": task_id,
-                "status": "resource-assign-agent-failed",
+                "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
                 "agent": "resource-assign-agent",
-                "error": str(e),
-                "message": f"Resource assignment failed: {str(e)}"
+                "message":[
+                    task_request.get("message",{}),
+                    {
+                        "role": "resource-assign-agent",
+                        "error": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+                    }
+                ]
+                
             }
         }
         return jsonify(error_response_task), 500

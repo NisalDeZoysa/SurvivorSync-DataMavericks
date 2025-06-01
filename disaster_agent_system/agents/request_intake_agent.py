@@ -174,18 +174,16 @@ def handle_task():
         return jsonify({"error": "Invalid request"}), 400
 
     task_id = task_request.get("id", str(uuid.uuid4()))  # Use provided or generate new ID
-
     try:
         # Run the async agent response using asyncio
         response = asyncio.run(get_agent_response(task_request, task_id))
         response_format = response['content']
         response_format_dict = response_format.model_dump()
-
         # Formulate A2A response Task
         response_task = {
             "request_intake_agent":{
                 "id": task_id,
-                "status": "request-intake-agent-completed",
+                "status": "success",
                 "agent": "request-intake-agent",
                 "initial_request": task_request.get("message", {}),
                 "next-agent": "request-verify-agent",
@@ -196,60 +194,66 @@ def handle_task():
                     "response": response_format_dict,
                 }
             ]
-            }
-        }
+            },
+        }  
         print(f"Forwarding task {task_id} response is {response_task}")
         target_agent_url = REQUEST_VERIFY_AGENT
         target_send_url = f"{target_agent_url}/tasks/send"
-
+        response = {}
         try:
             if response_task.get("request_intake_agent", {}).get("next-agent") == "request-verify-agent":
-               response = requests.post(target_send_url, json=response_task, timeout=60)
-               response.raise_for_status()
+               response = requests.post(target_send_url, json=response_task, timeout=300)        
             else:
-                print(f"Next agent is not request-verify-agent, skipping forwarding to {target_agent_url}")
-                return jsonify(response_task), 200 
+                print(f"Skipping forwarding to {target_agent_url} as next-agent is not request-verify-agent")
             
         except requests.exceptions.RequestException as e:
             print(f"Error forwarding task {task_id}: {e}")
-            error_response_task = {
-                "request_intake_agent": {
-                "id": task_id,
-                "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
-                "role" : "request-intake-agent",
-                "messages": [
-                    task_request.get("message", {}),
-                    {
-                        "role": "request-intake-agent",
-                        "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+            response = {
+                "request_verify_agent": {
+                    "id": task_id,
+                    "status": "error",
+                    "error_message": f"Failed to contact target agent at {target_agent_url}. Details: {e}",
+                    "agent" : "request-verify-agent",
+                    "request-verify-agent-response": [
+                        task_request.get("message", {}),
+                        {
+                            "role": "request-verify-agent",
+                            "response": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+                        }
+                    ]
                     }
-                ]
-                }
             }
-            return jsonify(error_response_task), 502
-
-        return jsonify(response_task)
+        print ("\n Respond from Request verify Agent: \n", response)
 
     except Exception as e:
         print(f"Agent error: {e}")
-        error_response_task ={
+        response_task ={
             "request_intake_agent":  {
-            "id": task_id,
-            "status": {"state": "failed", "reason": f"Agent processing failed: {e}"},
-            "role": "request-intake-agent",
-            "messages": [
-                task_request.get("message", {}),
-                {
-                    "role": "request-intake-agent",
-                    "parts": [{"text": f"RAG agent failed. Details: {e}"}]
-                }
-            ]
+                "id": task_id,
+                "status": "error",
+                "error_message": f"Agent processing failed: {e}",
+                "agent": "request-intake-agent",
+                "request-intake-agent-response": [
+                    task_request.get("message", {}),
+                    {
+                        "role": "request-intake-agent",
+                        "response": [{"text": f"RAG agent failed. Details: {e}"}]
+                    }
+                ]
             }
         }
-        return jsonify(error_response_task), 500
-
-
-
+        print(f"Error processing task {task_id} with agent intake: {e}")
+        response = {}    
+    # Ensure response is a dict before unpacking
+    if not isinstance(response, dict):
+        try:
+            response = response.json()
+        except Exception:
+            response = {}
+    response_task = {**response_task, **response}
+    return jsonify(response_task)
+        
+        
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5010))
     print(f"Request Intake Agent server starting on port {port}")

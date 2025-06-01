@@ -20,14 +20,13 @@ llm = ChatOllama(
 app = Flask(__name__)
 
 REQUEST_INTAKE_AGENT = "http://localhost:5010"
-CHAT_BOT_AGENT = "http://localhost:5002"  # URL for the Chat Bot Agent
 TIPS_AGENT = "http://localhost:5003"  # URL for the Tips Agent
-SEARCH_AGENT = "http://localhost:5001"  # URL for the Search Agent
+
 
 # Agent Card metadata for the Gateway Agent
 AGENT_CARD = {
     "name": "GatewayAgent",
-    "description": "Routes requests to either a REQUEST_INTAKE_AGENT, CHAT_BOT_AGENT, TIPS_AGENT, or SEARCH_AGENT using AI.",
+    "description": "Routes requests to either a REQUEST_INTAKE_AGENT or TIPS_AGENT,using AI.",
     "url": "http://localhost:5005",  # base URL where this gateway is hosted
     "version": "1.1",
     "capabilities": {
@@ -39,16 +38,13 @@ AGENT_CARD = {
 # --- New Function: OpenAI Routing Logic ---
 def route_query_with_ollama(user_text: str) -> str:
     prompt = f"""
-You are an intelligent request router. You need to decide whether to route a user's disaster request to a 'REQUEST_INTAKE_AGENT', 'CHAT_BOT_AGENT', 'TIPS_AGENT', or 'SEARCH_AGENT'.
+You are an intelligent request router. You need to decide whether to route a user's disaster request to a 'REQUEST_INTAKE_AGENT', or 'TIPS_AGENT'.
 - The 'REQUEST_INTAKE_AGENT' handles initial intake of disaster requests.
-- The 'CHAT_BOT_AGENT' is a conversational agent that can answer questions and provide information.
 - The 'TIPS_AGENT' provides safety tips and advice for disaster preparedness.
-- The 'SEARCH_AGENT' answers questions using a general web search engine. Use this agent for general knowledge questions, current events, or anything not specifically tied to the local knowledge base.
-
 User query: "{user_text}"
 
 Based on the query, which agent is more appropriate? If the user query contain data of a disaster and affected count value is there then pick the 'REQUEST_INTAKE_AGENT'.
-Respond with ONLY 'REQUEST_INTAKE_AGENT', 'CHAT_BOT_AGENT', 'TIPS_AGENT', 'SEARCH_AGENT'.
+Respond with ONLY 'REQUEST_INTAKE_AGENT', or 'TIPS_AGENT'.
 """
     try:
         messages=[
@@ -62,19 +58,16 @@ Respond with ONLY 'REQUEST_INTAKE_AGENT', 'CHAT_BOT_AGENT', 'TIPS_AGENT', 'SEARC
         
         if choice == 'REQUEST_INTAKE_AGENT':
             return REQUEST_INTAKE_AGENT
-        elif choice == 'CHAT_BOT_AGENT':
-            return CHAT_BOT_AGENT
         elif choice == 'TIPS_AGENT':
             return TIPS_AGENT
-        elif choice == 'SEARCH_AGENT':
-            return SEARCH_AGENT
         else:
-            print(f"Unknown agent choice: {choice}. Defaulting to Search Agent.")
-            return SEARCH_AGENT
+            print(f"Unexpected Ollama response: {choice}. Defaulting to TIPS_AGENT.")
+            return TIPS_AGENT
+        
             
     except Exception as e:
         print(f"Error calling Ollama for routing: {e}. Defaulting to Search.")
-        return SEARCH_AGENT
+        return TIPS_AGENT
 
 # Endpoint to serve the Gateway Agent Card
 @app.get("/.well-known/agent.json")
@@ -110,7 +103,7 @@ def handle_task():
     target_send_url = f"{target_agent_url}/tasks/send"
     try:
         response = requests.post(target_send_url, json=task_request, timeout=60)
-        response.raise_for_status()
+        # response.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f"Error forwarding task {task_id} to {target_agent_url}: {e}") # Log error
         # Return an error task response to the original client
@@ -126,10 +119,12 @@ def handle_task():
                 }
             ]
         }
-        return jsonify(error_response_task), 502 # Bad Gateway
+        
+        response = jsonify(error_response_task)
+        # return jsonify(error_response_task), 502 # Bad Gateway
     
     # Return the response from the downstream agent
-    print(f"Received response for task {task_id} from {target_agent_url}")
+    print(f"Received response for task {task_id} from {target_agent_url} with response {response}")
     return jsonify(response.json())
 
 
