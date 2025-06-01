@@ -3,6 +3,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Search, Phone, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import ambulance from '@/assets/ambulance.jpg';
+import police from '@/assets/police.jpg';
+// import medical from '@/assets/medical.jpg';
+import red_cross from '@/assets/red_cross.jpg';
 
 interface Contact {
   id: string;
