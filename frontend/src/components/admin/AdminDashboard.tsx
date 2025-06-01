@@ -149,12 +149,6 @@ const [yearlyDisasterData, setYearlyDisasterData] = useState([]);
       fetchData();
     });
 
-    newSocket.on('resourceCenterChange', () => {
-      console.log('resource Center Changed:');   
-      // Optionally, you can fetch data again or update state directly    
-      fetchData();
-    });
-
     // Error handling
     newSocket.on('connect_error', (err) => {
       console.error('Socket connection error:', err.message);
@@ -232,8 +226,6 @@ const [yearlyDisasterData, setYearlyDisasterData] = useState([]);
                 <BarChart data={yearlyDisasterData}>
                   //add a legend
                   <ChartTooltip content={<ChartTooltipContent />} />
-
-                  
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="year" />
                   <YAxis />

@@ -89,6 +89,7 @@ const ResourceAllocation = () => {
       try {
         const response = await fetch('http://localhost:7000/api/resource-centers/summary');
         const data = await response.json();
+        console.log('Fetched resource centers:', data);
         // Convert `id` to string
         const formatted = data.map((item: any) => ({
           ...item,
@@ -345,7 +346,7 @@ const ResourceAllocation = () => {
                 </TableHeader>
                 <TableBody>
                   {resourceCenters.map((center) => {
-                    const capacityPercentage = (center.currentStock / center.capacity) * 100;
+                    const capacityPercentage = (center.used / center.count) * 100;
                     return (
                       <TableRow key={center.id}>
                         <TableCell className="font-medium">{center.name}</TableCell>
@@ -359,7 +360,7 @@ const ResourceAllocation = () => {
                         <TableCell>
                           <div className="space-y-1">
                             <div className="flex justify-between text-sm">
-                              <span>{center.currentStock}/{center.capacity}</span>
+                              <span>{center.used}/{center.count}</span>
                               <span className={`px-1 py-0.5 rounded text-xs ${getCapacityColor(capacityPercentage)}`}>
                                 {capacityPercentage.toFixed(0)}%
                               </span>
