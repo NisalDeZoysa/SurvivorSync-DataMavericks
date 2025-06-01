@@ -1,33 +1,78 @@
-Flask Run - flask --app hello run
+# SurvivorSync-DataMavericks
 
-Link to Dataset : https://drive.google.com/file/d/1LNFukryIXuhc7wYPulh8OnVgXmpJx4WC/view?usp=sharing
+![SurvivorSync Logo](https://img.icons8.com/color/48/000000/survivor.png)  
+A robust disaster management platform with modular architecture.
 
-100 Epoch CNN - https://drive.google.com/file/d/1we840-FGUCojwDFbYTrDANlMHscfmmct/view?usp=sharing
+---
 
-https://drive.google.com/file/d/12YAeXm8yAcG8F1owbzuSHue_NPNqE-fz/view?usp=sharing
+## 🏗️ Project Structure
 
+```
+SurvivorSync-DataMavericks/
+│
+├── frontend/
+├── backend/
+└── disaster_agent_system/
+```
 
+---
 
+## 🚀 Getting Started
 
+### 1. Frontend
 
-https://drive.google.com/file/d/12YAeXm8yAcG8F1owbzuSHue_NPNqE-fz/view?usp=sharing
+![Frontend Icon](https://img.icons8.com/color/48/000000/react-native.png)
 
-commit graph - git log --oneline --graph --decorate --all
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-Proxy
+---
 
-# check proxy
-git config --global --get http.proxy
+### 2. Backend
 
-# unset proxy 
-git config --global --unset http.proxy
-git config --global --unset https.proxy
+![Backend Icon](https://img.icons8.com/color/48/000000/nodejs.png)
 
-# set proxy
-git config --global http.proxy 10.50.225.222:3128
-git config --global https.proxy 10.50.225.222:3128
+```bash
+cd backend
+npm install
+npm run dev
+```
 
+---
 
-netstat -ano | findstr <port_number>
+### 3. Disaster Agent System
 
+![Agent Icon](https://img.icons8.com/color/48/000000/artificial-intelligence.png)
 
+```bash
+# From the main project directory
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies (if any)
+pip install -r disaster_agent_system/requirements.txt
+
+# Run the agent system
+python -m disaster_agent_system.main
+```
+
+---
+
+## 📦 Requirements
+
+- Node.js & npm (for frontend & backend)
+- Python 3.8+ (for agent system)
+- Virtualenv (recommended for Python)
+
+---
+
+## 📝 License
+
+MIT
+
+---
+
+> Made with ❤️ by DataMavericks
