@@ -8,12 +8,12 @@ async function seedDatabase() {
   await Disaster.bulkCreate([
     { name: 'Flood', type: 'natural', severity: 'high', details: 'Severe flooding due to heavy rains and river overflow' },
     { name: 'Earthquake', type: 'natural', severity: 'critical', details: 'Strong earthquake causing widespread damage' },
-    { name: 'Household Fire', type: 'man-made', severity: 'medium', details: 'Fire incident in residential buildings' },
+    { name: 'HouseholdFire', type: 'man-made', severity: 'medium', details: 'Fire incident in residential buildings' },
     { name: 'Wildfire', type: 'natural', severity: 'high', details: 'Forest fire spreading rapidly due to dry conditions' },
     //{ name: 'Tornado', type: 'natural', severity: 'high', details: 'Tornado causing destruction in affected areas' },
     //{ name: 'Chemical Spill', type: 'man-made', severity: 'critical', details: 'Hazardous chemical leakage in industrial zone' },
     { name: 'Tsunami', type: 'natural', severity: 'medium', details: 'Severe tsunami causing widespread damage' },
-    //{ name: 'Cyber Attack', type: 'man-made', severity: 'high', details: 'Malicious cyber attack on critical infrastructure' },
+    { name: 'Landslide', type: 'natural', severity: 'high', details: 'Landslide' },
     { name: 'Other', type: 'natural', severity: 'medium', details: 'other' },
     //{ name: 'Industrial Fire', type: 'man-made', severity: 'high', details: 'Fire outbreak in factory or industrial plant' },
   ]);
@@ -71,10 +71,14 @@ async function seedDatabase() {
 
     resourceCentersData.push({
       resourceId: resource.id,
+      name: `Resource Center ${i + 1}`,
       lat,
       long,
+      district: `District ${Math.floor(i / 2) + 1}`, // Example districts
+      province: `Province ${Math.floor(i / 3) + 1}`, // Example provinces
       count: Math.floor(Math.random() * 100) + 1,
       contactNumber: `+1-555-010${i}`,
+      used: Math.floor(Math.random() * 50), // Randomly used resources
     });
   }
 

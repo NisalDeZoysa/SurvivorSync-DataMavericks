@@ -7,6 +7,11 @@ const ResourceCenter = sequelize.define('ResourceCenter', {
     primaryKey: true,
     autoIncrement: true,
   },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  
   resourceId: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -23,9 +28,21 @@ const ResourceCenter = sequelize.define('ResourceCenter', {
     type: DataTypes.FLOAT,
     allowNull: false,
   },
+  district:{
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  province: { 
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   count: {
     type: DataTypes.INTEGER,
     allowNull: false,
+  },
+  used: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,  
   },
   contactNumber: {
     type: DataTypes.STRING,

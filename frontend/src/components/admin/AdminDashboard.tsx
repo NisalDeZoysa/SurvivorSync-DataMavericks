@@ -32,13 +32,14 @@ import {
   MapPin,
   Calendar,
 } from 'lucide-react';
+import { l } from 'node_modules/@tanstack/query-core/build/modern/hydration-mKPlgzt9';
 
 const chartConfig = {
   flood: { color: '#3B82F6' },
   earthquake: { color: '#EF4444' },
   householdFire: { color: '#F59E0B' },
   wildfire: { color: '#10B981' },
-  powerOutage: { color: '#8B5CF6' },
+  tsunami: { color: '#8B5CF6' },
   landslide: { color: '#A855F7' },
   other: { color: '#6B7280' },
 };
@@ -96,9 +97,10 @@ const [yearlyDisasterData, setYearlyDisasterData] = useState([]);
           year,
           flood: counts['Flood'] || 0,
           earthquake: counts['Earthquake'] || 0,
-          householdFire: counts['Household Fire'] || 0,
+          householdFire: counts['HouseholdFire'] || 0,
           wildfire: counts['Wildfire'] || 0,
           tsunami: counts['Tsunami'] || 0,
+          landslide: counts['Landslide'] || 0,
           other: counts['Other'] || 0,
         }));
       setYearlyDisasterData(formattedYearlyData);
@@ -109,7 +111,7 @@ const [yearlyDisasterData, setYearlyDisasterData] = useState([]);
           district: districtName.replace(' District', ''),
           flood: disasterCounts['Flood'] || 0,
           earthquake: disasterCounts['Earthquake'] || 0,
-          householdFire: disasterCounts['Household Fire'] || 0,
+          householdFire: disasterCounts['HouseholdFire'] || 0,
           wildfire: disasterCounts['Wildfire'] || 0,
           tsunami: disasterCounts['Tsunami'] || 0,
           landslide: disasterCounts['Landslide'] || 0,
@@ -144,6 +146,12 @@ const [yearlyDisasterData, setYearlyDisasterData] = useState([]);
     // Listen for disaster updates
     newSocket.on('disasterStatsUpdated', () => {
       console.log('Received update notification - refreshing data...');
+      fetchData();
+    });
+
+    newSocket.on('resourceCenterChange', () => {
+      console.log('resource Center Changed:');   
+      // Optionally, you can fetch data again or update state directly    
       fetchData();
     });
 
@@ -222,15 +230,20 @@ const [yearlyDisasterData, setYearlyDisasterData] = useState([]);
             <ChartContainer config={chartConfig} className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={yearlyDisasterData}>
+                  //add a legend
+                  <ChartTooltip content={<ChartTooltipContent />} />
+
+                  
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="year" />
                   <YAxis />
                   <Bar dataKey="flood" stackId="a" fill="#3B82F6" />
-                  <Bar dataKey="earthquake" stackId="a" fill="#8B5CF6" />
-                  <Bar dataKey="householdFire" stackId="a" fill="#F97316" />
-                  <Bar dataKey="wildfire" stackId="a" fill="#DC2626" />
-                  <Bar dataKey="tsunami" stackId="a" fill="#FACC15" />
-                  <Bar dataKey="other" stackId="a" fill="#10B981" />
+                  <Bar dataKey="earthquake" stackId="a" fill="#EF4444" />
+                  <Bar dataKey="householdFire" stackId="a" fill="#F59E0B" />
+                  <Bar dataKey="wildfire" stackId="a" fill="#10B981" />
+                  <Bar dataKey="tsunami" stackId="a" fill="#8B5CF6" />
+                  <Bar dataKey="landslide" stackId="a" fill="#A855F7" />
+                  <Bar dataKey="other" stackId="a" fill="#6B7280" />
                 </BarChart>
               </ResponsiveContainer>
             </ChartContainer>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,13 +20,12 @@ interface Resource {
 }
 
 interface ResourceCenter {
+  currentStock: ReactNode;
   id: string;
   name: string;
   location: string;
-  district: string;
-  capacity: number;
-  currentStock: number;
-  manager: string;
+  count: number;
+  used: number;
   contact: string;
 }
 
@@ -60,37 +59,22 @@ const mockResources: Resource[] = [
   }
 ];
 
-const mockResourceCenters: ResourceCenter[] = [
-  {
-    id: '1',
-    name: 'Colombo Central Resource Hub',
-    location: 'Colombo 07',
-    district: 'Colombo',
-    capacity: 10000,
-    currentStock: 7500,
-    manager: 'Priya Wickramasinghe',
-    contact: '011-2345678'
-  },
-  {
-    id: '2',
-    name: 'Kandy Emergency Center',
-    location: 'Kandy City',
-    district: 'Kandy',
-    capacity: 5000,
-    currentStock: 3200,
-    manager: 'Sunil Rajapaksa',
-    contact: '081-2234567'
-  }
-];
 
 const ResourceAllocation = () => {
   const [resources, setResources] = useState<Resource[]>(mockResources);
-  const [resourceCenters, setResourceCenters] = useState<ResourceCenter[]>(mockResourceCenters);
+  const [resourceCenters, setResourceCenters] = useState<ResourceCenter[]>([]);
   const [isResourceDialogOpen, setIsResourceDialogOpen] = useState(false);
-  const [isCenterDialogOpen, setIsCenterDialogOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [editingCenter, setEditingCenter] = useState<ResourceCenter | null>(null);
-  
+  const [centerForm, setCenterForm] = useState<Omit<ResourceCenter, 'id'>>({
+    currentStock: 0,
+    name: '',
+    location: '',
+    count: 0,
+    used: 0,
+    contact: ''
+  });
+
   const [resourceForm, setResourceForm] = useState({
     name: '',
     type: '',
@@ -98,16 +82,29 @@ const ResourceAllocation = () => {
     unit: '',
     status: 'available' as 'available' | 'allocated' | 'maintenance'
   });
+  const [isCenterDialogOpen, setIsCenterDialogOpen] = useState(false);
 
-  const [centerForm, setCenterForm] = useState({
-    name: '',
-    location: '',
-    district: '',
-    capacity: 0,
-    currentStock: 0,
-    manager: '',
-    contact: ''
-  });
+  useEffect(() => {
+    const fetchCenters = async () => {
+      try {
+        const response = await fetch('http://localhost:7000/api/resource-centers/summary');
+        const data = await response.json();
+        // Convert `id` to string
+        const formatted = data.map((item: any) => ({
+          ...item,
+          id: String(item.id)
+        }));
+        setResourceCenters(formatted);
+      } catch (error) {
+        console.error('Failed to fetch resource centers:', error);
+        toast.error('Failed to load resource centers');
+      }
+    };
+
+    fetchCenters();
+  }, []);
+
+
 
   const handleAddResource = () => {
     const newResource: Resource = {
@@ -115,7 +112,7 @@ const ResourceAllocation = () => {
       ...resourceForm,
       lastUpdated: new Date().toISOString().split('T')[0]
     };
-    
+
     setResources([...resources, newResource]);
     setResourceForm({ name: '', type: '', quantity: 0, unit: '', status: 'available' });
     setIsResourceDialogOpen(false);
@@ -124,13 +121,13 @@ const ResourceAllocation = () => {
 
   const handleEditResource = () => {
     if (!editingResource) return;
-    
+
     const updatedResources = resources.map(resource =>
       resource.id === editingResource.id
         ? { ...resource, ...resourceForm, lastUpdated: new Date().toISOString().split('T')[0] }
         : resource
     );
-    
+
     setResources(updatedResources);
     setEditingResource(null);
     setIsResourceDialogOpen(false);
@@ -147,20 +144,16 @@ const ResourceAllocation = () => {
       id: Date.now().toString(),
       ...centerForm
     };
-    
     setResourceCenters([...resourceCenters, newCenter]);
-    setCenterForm({ name: '', location: '', district: '', capacity: 0, currentStock: 0, manager: '', contact: '' });
     setIsCenterDialogOpen(false);
     toast.success('Resource center added successfully');
   };
 
   const handleEditCenter = () => {
     if (!editingCenter) return;
-    
     const updatedCenters = resourceCenters.map(center =>
       center.id === editingCenter.id ? { ...center, ...centerForm } : center
     );
-    
     setResourceCenters(updatedCenters);
     setEditingCenter(null);
     setIsCenterDialogOpen(false);
@@ -193,17 +186,23 @@ const ResourceAllocation = () => {
     if (center) {
       setEditingCenter(center);
       setCenterForm({
+        currentStock: center.currentStock,
         name: center.name,
         location: center.location,
-        district: center.district,
-        capacity: center.capacity,
-        currentStock: center.currentStock,
-        manager: center.manager,
+        count: center.count,
+        used: center.used,
         contact: center.contact
       });
     } else {
       setEditingCenter(null);
-      setCenterForm({ name: '', location: '', district: '', capacity: 0, currentStock: 0, manager: '', contact: '' });
+      setCenterForm({
+        currentStock: 0,
+        name: '',
+        location: '',
+        count: 0,
+        used: 0,
+        contact: ''
+      });
     }
     setIsCenterDialogOpen(true);
   };
@@ -235,7 +234,7 @@ const ResourceAllocation = () => {
           <TabsTrigger value="resources">Resources</TabsTrigger>
           <TabsTrigger value="centers">Resource Centers</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="resources" className="space-y-4">
           <div className="flex justify-between items-center">
             <div>
@@ -247,7 +246,7 @@ const ResourceAllocation = () => {
               Add Resource
             </Button>
           </div>
-          
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -310,7 +309,7 @@ const ResourceAllocation = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="centers" className="space-y-4">
           <div className="flex justify-between items-center">
             <div>
@@ -322,7 +321,7 @@ const ResourceAllocation = () => {
               Add Resource Center
             </Button>
           </div>
-          
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -339,9 +338,7 @@ const ResourceAllocation = () => {
                   <TableRow>
                     <TableHead>Center Name</TableHead>
                     <TableHead>Location</TableHead>
-                    <TableHead>District</TableHead>
                     <TableHead>Capacity Usage</TableHead>
-                    <TableHead>Manager</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -358,7 +355,7 @@ const ResourceAllocation = () => {
                             {center.location}
                           </div>
                         </TableCell>
-                        <TableCell>{center.district}</TableCell>
+
                         <TableCell>
                           <div className="space-y-1">
                             <div className="flex justify-between text-sm">
@@ -368,14 +365,14 @@ const ResourceAllocation = () => {
                               </span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-blue-600 h-2 rounded-full" 
+                              <div
+                                className="bg-blue-600 h-2 rounded-full"
                                 style={{ width: `${capacityPercentage}%` }}
                               ></div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{center.manager}</TableCell>
+
                         <TableCell>{center.contact}</TableCell>
                         <TableCell>
                           <div className="flex gap-2">
@@ -478,8 +475,8 @@ const ResourceAllocation = () => {
                 <option value="maintenance">Maintenance</option>
               </select>
             </div>
-            <Button 
-              onClick={editingResource ? handleEditResource : handleAddResource} 
+            <Button
+              onClick={editingResource ? handleEditResource : handleAddResource}
               className="w-full"
             >
               {editingResource ? 'Update Resource' : 'Add Resource'}
@@ -496,9 +493,12 @@ const ResourceAllocation = () => {
               {editingCenter ? 'Edit Resource Center' : 'Add New Resource Center'}
             </DialogTitle>
             <DialogDescription>
-              {editingCenter ? 'Update resource center information' : 'Add a new resource storage and distribution center'}
+              {editingCenter
+                ? 'Update the resource center information.'
+                : 'Fill in the details to create a new resource center.'}
             </DialogDescription>
           </DialogHeader>
+
           <div className="space-y-4">
             <div>
               <Label htmlFor="center-name">Center Name</Label>
@@ -509,77 +509,65 @@ const ResourceAllocation = () => {
                 placeholder="Enter center name"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="center-location">Location</Label>
-                <Input
-                  id="center-location"
-                  value={centerForm.location}
-                  onChange={(e) => setCenterForm({ ...centerForm, location: e.target.value })}
-                  placeholder="Enter location"
-                />
-              </div>
-              <div>
-                <Label htmlFor="center-district">District</Label>
-                <select
-                  id="center-district"
-                  value={centerForm.district}
-                  onChange={(e) => setCenterForm({ ...centerForm, district: e.target.value })}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">Select District</option>
-                  <option value="Colombo">Colombo</option>
-                  <option value="Kandy">Kandy</option>
-                  <option value="Galle">Galle</option>
-                  <option value="Jaffna">Jaffna</option>
-                  <option value="Matara">Matara</option>
-                </select>
-              </div>
+
+            <div>
+              <Label htmlFor="center-location">Location</Label>
+              <Input
+                id="center-location"
+                value={centerForm.location}
+                onChange={(e) => setCenterForm({ ...centerForm, location: e.target.value })}
+                placeholder="Enter location"
+              />
             </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="center-capacity">Capacity</Label>
+                <Label htmlFor="center-count">Total Resources</Label>
                 <Input
-                  id="center-capacity"
+                  id="center-count"
                   type="number"
-                  value={centerForm.capacity}
-                  onChange={(e) => setCenterForm({ ...centerForm, capacity: parseInt(e.target.value) || 0 })}
-                  placeholder="Total capacity"
+                  value={centerForm.count}
+                  onChange={(e) =>
+                    setCenterForm({ ...centerForm, count: parseInt(e.target.value) || 0 })
+                  }
+                  placeholder="Total available resources"
                 />
               </div>
+
               <div>
-                <Label htmlFor="center-stock">Current Stock</Label>
+                <Label htmlFor="center-used">Used Resources</Label>
                 <Input
-                  id="center-stock"
+                  id="center-used"
                   type="number"
-                  value={centerForm.currentStock}
-                  onChange={(e) => setCenterForm({ ...centerForm, currentStock: parseInt(e.target.value) || 0 })}
-                  placeholder="Current stock level"
+                  value={centerForm.used}
+                  onChange={(e) =>
+                    setCenterForm({ ...centerForm, used: parseInt(e.target.value) || 0 })
+                  }
+                  placeholder="Resources currently used"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="center-manager">Manager</Label>
-                <Input
-                  id="center-manager"
-                  value={centerForm.manager}
-                  onChange={(e) => setCenterForm({ ...centerForm, manager: e.target.value })}
-                  placeholder="Manager name"
-                />
-              </div>
-              <div>
-                <Label htmlFor="center-contact">Contact</Label>
-                <Input
-                  id="center-contact"
-                  value={centerForm.contact}
-                  onChange={(e) => setCenterForm({ ...centerForm, contact: e.target.value })}
-                  placeholder="Contact number"
-                />
-              </div>
+
+            <div>
+              <Label htmlFor="center-contact">Contact</Label>
+              <Input
+                id="center-contact"
+                value={centerForm.contact}
+                onChange={(e) => setCenterForm({ ...centerForm, contact: e.target.value })}
+                placeholder="Contact number"
+              />
             </div>
-            <Button 
-              onClick={editingCenter ? handleEditCenter : handleAddCenter} 
+
+            {/* Optional live preview of usage percentage */}
+            <div className="text-sm text-muted-foreground">
+              Capacity Usage:{' '}
+              {centerForm.count > 0
+                ? `${Math.min((centerForm.used / centerForm.count) * 100, 100).toFixed(1)}%`
+                : '0%'}
+            </div>
+
+            <Button
+              onClick={editingCenter ? handleEditCenter : handleAddCenter}
               className="w-full"
             >
               {editingCenter ? 'Update Center' : 'Add Center'}

@@ -5,7 +5,8 @@ import {
   getResourceCenterById,
   updateResourceCenter,
   deleteResourceCenter,
-  getResourceCenterCount
+  getResourceCenterCount,
+  getResourceCenterSummary
 } from '../controllers/resourceCenterController.js';
 
 import {
@@ -15,11 +16,13 @@ import {
 
 const router = express.Router();
 
-router.post('/', authenticateToken, createResourceCenter);
+router.post('/', createResourceCenter);
 router.get('/',  getAllResourceCenters);
 router.get('/count', getResourceCenterCount);
-router.get('/:id', authenticateToken, getResourceCenterById);
-router.put('/:id', authenticateToken, updateResourceCenter);
-router.delete('/:id', authenticateToken, deleteResourceCenter);
+router.get('/summary', getResourceCenterSummary);
+router.get('/:id', getResourceCenterById);
+router.put('/:id',  updateResourceCenter);
+router.delete('/:id',  deleteResourceCenter);
+
 
 export default router;

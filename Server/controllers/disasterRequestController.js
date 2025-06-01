@@ -2,7 +2,6 @@ import { DisasterRequest, Disaster, User } from "../models/index.js";
 import Sequelize from 'sequelize';
 
 
-
 export const createUserRequest = async (req, res) => {
   try {
     let {
@@ -146,56 +145,6 @@ export const createUserRequest = async (req, res) => {
   }
 };
 
-export const exportDisasterStats = async (req, res) => {
-  try {
-    const stats = await fetchDisasterStatsData();
-    res.json(stats);
-  } catch (error) {
-    console.error("Error exporting stats:", error);
-    res.status(500).json({ error: "Failed to export disaster statistics" });
-  }
-};
-
-export const fetchDisasterStatsData = async () => {
-  const currentYear = new Date().getFullYear();
-  const startYear = currentYear - 4;
-
-  const rawData = await DisasterRequest.findAll({
-    attributes: [
-      [Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), 'year'],
-      [Sequelize.col('Disaster.name'), 'disasterName'],
-      [Sequelize.fn('COUNT', Sequelize.col('DisasterRequest.id')), 'count'],
-    ],
-    include: [{
-      model: Disaster,
-      attributes: [],
-    }],
-    where: Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), '>=', startYear),
-    group: ['year', 'disasterName'],
-    order: [['year', 'DESC']],
-    raw: true,
-  });
-
-  const result = {};
-  for (let i = currentYear; i >= startYear; i--) {
-    result[i] = {
-      Flood: 0,
-      Earthquake: 0,
-      HouseholdFire : 0,
-      Wildfire: 0,
-      Tsunami: 0,
-      Other: 0,
-    };
-  }
-
-  rawData.forEach(({ year, disasterName, count }) => {
-    if (result[year] && result[year][disasterName] !== undefined) {
-      result[year][disasterName] = parseInt(count, 10);
-    }
-  });
-
-  return result;
-};
 
 export const getAllRequests = async (req, res) => {
   try {
@@ -228,7 +177,58 @@ export const deleteRequest = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+//soket
+export const exportDisasterStats = async (req, res) => {
+  try {
+    const stats = await fetchDisasterStatsData();
+    res.json(stats);
+  } catch (error) {
+    console.error("Error exporting stats:", error);
+    res.status(500).json({ error: "Failed to export disaster statistics" });
+  }
+};
+//soket
+export const fetchDisasterStatsData = async () => {
+  const currentYear = new Date().getFullYear();
+  const startYear = currentYear - 4;
 
+  const rawData = await DisasterRequest.findAll({
+    attributes: [
+      [Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), 'year'],
+      [Sequelize.col('Disaster.name'), 'disasterName'],
+      [Sequelize.fn('COUNT', Sequelize.col('DisasterRequest.id')), 'count'],
+    ],
+    include: [{
+      model: Disaster,
+      attributes: [],
+    }],
+    where: Sequelize.where(Sequelize.fn('YEAR', Sequelize.col('DisasterRequest.created_at')), '>=', startYear),
+    group: ['year', 'disasterName'],
+    order: [['year', 'DESC']],
+    raw: true,
+  });
+
+  const result = {};
+  for (let i = currentYear; i >= startYear; i--) {
+    result[i] = {
+      Flood: 0,
+      Earthquake: 0,
+      HouseholdFire : 0,
+      Wildfire: 0,
+      Tsunami: 0,
+      Landslide: 0,
+      Other: 0,
+    };
+  }
+
+  rawData.forEach(({ year, disasterName, count }) => {
+    if (result[year] && result[year][disasterName] !== undefined) {
+      result[year][disasterName] = parseInt(count, 10);
+    }
+  });
+
+  return result;
+};
 
 export const getVerifiedRequest = async (req, res) => {
   try {
@@ -351,7 +351,7 @@ export const getDistrictDisasterSummary = async (req, res) => {
     const districtData = {};
 
     // Disaster types to include in every district
-    const disasterTypes = ["Flood", "Earthquake", "Household Fire", "Wildfire", "Power Outage", "Other"];
+    const disasterTypes = ["Flood", "Earthquake", "HouseholdFire", "Wildfire", "Tsunami", "Landslide", "Other"];
 
     // Populate the raw data
     rawData.forEach(({ district, disasterName, count }) => {
@@ -396,7 +396,8 @@ export const getCurrentYearDisasterTotals = async (req, res) => {
       "Earthquake",
       "Household Fire",
       "Wildfire",
-      "Power Outage",
+      "Tsunami",
+      "Landslide",
       "Other"
     ];
 
