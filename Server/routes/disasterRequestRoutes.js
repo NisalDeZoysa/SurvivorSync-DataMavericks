@@ -6,7 +6,8 @@ import {
   deleteRequest,
   exportDisasterStats,
   getDistrictDisasterSummary,
-  getCurrentYearDisasterTotals
+  getCurrentYearDisasterTotals,
+  getVerifiedRequest
 
 } from '../controllers/disasterRequestController.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
@@ -22,6 +23,7 @@ router.put('/requests/:id', userRequestUpload, updateRequest);
 router.get('/disaster-stats', exportDisasterStats);
 router.get('/district-disaster-summary', getDistrictDisasterSummary);
 router.get('/disasters/totals/current-year', getCurrentYearDisasterTotals);
+router.get('/requests/verified', getVerifiedRequest)
 
 
 export default router;

@@ -229,19 +229,21 @@ export const deleteRequest = async (req, res) => {
   }
 };
 
-// export const getRequestById = async (req, res) => {
-//   try {
-//     const request = await DisasterRequest.findOne({
-//       where: { id: req.params.id, userId: req.user.id },
-//     });
 
-//     if (!request) return res.status(404).json({ error: "Request not found" });
-//     res.json(request);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// };
+export const getVerifiedRequest = async (req, res) => {
+  try {
+    const request = await DisasterRequest.findAll({
+      where: { isVerified: true },
+    });
 
+    if (!request) return res.status(404).json({ error: "Request not found" });
+    res.json(request);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Get disaster request by user ID
 export const getRequestById = async (req, res) => {
   try {
     // Correct extraction methods:

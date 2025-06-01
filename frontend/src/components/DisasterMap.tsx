@@ -1,129 +1,56 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState ,useRef } from 'react';
 import { MapPin, AlertTriangle, Flame, Waves, Mountain } from 'lucide-react';
-import { Disaster, DisasterType, DisasterSeverity } from '@/types';
+import { Disaster, DisasterType, DisasterSeverity, ApiDisaster, APIResourceCenter, ResourceAvailability } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { APIProvider, Map, Marker,AdvancedMarker } from "@vis.gl/react-google-maps";
+import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
 import flood from '../assets/flood.png';
 import fire from '../assets/fire.png';
 import other from '../assets/other.png';
 import landslide from '..//assets/landslide.png';
+import shelterIconUrl from '../assets/shelter.svg';
 
 const apikey = import.meta.env.VITE_MAP_API_KEY;
-
-// Mock disaster data for the map
-const mockMapDisasters: Disaster[] = [
-  {
-    id: '1',
-    location: {
-      latitude: 7.8731,
-      longitude: 80.7718,
-      address: 'Colombo 03, Sri Lanka'
-    },
-    timestamp: new Date().toISOString(),
-    type: DisasterType.FLOOD,
-    name: 'Severe Flooding in Colombo',
-    severity: DisasterSeverity.HIGH,
-    details: 'Heavy rainfall has caused severe flooding in downtown Colombo. Multiple streets are underwater and evacuation is in progress.',
-    affectedCount: 150,
-    contactNo: '119',
-    status: 'in-progress'
-  },
-  {
-    id: '2',
-    location: {
-      latitude: 6.9271,
-      longitude: 79.8612,
-      address: 'Kandy, Sri Lanka'
-    },
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-    type: DisasterType.FIRE,
-    name: 'Commercial Building Fire',
-    severity: DisasterSeverity.CRITICAL,
-    details: 'Large fire engulfing a commercial complex in Kandy city center. Fire department on scene with multiple units.',
-    affectedCount: 85,
-    contactNo: '110',
-    status: 'in-progress'
-  },
-  {
-    id: '3',
-    location: {
-      latitude: 6.0535,
-      longitude: 80.2210,
-      address: 'Galle, Sri Lanka'
-    },
-    timestamp: new Date(Date.now() - 7200000).toISOString(),
-    type: DisasterType.LANDSLIDE,
-    name: 'Landslide Risk Alert',
-    severity: DisasterSeverity.MEDIUM,
-    details: 'Unstable soil conditions detected on hillside. Residents in the area have been advised to remain alert.',
-    affectedCount: 200,
-    contactNo: '117',
-    status: 'pending'
-  },
-  {
-    id: '4',
-    location: {
-      latitude: 9.6615,
-      longitude: 80.0255,
-      address: 'Jaffna, Sri Lanka'
-    },
-    timestamp: new Date(Date.now() - 10800000).toISOString(),
-    type: DisasterType.TSUNAMI,
-    name: 'Tsunami Warning Lifted',
-    severity: DisasterSeverity.LOW,
-    details: 'Tsunami warning has been lifted. Coastal areas are now safe for return.',
-    affectedCount: 500,
-    contactNo: '118',
-    status: 'resolved'
-  }
-];
+ 
 
 const DisasterMap: React.FC = () => {
   const [hoveredDisaster, setHoveredDisaster] = useState<Disaster | null>(null);
+  const [hoveredShelter, setHoveredShelter] = useState<ResourceAvailability | null>(null);
+  const [selectedShelter, setSelectedShelter] = useState<ResourceAvailability | null>(null);
   const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(null);
   const [currentLocation, setCurrentLocation] = useState({
     lat: 7.1,
     lng: 80.636696,
   });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [disasters, setDisasters] = useState<Disaster[]>([]);
+  const [shelter, setShelter] = useState<ResourceAvailability[]>([]);
 
-  const getDisasterIconForMap = (type: DisasterType) => {
-    switch (type) {
-      case DisasterType.FIRE:
-        return {
-          url: {fire},
-          scaledSize: new google.maps.Size(40, 40) 
-        };
-      case DisasterType.FLOOD:
-        return {
-          url: {flood},
-          scaledSize: new google.maps.Size(40, 40)
-        };
-      case DisasterType.LANDSLIDE:
-        return {
-          url: {landslide},
-          scaledSize:new google.maps.Size(40, 40)
-        };
-      case DisasterType.TSUNAMI:
-        return {
-          url: {other},
-          scaledSize: new google.maps.Size(40, 40)
-        };
-      default:
-        return {
-          url: {other},
-          scaledSize: new google.maps.Size(40, 40)
-        };
-    }
+  
+
+  const mapDisasterType = (disasterId: number): DisasterType => {
+      const map: Record<number, DisasterType> = {
+        1: DisasterType.FLOOD,
+        2: DisasterType.EARTHQUAKE,
+        3: DisasterType.HOUSEHOLDFIRE,
+        4: DisasterType.WILDFIRE,
+        5: DisasterType.TSUNAMI,
+        6: DisasterType.OTHER
+      };
+      
+      return map[disasterId] || DisasterType.OTHER;
   };
+  
 
-  const getDisasterIcon = (type: DisasterType) => {
+
+ const getDisasterIcon = (type: DisasterType) => {
     switch (type) {
-      case DisasterType.FIRE:
+      case DisasterType.HOUSEHOLDFIRE || DisasterType.WILDFIRE: 
         return <Flame className="h-6 w-6 text-red-500" />;
       case DisasterType.FLOOD:
         return <Waves className="h-6 w-6 text-blue-500" />;
-      case DisasterType.LANDSLIDE:
+      case DisasterType.EARTHQUAKE:
         return <Mountain className="h-6 w-6 text-orange-500" />;
       case DisasterType.TSUNAMI:
         return <MapPin className="h-6 w-6 text-indigo-500" />;
@@ -160,6 +87,116 @@ const DisasterMap: React.FC = () => {
     }
   };
 
+    const getResourceTypeColor = (status: string) => {
+    switch (status) {
+      case 'Human':
+        return "bg-yellow-100 text-yellow-800";
+      case 'Material':
+        return "bg-blue-100 text-blue-800";
+      case 'Financial':
+        return "bg-green-100 text-green-800";
+      case 'Equipment':
+        return "bg-purple-100 text-purple-800";
+      case 'Facility':
+        return "bg-orange-100 text-orange-800";
+      case 'Infrastructure':
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+    const fetchVerifidDisasters = async () => {
+        try {
+                const token = localStorage.getItem('token'); // Get auth token
+                const response = await fetch('http://localhost:7000/api/requests/verified', {
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+                
+                if (!response.ok) {
+                  throw new Error('Failed to fetch disasters');
+                }
+                
+                const apiData: ApiDisaster[] = await response.json();
+                
+                // Transform API data to match frontend Disaster type
+                const transformedData: Disaster[] = apiData.map(item => ({
+                  id: item.id.toString(),
+                  location: {
+                    latitude: parseFloat(item.latitude),
+                    longitude: parseFloat(item.longitude),
+                    address: `${item.district}, ${item.province}`
+                  },
+                  timestamp: item.created_at,
+                  type: mapDisasterType(item.disasterId),
+                  name: item.name,
+                  severity: item.severity as DisasterSeverity,
+                  details: item.details,
+                  affectedCount: item.affectedCount,
+                  contactNo: item.contactNo,
+                  status: item.status.toLowerCase()
+                }));
+                
+                setDisasters(transformedData);
+                console.log("Fetched disasters:", transformedData);
+              } catch (err) {
+                setError(err.message || 'An error occurred while fetching data');
+              } finally {
+                setIsLoading(false);
+              }
+      }
+
+  const fetchAllShelters = async () => {
+
+    try {
+          const token = localStorage.getItem('token'); // Get auth token
+            const response = await fetch('http://localhost:7000/api/resource-centers', {
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+            });
+                
+            if (!response.ok) {
+              throw new Error('Failed to fetch disasters');
+            }
+                
+            const apiData: APIResourceCenter[] = await response.json();
+                
+            // Transform API data to match frontend Disaster type
+            const transformedData: ResourceAvailability[] = apiData.map(item => ({
+                  id: item.id.toString(),
+                  resourceId: item.resourceId,
+                  lat: item.lat,
+                  long: item.long,
+                  count: item.count,
+                  contactNumber: item.contactNumber,
+                  name: item.Resource.name,
+                  type: item.Resource.type,
+            }));
+                
+            setShelter(transformedData);
+            console.log("Fetched all resource center:", transformedData);
+              
+          } catch (err) {
+            setError(err.message || 'An error occurred while fetching data');
+              
+          } finally {
+            setIsLoading(false);
+          }
+
+  }
+
+    // Create icon objects safely
+
+  useEffect(() => {
+    if (!disasters){
+      setIsLoading(true);
+    }
+    fetchVerifidDisasters();
+    fetchAllShelters();
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Simple Map Representation */}
@@ -167,10 +204,10 @@ const DisasterMap: React.FC = () => {
 
         <APIProvider apiKey={apikey}>
               <div className="w-full h-[80vh]">
-                <Map defaultZoom={7} defaultCenter={currentLocation}>
+                <Map defaultZoom={8} defaultCenter={currentLocation}>
 
                   {/* Disaster Markers */}
-                  {mockMapDisasters.map((disaster) => (
+                  {disasters.map((disaster) => (
                     <Marker
                       key={disaster.id}
                       position={{
@@ -180,11 +217,27 @@ const DisasterMap: React.FC = () => {
                       onMouseOver={() => setHoveredDisaster(disaster)}
                       onMouseOut={() => setHoveredDisaster(null)}
                       onClick={() => setSelectedDisaster(disaster)}
-                      // icon={getDisasterIconForMap(disaster.type)}             
+                      // icon={getDisasterMarker(disaster.type)}             
                     >
+                     
                     </Marker>
                   ))}
 
+                  {/* Disaster Markers */}
+                  {shelter.map((shelter) => (
+                    <Marker                 
+                      key={shelter.id}
+                      position={{
+                          lat: shelter.lat,
+                          lng: shelter.long
+                        }}
+                      onMouseOver={() => setHoveredShelter(shelter)}
+                      onMouseOut={() => setHoveredShelter(null)}
+                      onClick={() => setSelectedShelter(shelter)}
+                                 
+                    >
+                    </Marker>
+                  ))}
                 </Map>
               </div>
             </APIProvider>
@@ -195,10 +248,6 @@ const DisasterMap: React.FC = () => {
         {hoveredDisaster && (
           <div 
             className="absolute z-20 bg-white p-3 rounded-lg shadow-lg border max-w-xs pointer-events-none top-10 left-1/2 transform -translate-x-1/2"
-            // style={{
-            //   left: `${((hoveredDisaster.location.longitude - 79.5) / 2) * 100 + 55}%`,
-            //   top: `${((8.5 - hoveredDisaster.location.latitude) / 4) * 100 + 15}%`
-            // }}
           >
             <h4 className="font-semibold text-sm mb-1">{hoveredDisaster.name}</h4>
             <p className="text-xs text-gray-600 mb-2">{hoveredDisaster.location.address}</p>
@@ -216,6 +265,26 @@ const DisasterMap: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Selected Shelter Details */}
+        {hoveredShelter && (
+            <div 
+              className="absolute z-20 bg-white p-3 rounded-lg shadow-lg border max-w-xs pointer-events-none top-10 left-1/2 transform -translate-x-1/2"
+            >
+              <h4 className="font-semibold text-sm mb-1">{hoveredShelter.name}</h4>
+            <div className="mx-auto">
+              <Badge className={getResourceTypeColor(hoveredShelter.type)}>
+                {hoveredShelter.type}
+              </Badge>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Resources count: {hoveredShelter.count} 
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Contact: {hoveredShelter.contactNumber}
+            </p>
+          </div>
+        )}
 
       {/* Legend */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -282,6 +351,35 @@ const DisasterMap: React.FC = () => {
                   <span className="font-medium">Type:</span> {selectedDisaster.type}
                 </div>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Selected Shelter */}
+      {selectedShelter && (
+        <Card className="border-l-4 border-l-emergency-500">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <img src={shelterIconUrl} alt="Shelter Icon" className="h-6 w-6" />
+                  {selectedShelter.name}
+                </CardTitle>
+                <CardDescription>{selectedShelter.type}</CardDescription>
+              </div>
+              <button 
+                onClick={() => setSelectedShelter(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <p className="text-sm">Available Resources: {selectedShelter.count}</p>
+              <p className="text-sm">Contact: {selectedShelter.contactNumber}</p>
             </div>
           </CardContent>
         </Card>

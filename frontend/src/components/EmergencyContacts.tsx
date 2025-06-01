@@ -209,9 +209,9 @@ const EmergencyContacts = () => {
             </div>
           </div>
 
-          <Tabs defaultValue="fire" className="w-full">
+          <Tabs defaultValue="emergency" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="emergancy" className="flex items-center gap-2">
+              <TabsTrigger value="emergency" className="flex items-center gap-2">
                 🚒 Emergancy
               </TabsTrigger>
               <TabsTrigger value="police" className="flex items-center gap-2">
@@ -222,7 +222,7 @@ const EmergencyContacts = () => {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="fire" className="mt-6">
+            <TabsContent value="emergency" className="mt-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filterContacts(emergencyNumbers).map((contact) => (
                   <ContactCard key={contact.id} contact={contact} />

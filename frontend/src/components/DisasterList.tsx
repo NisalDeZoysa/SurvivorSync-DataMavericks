@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Disaster, DisasterSeverity, DisasterType } from '@/types';
+import { Disaster, DisasterSeverity, DisasterType, ApiDisaster } from '@/types';
 import {
   Select,
   SelectContent,
@@ -13,47 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-// Define types based on your API response
-interface ApiDisaster {
-  id: number;
-  name: string;
-  userId: number;
-  disasterId: number;
-  severity: string;
-  status: string;
-  details: string;
-  affectedCount: number;
-  contactNo: string;
-  latitude: string;
-  longitude: string;
-  district: string;
-  province: string;
-  image: string | null;
-  voice: string | null;
-  isVerified: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-// interface Location {
-//   latitude: number;
-//   longitude: number;
-//   address: string;
-// }
-
-// interface Disaster {
-//   id: string;
-//   location: Location;
-//   timestamp: string;
-//   type: DisasterType;
-//   name: string;
-//   severity: DisasterSeverity;
-//   details: string;
-//   affectedCount: number;
-//   contactNo: string;
-//   status: string;
-// }
 
 const DisasterList: React.FC = () => {
   const [disasters, setDisasters] = useState<Disaster[]>([]);
