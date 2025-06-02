@@ -53,6 +53,7 @@ export const registerFirstResponder = async (req, res) => {
         id: fr.id,
         name: fr.name,
         email: fr.email,
+        type: 'FIRST_RESPONDER',
       },
     });
   } catch (error) {
@@ -87,6 +88,7 @@ export const loginFirstResponder = async (req, res) => {
         id: fr.id,
         name: fr.name,
         email: fr.email,
+        type: 'FIRST_RESPONDER',
       },
     });
   } catch (error) {

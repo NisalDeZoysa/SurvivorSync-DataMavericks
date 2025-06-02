@@ -80,11 +80,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (!token) {
         throw new Error('Invalid login response');
       }
+
+      let userType = UserRole.FIRST_RESPONDER;
+
+      if ( response.data.admin.type === 'ADMIN'){
+        userType = UserRole.ADMIN;
+      }
+
       const userData: User = {
         id: response.data.admin.id,
         name: response.data.admin.name,
         email: response.data.admin.email,
-        role: UserRole.ADMIN
+        role: userType
       };
       
       // Store user data and token
@@ -131,7 +138,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const token = response.data.accessToken ;
       console.log('Token:', token);
 
-      const userType = Cookies.get('userType');
+      // const userType = Cookies.get('userType');
+
+      let userType = UserRole.USER;
+
+      if ( response.data.user.type === 'volunteer'){
+        userType = UserRole.VOLUNTEERS;
+      }
       
       // Create user object matching our User interface
       if (!token) {
@@ -141,7 +154,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         id: response.data.user.id,
         name: response.data.user.name,
         email: response.data.user.email,
-        role: UserRole.USER, // by changing the role can navigate to different pages
+        role: userType, // by changing the role can navigate to different pages
       };
       
       // Store user data and token

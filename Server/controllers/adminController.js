@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import {Admin} from '../models/index.js';
+import {FirstResponder} from '../models/index.js';
 // const { Admin } = models;
 import dotenv from 'dotenv';
 dotenv.config();
@@ -51,6 +52,7 @@ export const registerAdmin = async (req, res) => {
         id: admin.id,
         name: admin.name,
         email: admin.email,
+        type: 'ADMIN',
       },
     });
   } catch (error) {
@@ -62,12 +64,13 @@ export const registerAdmin = async (req, res) => {
   }
 };
 
+// Both admin and first responder login functions can be similar, but here we focus on admin login
 export const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const admin = await Admin.findOne({ where: { email } });
-    if (!admin) return res.status(404).json({ error: 'Admin not found' });
+    // if (!admin) return res.status(404).json({ error: 'Admin not found' });
 
     const match = await bcrypt.compare(password, admin.password);
     if (!match) return res.status(401).json({ error: 'Invalid credentials' });
@@ -75,6 +78,23 @@ export const loginAdmin = async (req, res) => {
     const { accessToken, refreshToken } = generateTokens(admin);
     res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
     res.cookie('userType', 'ADMIN', { sameSite: 'Strict' });
+    let userole = 'ADMIN';
+
+    if (!admin) {
+        const fr = await FirstResponder.findOne({ where: { email } });
+        if (!fr) return res.status(404).json({ error: 'FirstResponder not found' });
+
+        const match = await bcrypt.compare(password, fr.password);
+        if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+
+        const { accessToken, refreshToken } = generateTokens(admin);
+        res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
+        res.cookie('userType', 'FIRST_RESPONDER', { sameSite: 'Strict' });
+        userole = 'FIRST_RESPONDER';
+
+    }
+
+    console.log('User role:', userole);
 
     res.json({
       message: 'Admin logged in successfully',
@@ -85,6 +105,7 @@ export const loginAdmin = async (req, res) => {
         id: admin.id,
         name: admin.name,
         email: admin.email,
+        type: userole,
       },
     });
   } catch (error) {
