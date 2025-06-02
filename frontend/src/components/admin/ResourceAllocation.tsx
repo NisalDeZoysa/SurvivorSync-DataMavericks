@@ -6,65 +6,36 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, Package, MapPin, Building } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, MapPin, Building, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface Resource {
-  id: string;
-  name: string;
+interface ResourceAllocation {
+  id: number;
+  disasterId: number;
+  disasterType: string;
+  district: string;
+  province: string;
   type: string;
   quantity: number;
-  unit: string;
   status: 'available' | 'allocated' | 'maintenance';
   lastUpdated: string;
 }
 
 interface ResourceCenter {
-  currentStock: ReactNode;
   id: string;
   name: string;
   location: string;
   count: number;
   used: number;
+  currentStock: number;
   contact: string;
 }
 
-const mockResources: Resource[] = [
-  {
-    id: '1',
-    name: 'Emergency Food Packs',
-    type: 'Food',
-    quantity: 500,
-    unit: 'packs',
-    status: 'available',
-    lastUpdated: '2024-01-15'
-  },
-  {
-    id: '2',
-    name: 'Medical Kits',
-    type: 'Medical',
-    quantity: 150,
-    unit: 'kits',
-    status: 'allocated',
-    lastUpdated: '2024-01-14'
-  },
-  {
-    id: '3',
-    name: 'Water Bottles',
-    type: 'Water',
-    quantity: 1000,
-    unit: 'bottles',
-    status: 'available',
-    lastUpdated: '2024-01-16'
-  }
-];
-
-
 const ResourceAllocation = () => {
-  const [resources, setResources] = useState<Resource[]>(mockResources);
+  const [resources, setResources] = useState<ResourceAllocation[]>([]);
   const [resourceCenters, setResourceCenters] = useState<ResourceCenter[]>([]);
   const [isResourceDialogOpen, setIsResourceDialogOpen] = useState(false);
-  const [editingResource, setEditingResource] = useState<Resource | null>(null);
+  const [editingResource, setEditingResource] = useState<ResourceAllocation | null>(null);
   const [editingCenter, setEditingCenter] = useState<ResourceCenter | null>(null);
   const [centerForm, setCenterForm] = useState<Omit<ResourceCenter, 'id'>>({
     currentStock: 0,
@@ -76,21 +47,44 @@ const ResourceAllocation = () => {
   });
 
   const [resourceForm, setResourceForm] = useState({
-    name: '',
+    disasterId: 0,
+    disasterType: '',
+    district: '',
+    province: '',
     type: '',
     quantity: 0,
-    unit: '',
     status: 'available' as 'available' | 'allocated' | 'maintenance'
   });
   const [isCenterDialogOpen, setIsCenterDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [provinceFilter, setProvinceFilter] = useState('all');
 
+  // Fetch resources from backend API
+  useEffect(() => {
+    const fetchResources = async () => {
+      try {
+        const response = await fetch('http://localhost:7000/api/allocations/summary');
+        const data = await response.json();
+        console.log('Fetched resources:', data);
+        setResources(data);
+      } catch (error) {
+        console.error('Failed to fetch resources:', error);
+        toast.error('Failed to load resources');
+      }
+    };
+
+    fetchResources();
+  }, []);
+
+  // Fetch resource centers from backend API
   useEffect(() => {
     const fetchCenters = async () => {
       try {
         const response = await fetch('http://localhost:7000/api/resource-centers/summary');
         const data = await response.json();
         console.log('Fetched resource centers:', data);
-        // Convert `id` to string
         const formatted = data.map((item: any) => ({
           ...item,
           id: String(item.id)
@@ -105,39 +99,91 @@ const ResourceAllocation = () => {
     fetchCenters();
   }, []);
 
+  const handleAddResource = async () => {
+    try {
+      const response = await fetch('http://localhost:7000/api/allocations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(resourceForm),
+      });
 
-
-  const handleAddResource = () => {
-    const newResource: Resource = {
-      id: Date.now().toString(),
-      ...resourceForm,
-      lastUpdated: new Date().toISOString().split('T')[0]
-    };
-
-    setResources([...resources, newResource]);
-    setResourceForm({ name: '', type: '', quantity: 0, unit: '', status: 'available' });
-    setIsResourceDialogOpen(false);
-    toast.success('Resource added successfully');
+      if (response.ok) {
+        // Refresh the data
+        const refreshResponse = await fetch('http://localhost:7000/api/allocations/summary');
+        const data = await refreshResponse.json();
+        setResources(data);
+        
+        setResourceForm({ 
+          disasterId: 0,
+          disasterType: '',
+          district: '',
+          province: '',
+          type: '', 
+          quantity: 0, 
+          status: 'available' 
+        });
+        setIsResourceDialogOpen(false);
+        toast.success('Resource allocation added successfully');
+      } else {
+        toast.error('Failed to add resource allocation');
+      }
+    } catch (error) {
+      console.error('Error adding resource:', error);
+      toast.error('Failed to add resource allocation');
+    }
   };
 
-  const handleEditResource = () => {
+  const handleEditResource = async () => {
     if (!editingResource) return;
 
-    const updatedResources = resources.map(resource =>
-      resource.id === editingResource.id
-        ? { ...resource, ...resourceForm, lastUpdated: new Date().toISOString().split('T')[0] }
-        : resource
-    );
+    try {
+      const response = await fetch(`http://localhost:7000/api/allocations/${editingResource.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(resourceForm),
+      });
 
-    setResources(updatedResources);
-    setEditingResource(null);
-    setIsResourceDialogOpen(false);
-    toast.success('Resource updated successfully');
+      if (response.ok) {
+        // Refresh the data
+        const refreshResponse = await fetch('http://localhost:7000/api/allocations/summary');
+        const data = await refreshResponse.json();
+        setResources(data);
+        
+        setEditingResource(null);
+        setIsResourceDialogOpen(false);
+        toast.success('Resource allocation updated successfully');
+      } else {
+        toast.error('Failed to update resource allocation');
+      }
+    } catch (error) {
+      console.error('Error updating resource:', error);
+      toast.error('Failed to update resource allocation');
+    }
   };
 
-  const handleDeleteResource = (id: string) => {
-    setResources(resources.filter(resource => resource.id !== id));
-    toast.success('Resource deleted successfully');
+  const handleDeleteResource = async (id: number) => {
+    try {
+      const response = await fetch(`http://localhost:7000/api/allocations/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Refresh the data
+        const refreshResponse = await fetch('http://localhost:7000/api/allocations/summary');
+        const data = await refreshResponse.json();
+        setResources(data);
+        toast.success('Resource allocation deleted successfully');
+      } else {
+        toast.error('Failed to delete resource allocation');
+      }
+    } catch (error) {
+      console.error('Error deleting resource:', error);
+      toast.error('Failed to delete resource allocation');
+    }
   };
 
   const handleAddCenter = () => {
@@ -166,19 +212,29 @@ const ResourceAllocation = () => {
     toast.success('Resource center deleted successfully');
   };
 
-  const openResourceDialog = (resource?: Resource) => {
+  const openResourceDialog = (resource?: ResourceAllocation) => {
     if (resource) {
       setEditingResource(resource);
       setResourceForm({
-        name: resource.name,
+        disasterId: resource.disasterId,
+        disasterType: resource.disasterType,
+        district: resource.district,
+        province: resource.province,
         type: resource.type,
         quantity: resource.quantity,
-        unit: resource.unit,
         status: resource.status
       });
     } else {
       setEditingResource(null);
-      setResourceForm({ name: '', type: '', quantity: 0, unit: '', status: 'available' });
+      setResourceForm({ 
+        disasterId: 0,
+        disasterType: '',
+        district: '',
+        province: '',
+        type: '', 
+        quantity: 0, 
+        status: 'available' 
+      });
     }
     setIsResourceDialogOpen(true);
   };
@@ -223,6 +279,23 @@ const ResourceAllocation = () => {
     return 'bg-green-100 text-green-800';
   };
 
+  const filteredResources = resources.filter((resource) => {
+    const matchesSearch = 
+      resource.disasterType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resource.district.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resource.province.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resource.type.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = statusFilter === 'all' || resource.status === statusFilter;
+    const matchesType = typeFilter === 'all' || resource.type === typeFilter;
+    const matchesProvince = provinceFilter === 'all' || resource.province === provinceFilter;
+
+    return matchesSearch && matchesStatus && matchesType && matchesProvince;
+  });
+
+  const uniqueTypes = Array.from(new Set(resources.map(r => r.type)));
+  const uniqueProvinces = Array.from(new Set(resources.map(r => r.province)));
+
   return (
     <div className="space-y-6">
       <div>
@@ -232,19 +305,19 @@ const ResourceAllocation = () => {
 
       <Tabs defaultValue="resources" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
+          <TabsTrigger value="resources">Resource Allocations</TabsTrigger>
           <TabsTrigger value="centers">Resource Centers</TabsTrigger>
         </TabsList>
 
         <TabsContent value="resources" className="space-y-4">
           <div className="flex justify-between items-center">
             <div>
-              <h3 className="text-lg font-semibold">Emergency Resources</h3>
-              <p className="text-sm text-gray-600">Manage inventory of emergency supplies and equipment</p>
+              <h3 className="text-lg font-semibold">Resource Allocations</h3>
+              <p className="text-sm text-gray-600">Manage resource allocations for disaster response</p>
             </div>
-            <Button onClick={() => openResourceDialog()} className="bg-safety-500 hover:bg-safety-600">
+            <Button onClick={() => openResourceDialog()} className="bg-blue-500 hover:bg-blue-600">
               <Plus className="h-4 w-4 mr-2" />
-              Add Resource
+              Add Resource Allocation
             </Button>
           </div>
 
@@ -255,29 +328,78 @@ const ResourceAllocation = () => {
                 Resource Inventory
               </CardTitle>
               <CardDescription>
-                Current status of all emergency resources
+                Current status of all resource allocations
               </CardDescription>
+              <div className="mt-4 space-y-4">
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                      <Input
+                        placeholder="Search resources..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-8"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="all">All Status</option>
+                      <option value="available">Available</option>
+                      <option value="allocated">Allocated</option>
+                      <option value="maintenance">Maintenance</option>
+                    </select>
+                    <select
+                      value={typeFilter}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                      className="p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="all">All Types</option>
+                      {uniqueTypes.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={provinceFilter}
+                      onChange={(e) => setProvinceFilter(e.target.value)}
+                      className="p-2 border border-gray-300 rounded-md"
+                    >
+                      <option value="all">All Provinces</option>
+                      {uniqueProvinces.map((province) => (
+                        <option key={province} value={province}>{province}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Disaster</TableHead>
+                    <TableHead>District</TableHead>
+                    <TableHead>Province</TableHead>
                     <TableHead>Resource Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Unit</TableHead>
+                    <TableHead>Allocated Quantity</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Last Updated</TableHead>
+                    <TableHead>Allocated Date</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {resources.map((resource) => (
+                  {filteredResources.map((resource) => (
                     <TableRow key={resource.id}>
-                      <TableCell className="font-medium">{resource.name}</TableCell>
+                      <TableCell className="font-medium">{resource.disasterType}</TableCell>
+                      <TableCell>{resource.district}</TableCell>
+                      <TableCell>{resource.province}</TableCell>
                       <TableCell>{resource.type}</TableCell>
                       <TableCell>{resource.quantity}</TableCell>
-                      <TableCell>{resource.unit}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(resource.status)}`}>
                           {resource.status.charAt(0).toUpperCase() + resource.status.slice(1)}
@@ -317,7 +439,7 @@ const ResourceAllocation = () => {
               <h3 className="text-lg font-semibold">Resource Centers</h3>
               <p className="text-sm text-gray-600">Manage distribution centers and storage facilities</p>
             </div>
-            <Button onClick={() => openCenterDialog()} className="bg-safety-500 hover:bg-safety-600">
+            <Button onClick={() => openCenterDialog()} className="bg-blue-500 hover:bg-blue-600">
               <Plus className="h-4 w-4 mr-2" />
               Add Resource Center
             </Button>
@@ -404,29 +526,79 @@ const ResourceAllocation = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Resource Dialog */}
+      {/* Resource Allocation Dialog */}
       <Dialog open={isResourceDialogOpen} onOpenChange={setIsResourceDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingResource ? 'Edit Resource' : 'Add New Resource'}
+              {editingResource ? 'Edit Resource Allocation' : 'Add New Resource Allocation'}
             </DialogTitle>
             <DialogDescription>
-              {editingResource ? 'Update resource information' : 'Add a new emergency resource to the inventory'}
+              {editingResource ? 'Update resource allocation information' : 'Add a new resource allocation for disaster response'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="resource-name">Resource Name</Label>
+              <Label htmlFor="disaster-id">Disaster ID</Label>
               <Input
-                id="resource-name"
-                value={resourceForm.name}
-                onChange={(e) => setResourceForm({ ...resourceForm, name: e.target.value })}
-                placeholder="Enter resource name"
+                id="disaster-id"
+                type="number"
+                value={resourceForm.disasterId}
+                onChange={(e) => setResourceForm({ ...resourceForm, disasterId: parseInt(e.target.value) || 0 })}
+                placeholder="Enter disaster ID"
               />
             </div>
             <div>
-              <Label htmlFor="resource-type">Type</Label>
+              <Label htmlFor="disaster-type">Disaster Type</Label>
+              <select
+                id="disaster-type"
+                value={resourceForm.disasterType}
+                onChange={(e) => setResourceForm({ ...resourceForm, disasterType: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded-md"
+              >
+                <option value="">Select Disaster Type</option>
+                <option value="HouseholdFire">Household Fire</option>
+                <option value="Flood">Flood</option>
+                <option value="Landslide">Landslide</option>
+                <option value="Earthquake">Earthquake</option>
+                <option value="Tsunami">Tsunami</option>
+                <option value="Cyclone">Cyclone</option>
+                <option value="Drought">Drought</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="district">District</Label>
+                <Input
+                  id="district"
+                  value={resourceForm.district}
+                  onChange={(e) => setResourceForm({ ...resourceForm, district: e.target.value })}
+                  placeholder="Enter district"
+                />
+              </div>
+              <div>
+                <Label htmlFor="province">Province</Label>
+                <select
+                  id="province"
+                  value={resourceForm.province}
+                  onChange={(e) => setResourceForm({ ...resourceForm, province: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                >
+                  <option value="">Select Province</option>
+                  <option value="Western Province">Western Province</option>
+                  <option value="Central Province">Central Province</option>
+                  <option value="Southern Province">Southern Province</option>
+                  <option value="Northern Province">Northern Province</option>
+                  <option value="Eastern Province">Eastern Province</option>
+                  <option value="North Western Province">North Western Province</option>
+                  <option value="North Central Province">North Central Province</option>
+                  <option value="Uva Province">Uva Province</option>
+                  <option value="Sabaragamuwa Province">Sabaragamuwa Province</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="resource-type">Resource Type</Label>
               <select
                 id="resource-type"
                 value={resourceForm.type}
@@ -434,6 +606,8 @@ const ResourceAllocation = () => {
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
                 <option value="">Select Type</option>
+                <option value="Human">Human</option>
+                <option value="Material">Material</option>
                 <option value="Food">Food</option>
                 <option value="Water">Water</option>
                 <option value="Medical">Medical</option>
@@ -442,26 +616,15 @@ const ResourceAllocation = () => {
                 <option value="Clothing">Clothing</option>
               </select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="resource-quantity">Quantity</Label>
-                <Input
-                  id="resource-quantity"
-                  type="number"
-                  value={resourceForm.quantity}
-                  onChange={(e) => setResourceForm({ ...resourceForm, quantity: parseInt(e.target.value) || 0 })}
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <Label htmlFor="resource-unit">Unit</Label>
-                <Input
-                  id="resource-unit"
-                  value={resourceForm.unit}
-                  onChange={(e) => setResourceForm({ ...resourceForm, unit: e.target.value })}
-                  placeholder="e.g., packs, kits, bottles"
-                />
-              </div>
+            <div>
+              <Label htmlFor="resource-quantity">Quantity</Label>
+              <Input
+                id="resource-quantity"
+                type="number"
+                value={resourceForm.quantity}
+                onChange={(e) => setResourceForm({ ...resourceForm, quantity: parseInt(e.target.value) || 0 })}
+                placeholder="0"
+              />
             </div>
             <div>
               <Label htmlFor="resource-status">Status</Label>
@@ -480,7 +643,7 @@ const ResourceAllocation = () => {
               onClick={editingResource ? handleEditResource : handleAddResource}
               className="w-full"
             >
-              {editingResource ? 'Update Resource' : 'Add Resource'}
+              {editingResource ? 'Update Resource Allocation' : 'Add Resource Allocation'}
             </Button>
           </div>
         </DialogContent>
@@ -559,8 +722,7 @@ const ResourceAllocation = () => {
               />
             </div>
 
-            {/* Optional live preview of usage percentage */}
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-gray-500">
               Capacity Usage:{' '}
               {centerForm.count > 0
                 ? `${Math.min((centerForm.used / centerForm.count) * 100, 100).toFixed(1)}%`
