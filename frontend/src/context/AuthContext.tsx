@@ -12,6 +12,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (userData: Partial<User>, password: string) => Promise<void>;
   userLogin: (email: string, password: string) => Promise<void>;
+  userRegister: (name: string, email: string,  password: string, role: string, nic: string, address: string, contactNo: string) => Promise<void>;
   logout: () => void;
   createUser: (userData: Partial<User>, password: string) => Promise<void>;
   isAuthenticated: boolean;
@@ -155,6 +156,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         name: response.data.user.name,
         email: response.data.user.email,
         role: userType, // by changing the role can navigate to different pages
+        contactNo: response.data.user.contactNo,
+        nic: response.data.user.nic,
       };
       
       // Store user data and token
@@ -179,6 +182,51 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error(errorMessage);
       }
       throw new Error('Network error. Please check your connection.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const userRegister = async (name: string, email: string,  password: string, role: string, nic: string, address: string, contactNo: string) => {
+    setIsLoading(true);
+    try {
+      
+      const response = await api.post('/users/register', {
+        name,
+        nic,
+        address,
+        contactNo,
+        email,
+        type: role,
+        password,         
+        
+      });
+
+      console.log('Registration response:', response.data);
+
+      if(!response){
+        throw new Error('Registration failed');
+      }
+      
+      const newUser: User = {
+        id: response.data.user.id,
+        name: response.data.user.name,
+        email: response.data.user.email,
+        role: role === 'volunteer' ? UserRole.VOLUNTEERS : UserRole.USER,
+      };
+
+      setCurrentUser(newUser);
+      if(role === 'volunteer'){
+        Cookies.set('userType', 'volunteer', { expires: 7 });
+        localStorage.setItem('volunteer', JSON.stringify(newUser));
+      }else{
+        Cookies.set('userType', 'user', { expires: 7 });
+        localStorage.setItem('user', JSON.stringify(newUser));
+      }          
+      console.log("User registered:", newUser);
+          } catch (error) {
+      console.error("Registration failed:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -223,6 +271,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     isLoading,
     login,
     userLogin,
+    userRegister,
     register,
     logout,
     isAuthenticated: !!currentUser

@@ -48,7 +48,7 @@ const AuthForms: React.FC = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
-  const { userLogin, register } = useAuth();
+  const { userLogin, userRegister} = useAuth();
   
 
   const loginForm = useForm<LoginFormValues>({
@@ -73,26 +73,26 @@ const AuthForms: React.FC = () => {
 
  
   const handleLoginSubmit = async (data: LoginFormValues) => {
-  setIsLoading(true);
-  try {
-    await userLogin(data.email, data.password);
+    setIsLoading(true);
+    try {
+      await userLogin(data.email, data.password);
 
-    toast({
-      title: "Login Successful",
-      description: "Welcome back to the emergency response system.",
-    });
+      toast({
+        title: "Login Successful",
+        description: "Welcome back to the emergency response system.",
+      });
 
-    navigate("/");
-  } catch (error) {
-    toast({
-      title: "Login Failed",
-      description: "Please check your credentials and try again.",
-      variant: "destructive",
-    });
-    console.error("Login error:", error);
-  } finally {
-    setIsLoading(false);
-  }
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Login Failed",
+        description: "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
 };
 
   const handleRegisterSubmit = async (data: RegisterFormValues) => {
@@ -109,37 +109,25 @@ const AuthForms: React.FC = () => {
   }
 
   try {
-    // ✅ 2. Submit registration request
-    const res = await axios.post('http://localhost:7000/api/users/register', {
-      name: data.name,
-      nic: data.nic,
-      address: data.address,
-      contactNumber: data.contactNo,
-      email: data.email,
-      type: data.role,
-      password: data.password,
-    });
-
-    // ✅ 3. Check if registration was successful
-    if (res.status === 200 || res.status === 201) {
-      const { accessToken, user } = res.data;
-
-      // Optional: store token or user data if needed
-      if (accessToken) {
-        Cookies.set('accessToken', accessToken, { expires: 1 }); // expires in 1 day
-      }
+    console.log('Registering user with data:', data);
+    await userRegister(
+      data.name,
+      data.email,
+      data.password,
+      data.role,
+      data.nic,
+      data.address,
+      data.contactNo
+    );
 
       toast({
         title: 'Registration Successful',
-        description: `Welcome ${user?.name || ''}! You can now log in.`,
+        description: `Welcome ${data.name|| ''}! You can now log in.`,
       });
 
-      // ✅ 4. Switch to login tab after registration
-      setActiveTab('');
-    } else {
-      throw new Error(res.data.message || 'Unexpected error during registration');
-    }
-  } catch (error: any) {
+      navigate('/')
+    } 
+  catch (error) {
     console.error('Registration error:', error);
 
     toast({
