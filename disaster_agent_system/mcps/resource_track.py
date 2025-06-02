@@ -4,9 +4,10 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP("resource-track")
 
 @mcp.tool()
-def track_resources(help_needed_request_ids: list[int]) -> dict:
+def track_resources(request_id: int) -> dict:
     """
-    Track resources based on location for multiple disaster request IDs.
+    Track resources based on location for a single disaster request ID.
+    Returns nearby resource centers (within 10 km).
     """
     try:
         conn = mysql.connector.connect(
@@ -17,56 +18,53 @@ def track_resources(help_needed_request_ids: list[int]) -> dict:
         )
         cursor = conn.cursor(dictionary=True)
 
-        # Step 1: Fetch all disaster requests matching the given IDs
-        format_strings = ",".join(["%s"] * len(help_needed_request_ids))
-        disaster_query = f"SELECT * FROM disaster_requests WHERE id IN ({format_strings})"
-        cursor.execute(disaster_query, tuple(help_needed_request_ids))
-        disasters = cursor.fetchall()
+        # Get the disaster request
+        cursor.execute("SELECT * FROM disaster_requests WHERE id = %s", (request_id,))
+        disaster = cursor.fetchone()
 
-        results = {}
-
-        # Step 2 & 3: For each disaster, find nearby resource centers within 10 km
-        resource_query = """
-            SELECT * FROM resource_centers
-            WHERE ST_Distance_Sphere(
-                POINT(longitude, latitude),
-                POINT(%s, %s)
-            ) <= 10000
-        """
-
-        for disaster in disasters:
-            lat = disaster.get("latitude")
-            long = disaster.get("longitude")
-            if lat is None or long is None:
-                # Skip if coordinates are missing
-                results[disaster["id"]] = {
-                    "disaster": disaster,
-                    "resources": [],
-                    "error": "Missing latitude or longitude"
-                }
-                continue
-
-            cursor.execute(resource_query, (long, lat))
-            resources = cursor.fetchall()
-
-            results[disaster["id"]] = {
-                "disaster": disaster,
-                "resources": resources,
+        if not disaster:
+            return {
+                "error": f"No disaster request found with ID {request_id}",
+                "results": {}
             }
+
+        lat = disaster.get("latitude")
+        lon = disaster.get("longitude")
+
+        if lat is None or lon is None:
+            return {
+                "disaster": disaster,
+                "resources": [],
+                "error": "Missing latitude or longitude for disaster request"
+            }
+
+        # Find nearby resource centers within 10km
+        # Find nearby resource centers within 10km (uses correct column names)
+        resource_query = """
+            SELECT *, 
+            ST_Distance_Sphere(POINT(`long`, `lat`), POINT(%s, %s)) AS distance
+            FROM resource_centers
+            WHERE ST_Distance_Sphere(POINT(`long`, `lat`), POINT(%s, %s)) <= 10000
+        """
+        cursor.execute(resource_query, (lon, lat, lon, lat))
+        resources = cursor.fetchall()
 
         cursor.close()
         conn.close()
 
-        return results
+        return {
+            "disaster": disaster,
+            "resources": resources,
+            "status": "success",
+            "message": f"Found {len(resources)} resource center(s) near disaster ID {request_id}"
+        }
 
     except mysql.connector.Error as err:
-        print(f"Database error: {err}")
         return {
             "error": str(err),
             "results": {}
         }
     except Exception as e:
-        print(f"Unexpected error: {e}")
         return {
             "error": str(e),
             "results": {}

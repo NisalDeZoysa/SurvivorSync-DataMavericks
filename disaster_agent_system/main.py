@@ -78,9 +78,7 @@
 
 import sys
 import subprocess
-import time
-import multiprocessing
-import os
+
 
 SERVERS = {
     # gateway
@@ -90,13 +88,16 @@ SERVERS = {
     "request_verify_agent": "disaster_agent_system.agents.request_verify_agent",
     "resource_tracking_agent": "disaster_agent_system.agents.resource_tracking_agent",
     "resource_assign_agent": "disaster_agent_system.agents.resource_assign_agent",
+    "user_communication_agent": "disaster_agent_system.agents.user_communication_agent",
     "tips_agent": "disaster_agent_system.agents.tips_agent",
     #mcps
     "math_mcp": "disaster_agent_system.mcps.math",
-    "request_count_mcp": "disaster_agent_system.mcps.request_count",
     "brave_mcp": "disaster_agent_system.mcps.brave_search_mcp_server",
-    "imaage_voice_caption_mcp": "disaster_agent_system.mcps.image_voice_caption",
+    "image_voice_caption_mcp": "disaster_agent_system.mcps.image_voice_caption",
+    "resource_assign_mcp": "disaster_agent_system.mcps.resource_assign",
+    "near_requests_mcp": "disaster_agent_system.mcps.near_requests",
     "resource_tracking_mcp": "disaster_agent_system.mcps.resource_track",
+    "message_mcp": "disaster_agent_system.mcps.message_mcp",
 }
 
 processes = {}

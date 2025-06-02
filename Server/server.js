@@ -134,11 +134,12 @@ io.on('connection', (socket) => {
 
 // DB Sync + Start server
 sequelize
-  .sync()
+  .sync(
+    
+  )
   .then(async () => {
     console.log('Database connected');
-    // await seedDatabase();
-
+     //await seedDatabase();
     // Start HTTP server (not app.listen)
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
