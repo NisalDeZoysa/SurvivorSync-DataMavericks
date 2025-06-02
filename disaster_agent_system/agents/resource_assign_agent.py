@@ -17,8 +17,13 @@ load_dotenv()
 memory = MemorySaver()
 app = Flask(__name__)
 
+class AssignedResource(BaseModel):
+    disaster_id: int
+    resource_id: int
+    amount: int
+
 class ResourceAssignResponse(BaseModel):
-    assigned_resources: list[Dict[str, Any]]
+    assigned_resources: list[AssignedResource]
     status: Literal['success', 'error'] = 'success'
     message: str
 
@@ -39,11 +44,13 @@ class ResourceAssignAgent:
         '''
         "You are a resource assignment agent. Your task is to assign available resources to disaster requests "
         "based on the response from the resource tracking agent. Use the assign_resources tool with the disaster "
-        "details and available resources. Respond with the assignment details in JSON format. "
+        "you should select a suitable amount from the count and used values in the resources available"
+        "There can be multiple resources for a single disaster request. "
+        "Respond with a structured JSON response containing the assigned resources. "
         "If parameters are missing, return an error. "
         "Response format:\n"
         "{\n"
-        '  "assigned_resources": { ... } ,\n'
+        '  "assigned_resources": { "disaster_id": int, "resource_id": int, "amount": int } ,\n'
         '  "status": "success|error",\n'
         '  "message": "..."\n'
         "}"
@@ -91,11 +98,10 @@ def get_agent_card():
 async def get_agent_response(task_request, task_id):
     try:
         tracking_data = task_request["resource-tracking-agent"]
-        tracking_response = tracking_data.get("request-verify-agent-response", [{}])[0].get("response", {})
+        tracking_response = tracking_data.get("resource-tracking-agent-response", [{}])[0].get("response", {})
         instructions = (
             "Assign resources to the following disaster request using the available resources.\n"
-            f"Disaster Request: {json.dumps(tracking_response.get('disaster_requests', {}))}\n"
-            f"Available Resources: {json.dumps(tracking_response.get('resources', []))}"
+            f"Disaster Request: {json.dumps(tracking_response.get('help_needed_requests', {}))}\n"
         )
     except (KeyError, IndexError, TypeError) as e:
         print(f"Error extracting tracking agent response for task {task_id}: {e}")
@@ -219,5 +225,5 @@ def handle_task():
     return jsonify(response_task)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5014))
+    port = int(os.environ.get("PORT", 5013))
     app.run(host="0.0.0.0", port=port)

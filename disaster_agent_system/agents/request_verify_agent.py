@@ -47,7 +47,7 @@ class RequestVerifyAgent:
         'You are an intelligent request verify agent.' 
         'Your task is to verify the disaster request information provided by the user and respond in the following JSON format.'
         'Use the available tools to verify the information.'
-        'Get all the disasterIds from the data rows return from the request_count tool. and add them to the help_needed_requests list.'
+        'Get all the disasterIds from the data rows return from the request_count tool. and add them to the help_needed_requests list as comma seperated integers.'
         'If the tool calling gives sql query data rows, set the status to "completed"'
         'If the return query count from request_count tool is greater than 2, set the verification_status to "verified".'
         'If the return query count from request_count tool is greater than 5, set the verification_status to "already_verified".' 
@@ -123,7 +123,7 @@ async def get_agent_response(task_request,task_id):
         # Access hyphenated key using dictionary syntax
         previous_agent_response = intake_data["request-intake-agent-response"]
         
-        print(f"Request Intake Agent received task {task_id} with text: '{instructions}' and previous agent response: {previous_agent_response}")
+        print(f"Request Verify Agent received task {task_id} with text: '{instructions}' and previous agent response: {previous_agent_response}")
     except (KeyError, IndexError, TypeError) as e:
         print(f"Error extracting user text for task {task_id}: {e}")
         return jsonify({"error": "Bad message format"}), 400
@@ -150,10 +150,12 @@ async def get_agent_response(task_request,task_id):
         print("Sending prompt to agent...")
         
         full_instructions = f"{instructions}\n\n Previous agent response: {json.dumps(previous_agent_response)}"
-        print(f"Agent instructions: {full_instructions}")
+        print(f"Verify Agent instructions: {full_instructions}")
         
         response = await agent.invoke(full_instructions, task_id)
-        return response
+        response_format_dict = response['content'].model_dump()
+        print(f"Request Verify Agent response for task {task_id}: {response_format_dict}")
+        return response_format_dict
         
     except Exception as e:
         print(f"Error processing task {task_id}: {e}")
@@ -168,16 +170,9 @@ def handle_task():
     
     if not task_request:
         return jsonify({"error": "Invalid request"}), 400
-
-    # task_id = task_request.get("id", str(uuid.uuid4()))  # Use provided or generate new ID
-    # Check if the request has the intake agent structure
-    if "request_intake_agent" in task_request:
-        intake_data = task_request["request_intake_agent"]
-        task_id = intake_data.get("id", str(uuid.uuid4()))
-    else:
-        # Handle normal requests
-        task_id = task_request.get("id", str(uuid.uuid4()))
-
+    intake_data = task_request["request-intake-agent"]
+    task_id = intake_data.get("id", str(uuid.uuid4()))
+    response = {}
     try:
         agent_response = asyncio.run(get_agent_response(task_request, task_id))
         
@@ -185,16 +180,14 @@ def handle_task():
         
         response_content = agent_response['content']
         response_format_dict = response_content.model_dump()
-        
-
         # Formulate A2A response Task
         response_task = {
             "request-verify-agent": {
                 "id": task_id,
-                "status": "request-verify-agent-completed",
+                "status": "success",
                 "agent" : "request-verify-agent",
-                "previous_request": task_request["request_intake_agent"]["request-intake-agent-response"].get("response", {}),
-                "next-agent": "task-prioritize-agent",
+                "previous_request": task_request["request-intake-agent"]["request-intake-agent-response"].get("response", {}),
+                "next-agent": "resource-tracking-agent",
                 "message": "request verify agent has verified the request. now your task is to track the resources and output the available resources list.",
                 "request-verify-agent-response": [
                     {
@@ -204,47 +197,61 @@ def handle_task():
                 ]
             }
         }
-        
-        
         print(f"Forwarding task {task_id} response is {response_task}")
         target_agent_url = RESOURCE_TRACKING_AGENT
         target_send_url = f"{target_agent_url}/tasks/send"
 
         try:
-            response = requests.post(target_send_url, json=response_task, timeout=60)
+            if response_task.get("request_verify_agent", {}).get("next-agent") == "resource-tracking-agent":
+               response = requests.post(target_send_url, json=response_task, timeout=300)        
+            else:
+                print(f"Skipping forwarding to {target_agent_url} as next-agent is not resource-tracking-agent")
+            
         except requests.exceptions.RequestException as e:
             print(f"Error forwarding task {task_id}: {e}")
-            error_response_task = {
-                "id": task_id,
-                "agent": "request-verify-agent",
-                "status": {"state": "failed", "reason": f"Failed to contact downstream agent: {target_agent_url}"},
-                "messages": [
-                    task_request.get("message", {}),
-                    {
-                        "role": "request-verify-agent",
-                        "parts": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+            response = {
+                "resource-tracking-agent": {
+                    "id": task_id,
+                    "status": "error",
+                    "error_message": f"Failed to contact target agent at {target_agent_url}. Details: {e}",
+                    "agent" : "resource-tracking-agent",
+                    "resource-tracking-agent-response":
+                        {
+                            "role": "resource-tracking-agent",
+                            "response": [{"text": f"Error contacting target agent at {target_agent_url}. Details: {e}"}]
+                        }
+                    
                     }
-                ]
             }
-            return jsonify(error_response_task), 502
-
-        return jsonify(response_task.json())
+        print ("\n Respond from Request verify Agent: \n", response)
 
     except Exception as e:
         print(f"Request Verify Agent error: {e}")
-        error_response_task = {
-            "id": task_id,
-            "agent": "request-verify-agent",
-            "status": {"state": "failed", "reason": f"Agent processing failed: {e}"},
-            "messages": [
-                task_request.get("message", {}),
-                {
-                    "role": "request-verify-agent",
-                    "parts": [{"text": f"RAG agent failed. Details: {e}"}]
-                }
-            ]
+        print(f"Agent error: {e}")
+        response_task ={
+            "request-verify-agent":  {
+                "id": task_id,
+                "status": "error",
+                "error_message": f" Request Verify Agent processing failed: {e}",
+                "agent": "request-verify-agent",
+                "request-verify-agent-response": 
+                    {
+                        "role": "request-verify-agent",
+                        "response": [{"text": f"Request Verify agent failed. Details: {e}"}]
+                    }
+            }
         }
-        return jsonify(error_response_task), 500
+        print(f"Error processing task {task_id} with agent intake: {e}")
+        response = {}
+        
+    # Ensure response is a dict before unpacking
+    if not isinstance(response, dict):
+        try:
+            response = response.json()
+        except Exception:
+            response = {}
+    response_task = {**response_task, **response}
+    return jsonify(response_task)
 
 
 
