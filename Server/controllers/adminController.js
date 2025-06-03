@@ -26,7 +26,10 @@ const generateTokens = (admin) => {
   return { accessToken, refreshToken };
 };
 
-export const registerAdmin = async (req, res) => {
+export const createAdmin = async (req, res) => {
+
+  console.log("Admin registration data:", req.body);
+
   const { name, contactNumber, email, description, password } = req.body;
 
   try {
@@ -65,47 +68,105 @@ export const registerAdmin = async (req, res) => {
 };
 
 // Both admin and first responder login functions can be similar, but here we focus on admin login
+// export const loginAdmin = async (req, res) => {
+//   const { email, password } = req.body;
+
+//   try {
+//     const admin = await Admin.findOne({ where: { email } });
+//     // if (!admin) return res.status(404).json({ error: 'Admin not found' });
+
+//     const match = await bcrypt.compare(password, admin.password);
+//     // if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+
+//     const { accessToken, refreshToken } = generateTokens(admin);
+//     res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
+//     res.cookie('userType', 'ADMIN', { sameSite: 'Strict' });
+//     let userole = 'ADMIN';
+
+//     if (!admin) {
+//         const fr = await FirstResponder.findOne({ where: { email } });
+//         if (!fr) return res.status(404).json({ error: 'FirstResponder not found' });
+
+//         console.log(fr)
+
+//         const match = await bcrypt.compare(password, fr.password);
+//         if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+
+//         const { accessToken, refreshToken } = generateTokens(fr);
+//         res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
+//         res.cookie('userType', 'FIRST_RESPONDER', { sameSite: 'Strict' });
+//         userole = 'FIRST_RESPONDER';
+
+//     }
+
+//     console.log('User role:', userole);
+
+//     res.json({
+//       message: 'Admin logged in successfully',
+//       accessToken,
+//       refreshToken,
+//       expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
+//       admin: {
+//         id: admin.id,
+//         name: admin.name,
+//         email: admin.email,
+//         type: userole,
+//       },
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 export const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    let user = null;
+    let userType = null;
+
+    // First try to find Admin
     const admin = await Admin.findOne({ where: { email } });
-    // if (!admin) return res.status(404).json({ error: 'Admin not found' });
-
-    const match = await bcrypt.compare(password, admin.password);
-    if (!match) return res.status(401).json({ error: 'Invalid credentials' });
-
-    const { accessToken, refreshToken } = generateTokens(admin);
-    res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
-    res.cookie('userType', 'ADMIN', { sameSite: 'Strict' });
-    let userole = 'ADMIN';
-
-    if (!admin) {
-        const fr = await FirstResponder.findOne({ where: { email } });
-        if (!fr) return res.status(404).json({ error: 'FirstResponder not found' });
-
-        const match = await bcrypt.compare(password, fr.password);
-        if (!match) return res.status(401).json({ error: 'Invalid credentials' });
-
-        const { accessToken, refreshToken } = generateTokens(admin);
-        res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
-        res.cookie('userType', 'FIRST_RESPONDER', { sameSite: 'Strict' });
-        userole = 'FIRST_RESPONDER';
-
+    if (admin) {
+      const match = await bcrypt.compare(password, admin.password);
+      if (match) {
+        user = admin;
+        userType = 'ADMIN';
+      }
     }
 
-    console.log('User role:', userole);
+    // If not Admin, try First Responder
+    if (!user) {
+      const fr = await FirstResponder.findOne({ where: { email } });
+      if (fr) {
+        const match = await bcrypt.compare(password, fr.password);
+        if (match) {
+          user = fr;
+          userType = 'FIRST_RESPONDER';
+        }
+      }
+    }
+
+    // If no valid user found
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Generate tokens and set cookies
+    const { accessToken, refreshToken } = generateTokens(user);
+    res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
+    res.cookie('userType', userType, { sameSite: 'Strict' });
 
     res.json({
-      message: 'Admin logged in successfully',
+      message: `${userType} logged in successfully`,
       accessToken,
       refreshToken,
       expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
-      admin: {
-        id: admin.id,
-        name: admin.name,
-        email: admin.email,
-        type: userole,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        type: userType,
       },
     });
   } catch (error) {

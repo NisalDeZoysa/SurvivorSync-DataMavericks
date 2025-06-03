@@ -470,9 +470,6 @@ async function seedDatabase() {
   );
 
 
-
-
-
   const centerLat = 6.81;
   const centerLong = 79.87;
   const radiusInKm = 25;

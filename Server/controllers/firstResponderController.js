@@ -25,7 +25,8 @@ const generateTokens = (admin) => {
 };
 
 export const registerFirstResponder = async (req, res) => {
-  const { resourceCenterId, name, nic, contactNumber, email, type, password, is_verified } = req.body;
+
+  const { resourceCenterId, name, nic, contactNumber, email, type, password } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -36,11 +37,11 @@ export const registerFirstResponder = async (req, res) => {
       contactNumber,
       email,
       type,
-      is_verified,
+      is_verified : false,
       password: hashedPassword,
     });
 
-    const { accessToken, refreshToken } = generateTokens(admin);
+    const { accessToken, refreshToken } = generateTokens(fr);
     res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
     res.cookie('userType', 'ADMIN', { sameSite: 'Strict' });
 
@@ -54,6 +55,7 @@ export const registerFirstResponder = async (req, res) => {
         name: fr.name,
         email: fr.email,
         type: 'FIRST_RESPONDER',
+        is_verified: fr.is_verified,
       },
     });
   } catch (error) {
@@ -65,41 +67,20 @@ export const registerFirstResponder = async (req, res) => {
   }
 };
 
-export const loginFirstResponder = async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    const fr = await FirstResponder.findOne({ where: { email } });
-    if (!fr) return res.status(404).json({ error: 'FirstResponder not found' });
-
-    const match = await bcrypt.compare(password, fr.password);
-    if (!match) return res.status(401).json({ error: 'Invalid credentials' });
-
-    const { accessToken, refreshToken } = generateTokens(fr);
-    res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
-    res.cookie('userType', 'FIRST_RESPONDER', { sameSite: 'Strict' });
-
-    res.json({
-      message: 'FirstResponder logged in successfully',
-      accessToken,
-      refreshToken,
-      expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
-      first_responder: {
-        id: fr.id,
-        name: fr.name,
-        email: fr.email,
-        type: 'FIRST_RESPONDER',
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+// No separate end point for login FirstResponder, They will login using same login as admins
 
 export const getAllFirstResponders = async (req, res) => {
   const frs = await FirstResponder.findAll();
   res.json(frs);
 };
+
+
+export const verifyFirstResponder = async (req, res) => {
+  const {id, is_verified} = req.body;
+
+
+
+}
 
 export const getFirstResponderById = async (req, res) => {
   const fr = await FirstResponder.findByPk(req.params.id);

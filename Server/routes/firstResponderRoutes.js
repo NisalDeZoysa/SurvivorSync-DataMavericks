@@ -1,7 +1,6 @@
 import express from 'express';
 import {
     registerFirstResponder,
-    loginFirstResponder,
     getAllFirstResponders,
     getFirstResponderById,
     updateFirstResponder,
@@ -15,7 +14,7 @@ import { authenticateToken } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 router.post('/register', registerFirstResponder);
-router.post('/login', loginFirstResponder);
+// router.post('/login', loginFirstResponder);
 router.get('/refresh', refreshFirstResponderToken);
 
 router.get('/admins', authenticateToken, getAllFirstResponders);

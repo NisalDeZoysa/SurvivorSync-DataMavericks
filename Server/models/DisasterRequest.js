@@ -87,9 +87,4 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
 });
 
 
-
-
-
-
-
 export default DisasterRequest;

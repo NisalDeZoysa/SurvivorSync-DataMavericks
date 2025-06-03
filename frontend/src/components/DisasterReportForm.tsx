@@ -230,11 +230,13 @@ const DisasterReportForm: React.FC = () => {
         timeout: 0,
       });
 
-      console.log("Submission response:", response.data);
+      
 
       if (!response.data.success) {
         throw new Error(response.data.message || "Submission failed");
       }
+
+      console.log("Submission response:", response.data);
 
       toast({
         title: "Report Submitted",

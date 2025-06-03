@@ -134,8 +134,8 @@ io.on('connection', (socket) => {
 
 // DB Sync + Start server
 sequelize
-  .sync(
-    
+  .sync( 
+    // { force: true }
   )
   .then(async () => {
     console.log('Database connected');

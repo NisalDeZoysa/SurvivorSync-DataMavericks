@@ -1,6 +1,6 @@
 import express from 'express';
 import {
-  registerAdmin,
+  createAdmin,
   loginAdmin,
   getAllAdmins,
   getAdminById,
@@ -14,7 +14,7 @@ import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/register', registerAdmin);
+router.post('/register', createAdmin);
 router.post('/login', loginAdmin);
 router.get('/refresh', refreshAdminToken);
 

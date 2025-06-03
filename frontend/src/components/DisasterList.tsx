@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import io from "socket.io-client";
+import { useAuth } from "@/context/AuthContext";
 
 const DisasterList: React.FC = () => {
   const [disasters, setDisasters] = useState<Disaster[]>([]);
@@ -48,14 +49,23 @@ const DisasterList: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [socket, setSocket] = useState<any>(null);
+  const { currentUser } = useAuth();
 
   const fetchDisasters = async () => {
     try {
       const token = localStorage.getItem("token"); // Get auth token
-      const response = await fetch("http://localhost:7000/api/requests", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      
+        // Determine endpoint based on user role
+      let apiUrl;
+      if (currentUser.role === "admin" || currentUser.role === "first_responder") {
+        apiUrl = "http://localhost:7000/api/requests";
+      } else {
+        // Use current user's ID for non-admin/non-responder
+        apiUrl = `http://localhost:7000/api/requests/userId?id=${currentUser.id}`;
+      }
+
+      const response = await fetch(apiUrl, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!response.ok) {
@@ -63,6 +73,8 @@ const DisasterList: React.FC = () => {
       }
 
       const apiData: ApiDisaster[] = await response.json();
+
+      console.log("Fetched disasters:", apiData);
 
       // Transform API data to match frontend Disaster type
       const transformedData: Disaster[] = apiData.map((item) => ({

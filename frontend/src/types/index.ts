@@ -28,7 +28,18 @@ export interface User {
 }
 
 
-
+export interface Resource_Center{
+  id: number;
+  name: string;
+  resourceId: number;
+  lat: number;
+  long: number;
+  district: string;
+  province: string;
+  count: number;
+  used: number;
+  contactNumber: string;
+}
 
 
 export enum DisasterType {

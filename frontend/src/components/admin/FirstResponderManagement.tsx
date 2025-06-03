@@ -179,21 +179,21 @@ const UserManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">First Responders Management</h2>
+          <h2 className="text-2xl font-bold">Admin Management</h2>
           <p className="text-gray-600">Manage first responders registrations and create new responders</p>
         </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
             <Button className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
-              Create User
+              Create Admin
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Create New User</DialogTitle>
+              <DialogTitle>Create New Admin</DialogTitle>
               <DialogDescription>
-                Create a new user account with specified role and details.
+                Create a new admin account with role as ADMIN.
               </DialogDescription>
             </DialogHeader>
             <CreateUserForm onClose={() => setShowCreateDialog(false)} />
@@ -265,7 +265,7 @@ const UserManagement = () => {
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
-                    <TableCell>{getRoleBadge(user.role)}</TableCell>
+                    <TableCell>{getRoleBadge(user.type)}</TableCell>
                     <TableCell>{user.contactNumber}</TableCell>
                     <TableCell>
                       {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
