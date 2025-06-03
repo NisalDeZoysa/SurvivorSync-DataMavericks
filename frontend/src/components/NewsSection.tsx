@@ -98,7 +98,7 @@ const NewsSection: React.FC = () => {
   const filteredNews = mockVerifiedDisasters.filter(disaster =>
     disaster.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     disaster.location.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    disaster.type.toLowerCase().includes(searchTerm.toLowerCase())
+    String(disaster.type).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getSeverityColor = (severity: DisasterSeverity) => {

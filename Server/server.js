@@ -111,6 +111,7 @@ import resourceRoutes from './routes/resourceRoutes.js';
 import resourceCenterRoutes from './routes/resourceCenterRoutes.js';
 import allocationRoutes from './routes/allocationRoutes.js';
 import availabilityRoutes from './routes/availabilityRoutes.js';
+import assignmentRoutes from './routes/assignmentRoutes.js';
 
 app.use('/api/users', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -122,6 +123,7 @@ app.use('/api/resources', resourceRoutes);
 app.use('/api/resource-centers', resourceCenterRoutes);
 app.use('/api/allocations', allocationRoutes);
 app.use('/api/availability', availabilityRoutes);
+app.use('/api/assignments', assignmentRoutes);
 
 // Optional: Socket.io connection event for logging
 io.on('connection', (socket) => {
