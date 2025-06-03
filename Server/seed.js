@@ -203,7 +203,7 @@ async function seedDatabase() {
     },
     {
       name: "Tharindu",
-      userId: 6,
+      userId: 1,
       disasterId: 1,
       severity: "HIGH",
       status: "PENDING",

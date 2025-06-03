@@ -124,9 +124,13 @@ export const loginAdmin = async (req, res) => {
   try {
     let user = null;
     let userType = null;
+ 
 
     // First try to find Admin
     const admin = await Admin.findOne({ where: { email } });
+
+    console.log("Admin"+admin.password)
+    // console.log("Type"+admin.type)
     if (admin) {
       const match = await bcrypt.compare(password, admin.password);
       if (match) {
@@ -147,6 +151,8 @@ export const loginAdmin = async (req, res) => {
       }
     }
 
+
+
     // If no valid user found
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -162,7 +168,7 @@ export const loginAdmin = async (req, res) => {
       accessToken,
       refreshToken,
       expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
-      user: {
+      admin: {
         id: user.id,
         name: user.name,
         email: user.email,

@@ -102,6 +102,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error("Invalid login response");
       }
 
+      console.log("response.data.admin:", response.data.admin);
+
       let userType = UserRole.FIRST_RESPONDER;
 
       if (response.data.admin.type === "ADMIN") {

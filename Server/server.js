@@ -70,13 +70,20 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import seedDatabase from './seed.js'; // Your seeder function
 
+import {whatsappClient} from './controllers/whatsAppConroller.js';
+
+
+
 dotenv.config();
+
+// whatsappClient.initialize();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Create HTTP server from Express app
 const server = http.createServer(app);
+
 
 // Initialize Socket.io server with CORS options
 const io = new SocketIOServer(server, {
@@ -111,6 +118,7 @@ import resourceRoutes from './routes/resourceRoutes.js';
 import resourceCenterRoutes from './routes/resourceCenterRoutes.js';
 import allocationRoutes from './routes/allocationRoutes.js';
 import availabilityRoutes from './routes/availabilityRoutes.js';
+import whatsAppRoutes from './routes/whatsappRoutes.js';
 
 app.use('/api/users', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -122,6 +130,7 @@ app.use('/api/resources', resourceRoutes);
 app.use('/api/resource-centers', resourceCenterRoutes);
 app.use('/api/allocations', allocationRoutes);
 app.use('/api/availability', availabilityRoutes);
+app.use('/api/whatsapp', whatsAppRoutes); // Add WhatsApp routes
 
 // Optional: Socket.io connection event for logging
 io.on('connection', (socket) => {
@@ -139,7 +148,7 @@ sequelize
   )
   .then(async () => {
     console.log('Database connected');
-     //await seedDatabase();
+    // await seedDatabase();
     // Start HTTP server (not app.listen)
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
