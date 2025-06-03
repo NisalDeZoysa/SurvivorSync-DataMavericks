@@ -184,3 +184,19 @@ export const getVolunteerAndVictimCount = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getVolunteers = async (req, res) => {
+    try {
+        const volunteers = await User.findAll({
+            where: {
+                type: 'volunteer'
+            },
+            attributes: ['id', 'name', 'email', 'contactNumber', 'address'] // Only return necessary fields
+        });
+        
+        res.status(200).json(volunteers);
+    } catch (error) {
+        console.error('Error fetching volunteers:', error);
+        res.status(500).json({ message: 'Failed to fetch volunteers', error: error.message });
+    }
+};
