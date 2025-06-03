@@ -15,7 +15,7 @@ def search(query: str) -> dict:
         "X-Subscription-Token": BRAVE_API_KEY,
         
     }
-    params = {"q": query, "count": 5}
+    params = {"q": query, "count": 10}
     response = requests.get("https://api.search.brave.com/res/v1/web/search", headers=headers, params=params)
     return response.json()
 

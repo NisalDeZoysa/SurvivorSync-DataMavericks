@@ -2,10 +2,10 @@ import datetime
 import mysql.connector
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("request-count")
+mcp = FastMCP("near-requests")
 
 @mcp.tool()
-def output_requests(lat: float, long: float, disasterId: int) -> list:
+def output_requests(lat: float, long: float, disasterId: int) -> dict:
     """
     Fetch and print all requests based on location and disaster ID on the current day within ~5km,
     then return the matching rows.
@@ -38,22 +38,25 @@ def output_requests(lat: float, long: float, disasterId: int) -> list:
             """
 
         cursor.execute(query, (disasterId, today_start, tomorrow_start, long, lat))
-        rows = cursor.fetchall()
-
-        print(f"Fetched {len(rows)} rows:")
-        for row in rows:
-            print(row)
+        disaster_data = cursor.fetchall()
 
         cursor.close()
         conn.close()
 
-        return rows
+        return {
+            "disaster_data": disaster_data,
+            "message": f"Found {len(disaster_data)} requests for disaster ID {disasterId} near coordinates ({lat}, {long}) on {now.date()}."
+        }
     except mysql.connector.Error as err:
         print(f"Database error: {err}")
-        return []
+        return {
+            "error": f"Database error: {err}"
+        }
     except Exception as e:
         print(f"Unexpected error: {e}")
-        return []
+        return {
+            "error": f"Unexpected error: {e}"
+        }
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")
