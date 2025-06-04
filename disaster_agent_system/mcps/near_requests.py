@@ -5,7 +5,7 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP("near-requests")
 
 @mcp.tool()
-def output_requests(lat: float, long: float, disasterId: int) -> dict:
+def near_requests(lat: float, long: float, disasterId: int) -> dict:
     """
     Fetch and print all requests based on location and disaster ID on the current day within ~5km,
     then return the matching rows.

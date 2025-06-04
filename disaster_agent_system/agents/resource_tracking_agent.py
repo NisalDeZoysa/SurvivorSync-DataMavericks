@@ -280,19 +280,19 @@ class ResourceTrackingAgent:
     SYSTEM_INSTRUCTION = (
     "If the verification status is not 'verified', return an error with appropriate message. "
     "You are a resource tracking agent. Your task is to identify and recommend resource centers near verified disaster locations. "
-    "Start by retrieving all available resources within a 15km radius using the `track_resources` tool, providing the disaster ID, latitude, and longitude from the verified disaster data. "
+    "Start by retrieving all available resources within a 10km radius using the `track_resources` tool, providing the disaster ID, latitude, and longitude from the verified disaster data. "
     "Once the nearby resources are fetched, evaluate them based on their relevance and suitability for the specific disaster request (e.g., type of disaster, needed supplies, urgency, etc.). "
     "Select the most appropriate resources from the fetched data and include them in the final response. "
     "Ensure you use the disaster data provided by the previous response (disaster ID, location, and any other context). "
     "Your structured JSON response must include:\n"
-    "- resources: A list of the most suitable resources selected from the tool response.\n"
+    "- resources: A list of the most suitable resources selected from the (track_resources) tool response.\n"
     "- status: 'success' or 'error'.\n"
     "- message: A clear message describing what was done, including how many resources were found and how selection was made.\n"
     "If the disaster ID, latitude, or longitude is missing, return an error with an appropriate message. "
     "If tool data is missing or response is empty, return an error with explanation.\n"
     "Respond using the following format:\n"
     "{\n"
-    '  "disaster_data": <DisasterRequestResponseFormat>,\n'
+    '  "disaster_data": { },\n'
     '  "resources": [<filtered resources>],\n'
     '  "status": "success|error",\n'
     '  "message": "..." \n'
@@ -324,10 +324,11 @@ class ResourceTrackingAgent:
                 "disaster_data": DisasterRequestResponseFormat(
                     status = 'error',
                     request_id = 0,
+                    disaster = 'unknown',
+                    disasterId=0,
                     disaster_status = 'medium',
                     location = [0.0, 0.0],
                     time = '2023-11-15T10:00:00Z',
-                    type = 'unknown',
                     affected_count = 0,
                     contact_info = 'Not applicable',
                     image_description = 'Not applicable',
@@ -348,11 +349,16 @@ async def get_tracking_agent_response(task_request, task_id):
         # Initialize tools and agent
         client = MultiServerMCPClient(
         {
-            "resource-track": {
-                "transport": "stdio", 
-                "command": "python",
-                "args": ["disaster_agent_system/mcps/resource_track.py"]
-            }
+            # "resource-track": {
+            #     "transport": "stdio", 
+            #     "command": "python",
+            #     "args": ["disaster_agent_system/mcps/resource_track.py"]
+            # }
+            "mcp-server": 
+            {
+            "transport": "stdio", 
+            "command": "python",
+            "args": ["disaster_agent_system/mcps/mcp_server.py"]}
         })
         tools = await client.get_tools()
         print(f"Loaded {len(tools)} tools from MCP servers.")
@@ -369,9 +375,10 @@ async def get_tracking_agent_response(task_request, task_id):
                     status='error',
                     request_id=0,
                     disaster_status='medium',
+                    disaster='unknown',
+                    disasterId=0,
                     location=[0.0, 0.0],
                     time=datetime.datetime.now().isoformat(),
-                    type='unknown',
                     affected_count=0,
                     contact_info='Not applicable',
                     image_description='Not applicable',
@@ -385,15 +392,16 @@ async def get_tracking_agent_response(task_request, task_id):
 @app.post("/tasks/send")
 def handle_tracking_task():
     task_request = request.get_json()
-    print(f"Received task request for Resource Tracking Agent: {task_request}")
+    # print(f"Received task request for Resource Tracking Agent: {task_request}")
     if not task_request:
         return jsonify({"error": "Invalid request"}), 400
-
-    task_id = task_request.get("task_id", "")
-    verified_data = next((agent_resp.get("response") for agent_resp in task_request.get("agent_responses", []) if agent_resp.get("agent") == "request-verify-agent"), None)
-    print(f"Processing task {task_id} with intake data: {verified_data}")
+    agent_responses = task_request.get("agent_responses", [])
+    # Extract the response dict for "request-intake-agent" to another variable
+    request_verify_agent = next((agent_resp.get("response") for agent_resp in agent_responses if agent_resp.get("agent") == "request-verify-agent"),None)
+    task_id = request_verify_agent.get("id", "") if request_verify_agent is not None else ""
+    print(f"Processing task {task_id} with agent responses: {agent_responses}")
     try:
-        agent_response = asyncio.run(get_tracking_agent_response(verified_data, task_id))
+        agent_response = asyncio.run(get_tracking_agent_response(request_verify_agent, task_id))
         print(f"Resource Tracking Agent response for task {task_id}: {agent_response}")
     except Exception as e:
         agent_response = {

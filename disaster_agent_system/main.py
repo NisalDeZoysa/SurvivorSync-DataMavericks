@@ -91,13 +91,15 @@ SERVERS = {
     "user_communication_agent": "disaster_agent_system.agents.user_communication_agent",
     "tips_agent": "disaster_agent_system.agents.tips_agent",
     #mcps
-    "math_mcp": "disaster_agent_system.mcps.math",
-    "brave_mcp": "disaster_agent_system.mcps.brave_search_mcp_server",
-    "image_voice_caption_mcp": "disaster_agent_system.mcps.image_voice_caption",
-    "resource_assign_mcp": "disaster_agent_system.mcps.resource_assign",
-    "near_requests_mcp": "disaster_agent_system.mcps.near_requests",
-    "resource_tracking_mcp": "disaster_agent_system.mcps.resource_track",
-    "message_mcp": "disaster_agent_system.mcps.message_mcp",
+    # "math_mcp": "disaster_agent_system.mcps.math",
+    # "brave_mcp": "disaster_agent_system.mcps.brave_search_mcp_server",
+    # "image_voice_caption_mcp": "disaster_agent_system.mcps.image_voice_caption",
+    # "resource_assign_mcp": "disaster_agent_system.mcps.resource_assign",
+    # "near_requests_mcp": "disaster_agent_system.mcps.near_requests",
+    # "resource_tracking_mcp": "disaster_agent_system.mcps.resource_track",
+    # "message_mcp": "disaster_agent_system.mcps.message_mcp",
+    "captioning_mcp": "disaster_agent_system.mcps.captioning_mcp",
+    "mcp_server": "disaster_agent_system.mcps.mcp_server",
 }
 
 processes = {}

@@ -267,7 +267,8 @@ class ResourceAllocationAgent:
         "based on the output from the resource tracking agent. You must use the available information including disaster ID, "
         "resource ID, available quantity, and disaster needs to determine suitable allocations.\n\n"
 
-        "Use the `assign_resources` tool to perform the assignment. Make sure that:\n"
+        "Use the `assign_resources` and pass parameters as (request_id: int, resource_center_ids: list[int], amounts: list[int]) to the tool to perform the assignment. Make sure that:\n"
+        "Then call change_status_after_assign_resources with parameters as (request_id: int, status: str)"
         "- You only assign resources that are available (i.e., not already fully allocated).\n"
         "- For each disaster request, select the most suitable resource centers based on proximity and availability.\n"
         "- Use fields: `disasterRequestId`, `resourceCenterId`, `amount`, and set `isAllocated` to `true`.\n"
@@ -326,11 +327,16 @@ async def get_verify_agent_response(task_request, task_id):
         # Initialize tools and agent
         client = MultiServerMCPClient(
         {
-            "resource-assign": {
-                "transport": "stdio", 
-                "command": "python",
-                "args": ["disaster_agent_system/mcps/resource_assign.py"]
-            }
+            # "resource-assign": {
+            #     "transport": "stdio", 
+            #     "command": "python",
+            #     "args": ["disaster_agent_system/mcps/resource_assign.py"]
+            # }
+            "mcp-server": 
+            {
+            "transport": "stdio", 
+            "command": "python",
+            "args": ["disaster_agent_system/mcps/mcp_server.py"]}
         })
         tools = await client.get_tools()
         print(f"Loaded {len(tools)} tools from MCP servers.")
@@ -351,15 +357,18 @@ async def get_verify_agent_response(task_request, task_id):
 @app.post("/tasks/send")
 def handle_verify_task():
     task_request = request.get_json()
-    print(f"Received task request for Resource Allocation Agent: {task_request}")
+    # print(f"Received task request for Resource Allocation Agent: {task_request}")
     if not task_request:
         return jsonify({"error": "Invalid request"}), 400
-
-    task_id = task_request.get("task_id", "")
-    intake_data = next((agent_resp.get("response") for agent_resp in task_request.get("agent_responses", []) if agent_resp.get("agent") == "resource-tracking-agent"), None)
-    print(f"Processing task {task_id} with intake data: {intake_data}")
+    agent_responses = task_request.get("agent_responses", [])
+    # Extract the response dict for "request-intake-agent" to another variable
+    resource_tracking_agent = next(
+        (agent_resp.get("response") for agent_resp in agent_responses if agent_resp.get("agent") == "resource-tracking-agent"),
+        None
+    )
+    task_id = resource_tracking_agent.get("id", "") if resource_tracking_agent is not None else ""
     try:
-        agent_response = asyncio.run(get_verify_agent_response(intake_data, task_id))
+        agent_response = asyncio.run(get_verify_agent_response(resource_tracking_agent, task_id))
         print(f"Resource Allocation Agent response for task {task_id}: {agent_response}")
     except Exception as e:
         agent_response = {
