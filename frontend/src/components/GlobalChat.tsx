@@ -38,7 +38,7 @@ const GlobalChat: React.FC = () => {
   }, [messages]);
 
   // Only show for regular users - moved after all hooks
-  if (!currentUser || currentUser.role !== UserRole.USER) {
+  if (!currentUser || currentUser.role !== UserRole.USER && currentUser.role !== UserRole.VOLUNTEERS) {
     return null;
   }
 
