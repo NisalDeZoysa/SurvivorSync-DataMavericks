@@ -1,6 +1,7 @@
 import { DisasterRequest, Disaster, User } from "../models/index.js";
 import Sequelize from 'sequelize';
 import { getDisasterById } from "./disasterController.js";
+import { sendMessage } from "./whatsAppConroller.js";
 
 
 export const createUserRequest = async (req, res) => {
@@ -135,6 +136,17 @@ export const createUserRequest = async (req, res) => {
 
   // }
   // console.log("\n Full gateway response when all process success:\n", gatewayData);
+
+  // Send WhatsApp message
+  // get the text from the gatewayResponse
+
+  // const agentResponses = gatewayResponse.gatewayResponse?.gatewayData?.agent_responses || [];
+  // const userCommAgent = agentResponses.find(a => a.agent === "user-communication-agent");
+  // const title  = userCommAgent.title
+  // const description = userCommAgent.description
+  // const msg = "You have request for " + title + "this is the verification precess result" + description
+
+  // await sendWhatsAppMessage(request.contactNo, msg);
 
 
   // Include gateway response in your final output if needed

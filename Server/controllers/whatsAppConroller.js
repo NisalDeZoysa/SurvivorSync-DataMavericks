@@ -47,7 +47,13 @@ export async function sendMessage(phoneNumber, message) {
     
     // Remove any non-digit characters from phone number
     const cleanedNumber = phoneNumber.replace(/\D/g, '');
-    const chatId = `${cleanedNumber}@c.us`;
+    
+    // Extract last 9 digits
+    const last9Digits = cleanedNumber.slice(-9);
+    
+    // Format as 94 + last 9 digits
+    const formattedNumber = '94' + last9Digits;
+    const chatId = `${formattedNumber}@c.us`;
     
     try {
         await whatsappClient.sendMessage(chatId, message);

@@ -36,6 +36,8 @@ import {
 } from "@/components/ui/select";
 import io from "socket.io-client";
 import { useAuth } from "@/context/AuthContext";
+import { PDFDownloadLink } from "@react-pdf/renderer";
+import EmergencyReportPDF from "./EmergencyReportPDF";
 
 const DisasterList: React.FC = () => {
   const [disasters, setDisasters] = useState<Disaster[]>([]);
@@ -54,10 +56,13 @@ const DisasterList: React.FC = () => {
   const fetchDisasters = async () => {
     try {
       const token = localStorage.getItem("token"); // Get auth token
-      
-        // Determine endpoint based on user role
+
+      // Determine endpoint based on user role
       let apiUrl;
-      if (currentUser.role === "admin" || currentUser.role === "first_responder") {
+      if (
+        currentUser.role === "admin" ||
+        currentUser.role === "first_responder"
+      ) {
         apiUrl = "http://localhost:7000/api/requests";
       } else {
         // Use current user's ID for non-admin/non-responder
@@ -183,11 +188,13 @@ const DisasterList: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "pending":
+      case "PENDING":
         return <Clock className="h-4 w-4 text-yellow-500" />;
-      case "in-progress":
+      case "VERIFIED":
+        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      case "IN_PROGRESS":
         return <AlertCircle className="h-4 w-4 text-blue-500" />;
-      case "resolved":
+      case "COMPLETED":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       default:
         return <AlertTriangle className="h-4 w-4 text-gray-500" />;
@@ -385,10 +392,9 @@ const DisasterList: React.FC = () => {
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>
-                        <span className="font-medium text-gray-500">Type:</span>
+                        <span className="font-medium text-gray-500">Requester Name:</span>
                         <span className="ml-1">
-                          {String(disaster.type).charAt(0).toUpperCase() +
-                            String(disaster.type).slice(1)}
+                          {String(disaster.name)}
                         </span>
                       </div>
                       <div>
@@ -439,6 +445,18 @@ const DisasterList: React.FC = () => {
           </div>
         )}
       </div>
+
+{/* PDF Download button, should remove from here */}
+      <PDFDownloadLink
+        document={<EmergencyReportPDF disasters={filteredDisasters} />}
+        fileName="emergency-reports.pdf"
+      >
+        {({ loading }) => (
+          <Button variant="outline">
+            {loading ? "Preparing PDF..." : "Download All as PDF"}
+          </Button>
+        )}
+      </PDFDownloadLink>
 
       {/* Detailed View Dialog */}
       <Dialog

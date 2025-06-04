@@ -27,6 +27,8 @@ import { Disaster, DisasterType, DisasterSeverity } from '@/types';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { Card } from '@/components/ui/card';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import EmergencyReportPDF from '@/components/EmergencyReportPDF';
 
 interface DisasterFormValues {
   name: string;
@@ -51,6 +53,8 @@ const DisasterReportForm: React.FC = () => {
   const streamRef = useRef<MediaStream | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const mimeTypeRef = useRef<string>('audio/wav'); // Default to WAV
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [createdDisaster, setCreatedDisaster] = useState<Disaster | null>(null);
 
 
 
@@ -235,6 +239,11 @@ const DisasterReportForm: React.FC = () => {
       if (!response.data.success) {
         throw new Error(response.data.message || "Submission failed");
       }
+
+    //  set the disaster 
+      // setCreatedDisaster(response.data); 
+      // console.log(createdDisaster)
+      // setShowSuccessPopup(true);
 
       console.log("Submission response:", response.data);
 
@@ -520,7 +529,43 @@ const DisasterReportForm: React.FC = () => {
           </div>
         </form>
       </Form>
+
+{/* pop us window */}
+        {
+          showSuccessPopup && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-8 rounded-lg max-w-md w-full">
+                <h3 className="text-xl font-bold mb-2">Report Submitted Successfully!</h3>
+                <p className="mb-6">Your emergency report has been submitted. You can download the report as PDF.</p>
+                
+                <div className="flex justify-end space-x-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowSuccessPopup(false)}
+                  >
+                    Close
+                  </Button>
+                  
+                  {createdDisaster && (
+                    <PDFDownloadLink
+                      document={<EmergencyReportPDF disasters={[createdDisaster]} />}
+                      fileName="emergency-report.pdf"
+                    >
+                      {({ loading }) => (
+                        <Button className="bg-emergency-500 hover:bg-emergency-600">
+                          {loading ? "Generating PDF..." : "Download PDF"}
+                        </Button>
+                      )}
+                    </PDFDownloadLink>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        }
     </Card>
+
+    
   );
 };
 

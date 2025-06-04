@@ -3,6 +3,15 @@ import { Bot, MessageCircle, X, Send, Minimize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import axios from 'axios';
+
+interface Message {
+  id: number;
+  text: string;
+  isBot: boolean;
+  timestamp: Date;
+}
+
 
 const FloatingChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,6 +25,19 @@ const FloatingChatbot = () => {
       timestamp: new Date()
     }
   ]);
+
+  // const [isLoading, setIsLoading] = useState(false);
+  // const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // // Auto-scroll to bottom when messages change
+  // useEffect(() => {
+  //   scrollToBottom();
+  // }, [messages]);
+
+  // const scrollToBottom = () => {
+  //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // };
+
 
   const handleSendMessage = () => {
     if (!message.trim()) return;
@@ -41,6 +63,59 @@ const FloatingChatbot = () => {
       setMessages(prev => [...prev, botResponse]);
     }, 1000);
   };
+
+
+  //   const handleSendMessage = async () => {
+  //   if (!message.trim() || isLoading) return;
+
+  //   // Add user message to chat
+  //   const userMessage: Message = {
+  //     id: Date.now(),
+  //     text: message,
+  //     isBot: false,
+  //     timestamp: new Date()
+  //   };
+
+  //   setMessages(prev => [...prev, userMessage]);
+  //   setMessage('');
+  //   setIsLoading(true);
+
+  //   try {
+  //     // Send message to chatbot backend
+  //     const response = await axios.post('http://localhost:5003/chat', {
+  //       message: message,
+  //       history: messages.slice(-10).map(m => ({
+  //         role: m.isBot ? 'assistant' : 'user',
+  //         content: m.text
+  //       }))
+  //     }, {
+  //       headers: {
+  //         'Content-Type': 'application/json'
+  //       }
+  //     });
+
+  //     // Add bot response to chat
+  //     const botResponse: Message = {
+  //       id: Date.now() + 1,
+  //       text: response.data.response,
+  //       isBot: true,
+  //       timestamp: new Date()
+  //     };
+
+  //     setMessages(prev => [...prev, botResponse]);
+  //   } catch (error) {
+  //     console.error("Chatbot error:", error);
+  //     const errorMessage: Message = {
+  //       id: Date.now() + 1,
+  //       text: "Sorry, I'm having trouble connecting. Please try again later.",
+  //       isBot: true,
+  //       timestamp: new Date()
+  //     };
+  //     setMessages(prev => [...prev, errorMessage]);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {

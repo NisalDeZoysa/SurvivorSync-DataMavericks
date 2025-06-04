@@ -15,7 +15,7 @@ import FloatingChatbot from "./components/FloatingChatbot";
 import UserManagementPage from "./pages/FirstResponderManagement";
 import NotFound from "./pages/NotFound";
 import News from "./pages/News";
-import Admin from "./pages/Admin";
+import GlobalChat from "./components/GlobalChat";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +40,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
              <FloatingChatbot />
+              <GlobalChat />
             <Footer />
           </div>
         </BrowserRouter>
