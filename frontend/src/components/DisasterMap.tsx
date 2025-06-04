@@ -1,23 +1,39 @@
-import React, { useEffect, useState ,useRef } from 'react';
-import { MapPin, AlertTriangle, Flame, Waves, Mountain } from 'lucide-react';
-import { Disaster, DisasterType, DisasterSeverity, ApiDisaster, APIResourceCenter, ResourceAvailability } from '@/types';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useEffect, useState, useRef } from "react";
+import { MapPin, AlertTriangle, Flame, Waves, Mountain } from "lucide-react";
+import {
+  Disaster,
+  DisasterType,
+  DisasterSeverity,
+  ApiDisaster,
+  APIResourceCenter,
+  ResourceAvailability,
+} from "@/types";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { APIProvider, Map, Marker } from "@vis.gl/react-google-maps";
-import flood from '../assets/flood.png';
-import fire from '../assets/fire.png';
-import other from '../assets/other.png';
-import landslide from '..//assets/landslide.png';
-import shelterIconUrl from '../assets/shelter.svg';
+import flood from "../assets/flood.png";
+import fire from "../assets/fire.png";
+import other from "../assets/other.png";
+import landslide from "..//assets/landslide.png";
+import shelterIconUrl from "../assets/shelter.svg";
 
 const apikey = import.meta.env.VITE_MAP_API_KEY;
- 
 
 const DisasterMap: React.FC = () => {
   const [hoveredDisaster, setHoveredDisaster] = useState<Disaster | null>(null);
-  const [hoveredShelter, setHoveredShelter] = useState<ResourceAvailability | null>(null);
-  const [selectedShelter, setSelectedShelter] = useState<ResourceAvailability | null>(null);
-  const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(null);
+  const [hoveredShelter, setHoveredShelter] =
+    useState<ResourceAvailability | null>(null);
+  const [selectedShelter, setSelectedShelter] =
+    useState<ResourceAvailability | null>(null);
+  const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(
+    null
+  );
   const [currentLocation, setCurrentLocation] = useState({
     lat: 7.1,
     lng: 80.636696,
@@ -27,25 +43,21 @@ const DisasterMap: React.FC = () => {
   const [disasters, setDisasters] = useState<Disaster[]>([]);
   const [shelter, setShelter] = useState<ResourceAvailability[]>([]);
 
-  
-
   const mapDisasterType = (disasterId: number): DisasterType => {
-      const map: Record<number, DisasterType> = {
-        1: DisasterType.FLOOD,
-        2: DisasterType.EARTHQUAKE,
-        3: DisasterType.HOUSEHOLDFIRE,
-        4: DisasterType.WILDFIRE,
-        5: DisasterType.TSUNAMI,
-        6: DisasterType.OTHER
-      };     
-      return map[disasterId] || DisasterType.OTHER;
+    const map: Record<number, DisasterType> = {
+      1: DisasterType.FLOOD,
+      2: DisasterType.EARTHQUAKE,
+      3: DisasterType.HOUSEHOLDFIRE,
+      4: DisasterType.WILDFIRE,
+      5: DisasterType.TSUNAMI,
+      6: DisasterType.OTHER,
+    };
+    return map[disasterId] || DisasterType.OTHER;
   };
-  
 
-
- const getDisasterIcon = (type: DisasterType) => {
+  const getDisasterIcon = (type: DisasterType) => {
     switch (type) {
-      case DisasterType.HOUSEHOLDFIRE || DisasterType.WILDFIRE: 
+      case DisasterType.HOUSEHOLDFIRE || DisasterType.WILDFIRE:
         return <Flame className="h-6 w-6 text-red-500" />;
       case DisasterType.FLOOD:
         return <Waves className="h-6 w-6 text-blue-500" />;
@@ -75,140 +87,158 @@ const DisasterMap: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending':
+      case "pending":
         return "bg-yellow-100 text-yellow-800";
-      case 'in-progress':
+      case "in-progress":
         return "bg-blue-100 text-blue-800";
-      case 'resolved':
+      case "resolved":
         return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-    const getResourceTypeColor = (status: string) => {
+  const getResourceTypeColor = (status: string) => {
     switch (status) {
-      case 'Human':
+      case "Human":
         return "bg-yellow-100 text-yellow-800";
-      case 'Material':
+      case "Material":
         return "bg-blue-100 text-blue-800";
-      case 'Financial':
+      case "Financial":
         return "bg-green-100 text-green-800";
-      case 'Equipment':
+      case "Equipment":
         return "bg-purple-100 text-purple-800";
-      case 'Facility':
+      case "Facility":
         return "bg-orange-100 text-orange-800";
-      case 'Infrastructure':
+      case "Infrastructure":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-    const getDisasterTypeName = (type: DisasterType): string => {
-      switch (type) {
-        case DisasterType.FLOOD:
-          return "Flood";
-        case DisasterType.EARTHQUAKE:
-          return "Earthquake";
-        case DisasterType.HOUSEHOLDFIRE:
-          return "Household Fire";
-        case DisasterType.WILDFIRE:
-          return "Wildfire";
-        case DisasterType.TSUNAMI:
-          return "Tsunami";
-        case DisasterType.OTHER:
-          return "Other";
-        default:
-          return "Unknown";
-      }
-    };
+  const getDisasterTypeName = (type: DisasterType): string => {
+    switch (type) {
+      case DisasterType.FLOOD:
+        return "Flood";
+      case DisasterType.EARTHQUAKE:
+        return "Earthquake";
+      case DisasterType.HOUSEHOLDFIRE:
+        return "Household Fire";
+      case DisasterType.WILDFIRE:
+        return "Wildfire";
+      case DisasterType.TSUNAMI:
+        return "Tsunami";
+      case DisasterType.OTHER:
+        return "Other";
+      default:
+        return "Unknown";
+    }
+  };
 
+   const getDisasterMarker = (type: DisasterType) => {
+    switch (type) {
+      case DisasterType.HOUSEHOLDFIRE:
+      case DisasterType.WILDFIRE:
+        return fire;
+      case DisasterType.FLOOD:
+        return flood;
+      case DisasterType.EARTHQUAKE:
+        return landslide;
+      case DisasterType.TSUNAMI:
+        return other;
+      default:
+        return other;
+    }
+  };
 
-    const fetchVerifidDisasters = async () => {
-        try {
-                const token = localStorage.getItem('token'); // Get auth token
-                const response = await fetch('http://localhost:7000/api/requests/verified', {
-                  headers: {
-                    'Authorization': `Bearer ${token}`
-                  }
-                });
-                
-                if (!response.ok) {
-                  throw new Error('Failed to fetch disasters');
-                }
-                
-                const apiData: ApiDisaster[] = await response.json();
-                
-                // Transform API data to match frontend Disaster type
-                const transformedData: Disaster[] = apiData.map(item => ({
-                  id: item.id.toString(),
-                  location: {
-                    latitude: parseFloat(item.latitude),
-                    longitude: parseFloat(item.longitude),
-                    address: `${item.district}, ${item.province}`
-                  },
-                  timestamp: item.created_at,
-                  type: mapDisasterType(item.disasterId),
-                  name: item.name,
-                  severity: item.severity as DisasterSeverity,
-                  details: item.details,
-                  affectedCount: item.affectedCount,
-                  contactNo: item.contactNo,
-                  status: item.status.toLowerCase()
-                }));
-                
-                setDisasters(transformedData);
-                console.log("Fetched disasters:", transformedData);
-              } catch (err) {
-                setError(err.message || 'An error occurred while fetching data');
-              } finally {
-                setIsLoading(false);
-              }
+  const fetchVerifidDisasters = async () => {
+    try {
+      const token = localStorage.getItem("token"); // Get auth token
+      const response = await fetch(
+        "http://localhost:7000/api/requests/verified",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch disasters");
       }
+
+      const apiData: ApiDisaster[] = await response.json();
+
+      // Transform API data to match frontend Disaster type
+      const transformedData: Disaster[] = apiData.map((item) => ({
+        id: item.id.toString(),
+        location: {
+          latitude: parseFloat(item.latitude),
+          longitude: parseFloat(item.longitude),
+          address: `${item.district}, ${item.province}`,
+        },
+        timestamp: item.created_at,
+        type: mapDisasterType(item.disasterId),
+        name: item.name,
+        severity: item.severity as DisasterSeverity,
+        details: item.details,
+        affectedCount: item.affectedCount,
+        contactNo: item.contactNo,
+        status: item.status.toLowerCase(),
+      }));
+
+      setDisasters(transformedData);
+      console.log("Fetched disasters:", transformedData);
+    } catch (err) {
+      setError(err.message || "An error occurred while fetching data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const fetchAllShelters = async () => {
     try {
-          const token = localStorage.getItem('token'); // Get auth token
-            const response = await fetch('http://localhost:7000/api/resource-centers', {
-                headers: {
-                  'Authorization': `Bearer ${token}`
-                }
-            });
-                
-            if (!response.ok) {
-              throw new Error('Failed to fetch disasters');
-            }
-                
-            const apiData: APIResourceCenter[] = await response.json();              
-            // Transform API data to match frontend Disaster type
-            const transformedData: ResourceAvailability[] = apiData.map(item => ({
-                  id: item.id.toString(),
-                  resourceId: item.resourceId,
-                  lat: item.lat,
-                  long: item.long,
-                  count: item.count,
-                  contactNumber: item.contactNumber,
-                  name: item.Resource.name,
-                  type: item.Resource.type,
-            }));
-                
-            setShelter(transformedData);
-            console.log("Fetched all resource center:", transformedData);
-              
-          } catch (err) {
-            setError(err.message || 'An error occurred while fetching data');
-              
-          } finally {
-            setIsLoading(false);
-          }
+      const token = localStorage.getItem("token"); // Get auth token
+      const response = await fetch(
+        "http://localhost:7000/api/resource-centers",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-  }
+      if (!response.ok) {
+        throw new Error("Failed to fetch disasters");
+      }
 
-    // Create icon objects safely
+      const apiData: APIResourceCenter[] = await response.json();
+      // Transform API data to match frontend Disaster type
+      const transformedData: ResourceAvailability[] = apiData.map((item) => ({
+        id: item.id.toString(),
+        resourceId: item.resourceId,
+        lat: item.lat,
+        long: item.long,
+        count: item.count,
+        contactNumber: item.contactNumber,
+        name: item.Resource.name,
+        type: item.Resource.type,
+      }));
+
+      setShelter(transformedData);
+      console.log("Fetched all resource center:", transformedData);
+    } catch (err) {
+      setError(err.message || "An error occurred while fetching data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Create icon objects safely
 
   useEffect(() => {
-    if (!disasters){
+    if (!disasters) {
       setIsLoading(true);
     }
     fetchVerifidDisasters();
@@ -219,55 +249,60 @@ const DisasterMap: React.FC = () => {
     <div className="space-y-6">
       {/* Simple Map Representation */}
       <div className="relative w-full h-100 bg-gradient-to-b from-blue-100 to-green-100 rounded-lg border-2 border-gray-200 overflow-hidden">
-
         <APIProvider apiKey={apikey}>
-              <div className="w-full h-[80vh]">
-                <Map defaultZoom={8} defaultCenter={currentLocation}>
-                  {/* Disaster Markers */}
-                  {disasters.map((disaster) => (
-                    <Marker
-                      key={disaster.id}
-                      position={{
-                          lat: disaster.location.latitude,
-                          lng: disaster.location.longitude,
-                        }}
-                      onMouseOver={() => setHoveredDisaster(disaster)}
-                      onMouseOut={() => setHoveredDisaster(null)}
-                      onClick={() => setSelectedDisaster(disaster)}
-                      // icon={getDisasterMarker(disaster.type)}             
-                    >
-                     
-                    </Marker>
-                  ))}
+          <div className="w-full h-[80vh]">
+            <Map defaultZoom={8} defaultCenter={currentLocation}>
+              {/* Disaster Markers */}
+              {disasters.map((disaster) => (
+                <Marker
+                  key={disaster.id}
+                  position={{
+                    lat: disaster.location.latitude,
+                    lng: disaster.location.longitude,
+                  }}
 
-                  {/* Disaster Markers */}
-                  {shelter.map((shelter) => (
-                    <Marker                 
-                      key={shelter.id}
-                      position={{
-                          lat: shelter.lat,
-                          lng: shelter.long
-                        }}
-                      onMouseOver={() => setHoveredShelter(shelter)}
-                      onMouseOut={() => setHoveredShelter(null)}
-                      onClick={() => setSelectedShelter(shelter)}
-                                 
-                    >
-                    </Marker>
-                  ))}
-                </Map>
-              </div>
-            </APIProvider>
-        
-  
+                  // icon={{
+                  //   url: getDisasterMarker(disaster.type),
+                  //   scaledSize: new google.maps.Size(40, 40),
+                  // }}
+                  onMouseOver={() => setHoveredDisaster(disaster)}
+                  onMouseOut={() => setHoveredDisaster(null)}
+                  onClick={() => setSelectedDisaster(disaster)}
+                  // icon={getDisasterMarker(disaster.type)}
+                ></Marker>
+              ))}
+
+              {/* Disaster Markers */}
+              {shelter.map((shelter) => (
+                <Marker
+                  key={shelter.id}
+                  position={{
+                    lat: shelter.lat,
+                    lng: shelter.long,
+                  }}
+
+                  icon={{
+                    url: shelterIconUrl,
+                    scaledSize: new google.maps.Size(40, 40),
+                  }}
+                  onMouseOver={() => setHoveredShelter(shelter)}
+                  onMouseOut={() => setHoveredShelter(null)}
+                  onClick={() => setSelectedShelter(shelter)}
+                ></Marker>
+              ))}
+            </Map>
+          </div>
+        </APIProvider>
 
         {/* Hover Tooltip */}
         {hoveredDisaster && (
-          <div 
-            className="absolute z-20 bg-white p-3 rounded-lg shadow-lg border max-w-xs pointer-events-none top-10 left-1/2 transform -translate-x-1/2"
-          >
-            <h4 className="font-semibold text-sm mb-1">{getDisasterTypeName(hoveredDisaster.type)}</h4>
-            <p className="text-xs text-gray-600 mb-2">{hoveredDisaster.location.address}</p>
+          <div className="absolute z-20 bg-white p-3 rounded-lg shadow-lg border max-w-xs pointer-events-none top-10 left-1/2 transform -translate-x-1/2">
+            <h4 className="font-semibold text-sm mb-1">
+              {getDisasterTypeName(hoveredDisaster.type)}
+            </h4>
+            <p className="text-xs text-gray-600 mb-2">
+              {hoveredDisaster.location.address}
+            </p>
             <div className="flex gap-2">
               <Badge className={getSeverityColor(hoveredDisaster.severity)}>
                 {hoveredDisaster.severity}
@@ -281,27 +316,27 @@ const DisasterMap: React.FC = () => {
             </p>
           </div>
         )}
-      </div>
 
-      {/* Selected Shelter Details */}
+        {/* Selected Shelter Details */}
         {hoveredShelter && (
-            <div 
-              className="absolute z-20 bg-white p-3 rounded-lg shadow-lg border max-w-xs pointer-events-none top-10 left-1/2 transform -translate-x-1/2"
-            >
-              <h4 className="font-semibold text-sm mb-1">{hoveredShelter.name}</h4>
+          <div className="absolute z-20 bg-white p-3 rounded-lg shadow-lg border max-w-xs pointer-events-none top-10 left-1/2 transform -translate-x-1/2">
+            <h4 className="font-semibold text-sm mb-1">
+              {hoveredShelter.name}
+            </h4>
             <div className="mx-auto">
               <Badge className={getResourceTypeColor(hoveredShelter.type)}>
                 {hoveredShelter.type}
               </Badge>
             </div>
             <p className="text-xs text-gray-500 mt-1">
-              Resources count: {hoveredShelter.count} 
+              Resources count: {hoveredShelter.count}
             </p>
             <p className="text-xs text-gray-500 mt-1">
               Contact: {hoveredShelter.contactNumber}
             </p>
           </div>
         )}
+      </div>
 
       {/* Legend */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -318,8 +353,8 @@ const DisasterMap: React.FC = () => {
           <span className="text-sm">Landslide</span>
         </div>
         <div className="flex items-center gap-2">
-          <MapPin className="h-5 w-5 text-indigo-500" />
-          <span className="text-sm">Other</span>
+          <img src={shelterIconUrl} className="h-7 w-7" alt="Shelter" />
+          <span className="text-sm">Shelter</span>
         </div>
       </div>
 
@@ -333,9 +368,11 @@ const DisasterMap: React.FC = () => {
                   {getDisasterIcon(selectedDisaster.type)}
                   {getDisasterTypeName(selectedDisaster.type)}
                 </CardTitle>
-                <CardDescription>{selectedDisaster.location.address}</CardDescription>
+                <CardDescription>
+                  {selectedDisaster.location.address}
+                </CardDescription>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedDisaster(null)}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -356,16 +393,20 @@ const DisasterMap: React.FC = () => {
               <p className="text-sm">{selectedDisaster.details}</p>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="font-medium">Affected:</span> {selectedDisaster.affectedCount} people
+                  <span className="font-medium">Affected:</span>{" "}
+                  {selectedDisaster.affectedCount} people
                 </div>
                 <div>
-                  <span className="font-medium">Emergency Contact:</span> {selectedDisaster.contactNo}
+                  <span className="font-medium">Emergency Contact:</span>{" "}
+                  {selectedDisaster.contactNo}
                 </div>
                 <div>
-                  <span className="font-medium">Reported:</span> {new Date(selectedDisaster.timestamp).toLocaleString()}
+                  <span className="font-medium">Reported:</span>{" "}
+                  {new Date(selectedDisaster.timestamp).toLocaleString()}
                 </div>
                 <div>
-                  <span className="font-medium">Type:</span> {selectedDisaster.type}
+                  <span className="font-medium">Type:</span>{" "}
+                  {selectedDisaster.type}
                 </div>
               </div>
             </div>
@@ -380,12 +421,16 @@ const DisasterMap: React.FC = () => {
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  <img src={shelterIconUrl} alt="Shelter Icon" className="h-6 w-6" />
+                  <img
+                    src={shelterIconUrl}
+                    alt="Shelter Icon"
+                    className="h-6 w-6"
+                  />
                   {selectedShelter.name}
                 </CardTitle>
                 <CardDescription>{selectedShelter.type}</CardDescription>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedShelter(null)}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -395,8 +440,12 @@ const DisasterMap: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <p className="text-sm">Available Resources: {selectedShelter.count}</p>
-              <p className="text-sm">Contact: {selectedShelter.contactNumber}</p>
+              <p className="text-sm">
+                Available Resources: {selectedShelter.count}
+              </p>
+              <p className="text-sm">
+                Contact: {selectedShelter.contactNumber}
+              </p>
             </div>
           </CardContent>
         </Card>
