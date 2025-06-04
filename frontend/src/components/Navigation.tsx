@@ -129,8 +129,8 @@ const Navigation: React.FC = () => {
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2">
-            <AlertTriangle className="h-6 w-6 text-emergency-500" />
-            <span className="text-xl font-bold">Emergency Aid Connect</span>
+            <img src={logo} alt="Logo" className="h-10 w-11" />
+            <span className="text-xl font-bold">SurvivorSync</span>
           </Link>
           
           <div className="md:hidden">
