@@ -37,8 +37,7 @@ const DisasterMap: React.FC = () => {
         4: DisasterType.WILDFIRE,
         5: DisasterType.TSUNAMI,
         6: DisasterType.OTHER
-      };
-      
+      };     
       return map[disasterId] || DisasterType.OTHER;
   };
   
@@ -105,6 +104,27 @@ const DisasterMap: React.FC = () => {
         return "bg-gray-100 text-gray-800";
     }
   };
+
+    const getDisasterTypeName = (type: DisasterType): string => {
+      switch (type) {
+        case DisasterType.FLOOD:
+          return "Flood";
+        case DisasterType.EARTHQUAKE:
+          return "Earthquake";
+        case DisasterType.HOUSEHOLDFIRE:
+          return "Household Fire";
+        case DisasterType.WILDFIRE:
+          return "Wildfire";
+        case DisasterType.TSUNAMI:
+          return "Tsunami";
+        case DisasterType.OTHER:
+          return "Other";
+        default:
+          return "Unknown";
+      }
+    };
+
+
     const fetchVerifidDisasters = async () => {
         try {
                 const token = localStorage.getItem('token'); // Get auth token
@@ -148,7 +168,6 @@ const DisasterMap: React.FC = () => {
       }
 
   const fetchAllShelters = async () => {
-
     try {
           const token = localStorage.getItem('token'); // Get auth token
             const response = await fetch('http://localhost:7000/api/resource-centers', {
@@ -161,8 +180,7 @@ const DisasterMap: React.FC = () => {
               throw new Error('Failed to fetch disasters');
             }
                 
-            const apiData: APIResourceCenter[] = await response.json();
-                
+            const apiData: APIResourceCenter[] = await response.json();              
             // Transform API data to match frontend Disaster type
             const transformedData: ResourceAvailability[] = apiData.map(item => ({
                   id: item.id.toString(),
@@ -205,7 +223,6 @@ const DisasterMap: React.FC = () => {
         <APIProvider apiKey={apikey}>
               <div className="w-full h-[80vh]">
                 <Map defaultZoom={8} defaultCenter={currentLocation}>
-
                   {/* Disaster Markers */}
                   {disasters.map((disaster) => (
                     <Marker
@@ -249,7 +266,7 @@ const DisasterMap: React.FC = () => {
           <div 
             className="absolute z-20 bg-white p-3 rounded-lg shadow-lg border max-w-xs pointer-events-none top-10 left-1/2 transform -translate-x-1/2"
           >
-            <h4 className="font-semibold text-sm mb-1">{hoveredDisaster.name}</h4>
+            <h4 className="font-semibold text-sm mb-1">{getDisasterTypeName(hoveredDisaster.type)}</h4>
             <p className="text-xs text-gray-600 mb-2">{hoveredDisaster.location.address}</p>
             <div className="flex gap-2">
               <Badge className={getSeverityColor(hoveredDisaster.severity)}>
@@ -314,7 +331,7 @@ const DisasterMap: React.FC = () => {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   {getDisasterIcon(selectedDisaster.type)}
-                  {selectedDisaster.name}
+                  {getDisasterTypeName(selectedDisaster.type)}
                 </CardTitle>
                 <CardDescription>{selectedDisaster.location.address}</CardDescription>
               </div>

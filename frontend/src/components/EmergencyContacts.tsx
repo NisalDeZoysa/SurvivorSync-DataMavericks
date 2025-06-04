@@ -4,6 +4,17 @@ import { Input } from '@/components/ui/input';
 import { Search, Phone, MapPin } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
+import ambulance from "@/assets/ambulance.jpg"
+import red_cross from "@/assets/red_cross.jpg"
+import police from "@/assets/police.jpg"
+import police_1 from "@/assets/police_1.jpg"
+
+import medical from "@/assets/medical.jpg"
+import medical_1 from "@/assets/medical_1.jpg"
+import army from "@/assets/Army.jpg"
+import help from "@/assets/help.jpg"
+import dms from "@/assets/dms.jpg"
+
 interface Contact {
   id: string;
   name: string;
@@ -23,7 +34,7 @@ const EmergencyContacts = () => {
       phone: '117',
       district: 'Colombo',
       station: '',
-      image: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face'
+      image: dms
     },
     {
       id: '2',
@@ -31,7 +42,7 @@ const EmergencyContacts = () => {
       phone: '110',
       district: 'Colombo',
       station: '',
-      image: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face'
+      image: ambulance
     },
     {
       id: '3',
@@ -39,7 +50,7 @@ const EmergencyContacts = () => {
       phone: '118 / 1919',
       district: 'Head Office',
       station: '',
-      image: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face'
+      image: help
     },
     {
       id: '4',
@@ -47,7 +58,7 @@ const EmergencyContacts = () => {
       phone: '119',
       district: 'Head Office',
       station: '',
-      image: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
+      image: police
     },
     {
       id: '5',
@@ -55,7 +66,7 @@ const EmergencyContacts = () => {
       phone: '011 267 9373',
       district: 'Head Office',
       station: '',
-      image: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
+      image: red_cross
     },
     {
       id: '6',
@@ -63,7 +74,7 @@ const EmergencyContacts = () => {
       phone: '011-2432682 to 5',
       district: 'Head Office',
       station: 'Head Quarter',
-      image: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
+      image: army
     }
   ];
 
@@ -74,7 +85,7 @@ const EmergencyContacts = () => {
       phone: '(011) 242 1111',
       district: 'Colombo',
       station: '',
-      image: 'https://images.unsplash.com/photo-1466721591366-2d5fba72006d?w=150&h=150&fit=crop&crop=face'
+      image: police_1
     },
     {
       id: '8',
@@ -82,7 +93,7 @@ const EmergencyContacts = () => {
       phone: '(034) 227 6049',
       district: 'Beruwala',
       station: '',
-      image: 'https://images.unsplash.com/photo-1493962853295-0fd70327578a?w=150&h=150&fit=crop&crop=face'
+      image: police_1
     },
     {
       id: '9',
@@ -90,7 +101,7 @@ const EmergencyContacts = () => {
       phone: '(034) 227 5022',
       district: 'Bentota',
       station: '',
-      image: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face'
+      image: police_1
     },
     {
       id: '10',
@@ -98,7 +109,7 @@ const EmergencyContacts = () => {
       phone: '(081) 222 2222',
       district: 'Pushpadana Mawatha',
       station: '',
-      image: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face'
+      image: police_1
     },
     {
       id: '11',
@@ -106,7 +117,7 @@ const EmergencyContacts = () => {
       phone: '(027) 222 3099',
       district: 'New Town',
       station: '',
-      image: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=150&h=150&fit=crop&crop=face'
+      image: police_1
     }
   ];
 
@@ -117,7 +128,7 @@ const EmergencyContacts = () => {
       phone: '011-2691111',
       district: 'Colombo ',
       station: 'General Hospital',
-      image: 'https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=150&h=150&fit=crop&crop=face'
+      image: medical
     },
     {
       id: '13',
@@ -125,7 +136,7 @@ const EmergencyContacts = () => {
       phone: '011-2422222',
       district: 'Head Office',
       station: '',
-      image: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
+      image: medical_1
     },
     {
       id: '14',
@@ -133,7 +144,7 @@ const EmergencyContacts = () => {
       phone: '011 2 373 000',
       district: 'Colombo',
       station: '',
-      image: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
+      image: medical_1
     },
     {
       id: '15',
@@ -141,7 +152,7 @@ const EmergencyContacts = () => {
       phone: '011 2 677 777',
       district: 'Colombo',
       station: '',
-      image: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
+      image: medical
     },
     {
       id: '16',
@@ -149,7 +160,7 @@ const EmergencyContacts = () => {
       phone: '011 2 472 472',
       district: 'Colombo',
       station: '',
-      image: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=150&h=150&fit=crop&crop=face'
+      image: medical
     }
   ];
 
