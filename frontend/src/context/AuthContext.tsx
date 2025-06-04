@@ -35,7 +35,6 @@ interface AuthContextType {
     contactNo: string
   ) => Promise<void>;
   logout: () => void;
-  createUser: (userData: Partial<User>, password: string) => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -294,17 +293,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error("Registration failed");
       }
 
-
-      // const newUser: User = {
-      //   id: response.data.admin.id,
-      //   name: response.data.admin.name,
-      //   email: response.data.admin.email,
-      //   role: UserRole.FIRST_RESPONDER, // Assuming first responder role
-      // };
-
-      // setCurrentUser(newUser);
-
-      // console.log("User registered:", newUser);
     } catch (error) {
       console.error("Registration failed:", error);
       throw error;

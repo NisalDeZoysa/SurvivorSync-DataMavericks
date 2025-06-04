@@ -465,6 +465,15 @@ async function seedDatabase() {
     email: "admin3@gmail.com",
     description: "National emergency response supervisor",
     password: "adminpass2"
+  },
+  {
+    name: "Inspector Gunasekara",
+    NIC: "7812345678",
+    contactNumber: "0734567890",
+    email: "admin20@gmail.com",
+    description: "Head of local police operations",
+    password: "$2b$10$pGhNLektPGSqwPyi334TYOdyhPYWFiFyBLpzfUhXk2UcXPVh3aLBm"
+
   }
 ]
   );

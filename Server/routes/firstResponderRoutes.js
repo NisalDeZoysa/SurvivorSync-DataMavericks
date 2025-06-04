@@ -1,6 +1,7 @@
 import express from 'express';
 import {
     registerFirstResponder,
+    verifyFirstResponder,
     getAllFirstResponders,
     getFirstResponderById,
     updateFirstResponder,
@@ -17,10 +18,11 @@ router.post('/register', registerFirstResponder);
 // router.post('/login', loginFirstResponder);
 router.get('/refresh', refreshFirstResponderToken);
 
-router.get('/admins', authenticateToken, getAllFirstResponders);
+router.get('/admins',  getAllFirstResponders);
 router.get('/admins/:id', authenticateToken, getFirstResponderById);
 router.put('/admins/:id', authenticateToken, updateFirstResponder);
 router.delete('/admins/:id', authenticateToken, deleteFirstResponder);
 router.get('/profile', authenticateToken, getFirstResponderProfile);
+router.put('/verify', verifyFirstResponder)
 
 export default router;

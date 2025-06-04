@@ -1,5 +1,3 @@
-import { R } from "node_modules/@tanstack/query-core/build/modern/hydration-mKPlgzt9";
-
 export enum UserRole {
   USER = "user",
   FIRST_RESPONDER = "first_responder",
@@ -8,9 +6,33 @@ export enum UserRole {
 }
 
 export enum FirstResponderStatus {
-  PENDING = "pending",
-  APPROVED = "approved",
-  REJECTED = "rejected"
+  PENDING = "PEDING",
+  VERIFIED = "VERIFIED",
+  REJECTED = "REJECTED"
+}
+
+// 'Police', 'Army', 'Hospital', 'Redcross', 'NGO', 'Government', 'Other'
+export enum FirstResponderTypes{
+  POLICE = "Police",
+  ARMY = "Army",
+  HOSPITAL = "Hospital",
+  REDCROSS = "Redcross",
+  NGO = "NGO",
+  GOVERNMENT = "Government",
+  OTHER = "Other"
+}
+
+
+export interface FirstResponder {
+  id: number;
+  resourceCenterId: number;
+  name: string;
+  nic: string;
+  contactNumber: string;
+  email: string;
+  type: FirstResponderTypes;
+  password: string;
+  is_verified: FirstResponderStatus;
 }
 
 export interface User {
@@ -49,10 +71,10 @@ export enum DisasterType {
   WILDFIRE = 4,
   TSUNAMI = 5,
   OTHER = 6,
-  LANDSLIDE,
-  FIRE,
-  LANDSLIDE,
-  FIRE
+  // LANDSLIDE,
+  // FIRE,
+  // LANDSLIDE,
+  // FIRE
 }
 
 export enum DisasterSeverity {
@@ -115,26 +137,6 @@ export interface ResourceAvailability {
   name: Resource["name"];
   type: Resource["type"];
 }
-
-// export interface Disaster {
-//   id: string;
-//   location: {
-//     latitude: number;
-//     longitude: number;
-//     address?: string;
-//   };
-//   timestamp: string;
-//   type: DisasterType;
-//   name: string;
-//   severity: DisasterSeverity;
-//   details: string;
-//   affectedCount: number;
-//   contactNo?: string;
-//   images?: string[];
-//   audioRecording?: string;
-//   reportedBy?: string; // User ID if logged in, otherwise null for anonymous
-//   status: "pending" | "in-progress" | "resolved";
-// }
 
 
 export interface Disaster {

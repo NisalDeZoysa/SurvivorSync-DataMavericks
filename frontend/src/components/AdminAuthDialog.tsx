@@ -5,9 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useForm } from "react-hook-form";
 import { Resource_Center } from "@/types";
 
 interface AdminAuthDialogProps {
@@ -34,25 +32,19 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  interface LoginFormValues {
-    email: string;
-    password: string;
-  }
-
-
   // Admin and First Responder Login
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Login data:", loginData);
     try {
       await login(loginData.email, loginData.password);
-
       toast({
         title: "Login Successful",
         description: "Welcome back to the emergency response system.",
       });
       onClose();
       navigate("/");
+      
     } catch (error) {
       toast({
         title: "Login Failed",
@@ -65,7 +57,6 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (registerData.password !== registerData.confirmPassword) {
       toast({
         title: "Password Mismatch",
@@ -325,6 +316,7 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
                   className="w-full p-2 border rounded-md bg-white text-sm"
                   required
                 >
+                  <option value="">Select Type</option>
                   <option value="Police">Police</option>
                   <option value="Army">Army</option>
                   <option value="Hospital">Hospital</option>
@@ -343,7 +335,7 @@ const AdminAuthDialog = ({ onClose }: AdminAuthDialogProps) => {
                   onChange={(e) =>
                     setRegisterData({
                       ...registerData,
-                      resourceCenterId: e.target.value,
+                      resourceCenterId: Number(e.target.value),
                     })
                   }
                   className="w-full p-2 border rounded-md bg-white"

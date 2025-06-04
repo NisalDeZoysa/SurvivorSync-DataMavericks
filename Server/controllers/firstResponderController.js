@@ -37,7 +37,6 @@ export const registerFirstResponder = async (req, res) => {
       contactNumber,
       email,
       type,
-      is_verified : false,
       password: hashedPassword,
     });
 
@@ -67,20 +66,50 @@ export const registerFirstResponder = async (req, res) => {
   }
 };
 
+
 // No separate end point for login FirstResponder, They will login using same login as admins
 
-export const getAllFirstResponders = async (req, res) => {
-  const frs = await FirstResponder.findAll();
-  res.json(frs);
+// Create a reusable function to get all first responders
+const fetchAllFirstResponders = async () => {
+  return await FirstResponder.findAll();
 };
 
+export const getAllFirstResponders = async (req, res) => {
+  try {
+    const frs = await fetchAllFirstResponders();
+    res.json(frs);
+  } catch (error) {
+    console.error('Error fetching first responders:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 export const verifyFirstResponder = async (req, res) => {
-  const {id, is_verified} = req.body;
+  try {
+    console.log(req.body);
+    const { id, is_verified } = req.body;
 
+    // Check if the first responder exists
+    const fr = await FirstResponder.findByPk(id);
+    if (!fr) return res.status(404).json({ error: 'FirstResponder not found' });
 
+    // Update the is_verified field
+    fr.is_verified = is_verified;
+    await fr.save();
 
-}
+    const io = req.app.get('io');
+    
+    // Use the reusable fetch function
+    const updatedfr = await fetchAllFirstResponders();
+    
+    io.emit('FRUpdated', updatedfr);
+
+    res.json({ message: 'FirstResponder verified', fr });
+  } catch (error) {
+    console.error('Error verifying first responder:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 export const getFirstResponderById = async (req, res) => {
   const fr = await FirstResponder.findByPk(req.params.id);

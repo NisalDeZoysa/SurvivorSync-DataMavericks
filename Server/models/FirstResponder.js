@@ -44,8 +44,8 @@ const FirstResponder = sequelize.define('FirstResponder', {
       allowNull: false,
   },
     is_verified: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
+      type: DataTypes.ENUM('PEDING', 'VERIFIED','REJECTED'),
+      defaultValue: 'PEDING',
     },
     
 }, {

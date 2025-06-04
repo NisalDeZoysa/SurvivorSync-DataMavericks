@@ -26,6 +26,7 @@ const generateTokens = (admin) => {
   return { accessToken, refreshToken };
 };
 
+// Only admin creating function
 export const createAdmin = async (req, res) => {
 
   console.log("Admin registration data:", req.body);
@@ -67,50 +68,66 @@ export const createAdmin = async (req, res) => {
   }
 };
 
-// Both admin and first responder login functions can be similar, but here we focus on admin login
+
 // export const loginAdmin = async (req, res) => {
 //   const { email, password } = req.body;
 
+//   console.log("Admin login data:", req.body);
+
 //   try {
+//     let user = null;
+//     let userType = null;
+ 
+
+//     // First try to find Admin
 //     const admin = await Admin.findOne({ where: { email } });
-//     // if (!admin) return res.status(404).json({ error: 'Admin not found' });
 
-//     const match = await bcrypt.compare(password, admin.password);
-//     // if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+//     console.log("Is user admin", user)
+//     console.log("admin ", admin)
 
-//     const { accessToken, refreshToken } = generateTokens(admin);
-//     res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
-//     res.cookie('userType', 'ADMIN', { sameSite: 'Strict' });
-//     let userole = 'ADMIN';
-
-//     if (!admin) {
-//         const fr = await FirstResponder.findOne({ where: { email } });
-//         if (!fr) return res.status(404).json({ error: 'FirstResponder not found' });
-
-//         console.log(fr)
-
-//         const match = await bcrypt.compare(password, fr.password);
-//         if (!match) return res.status(401).json({ error: 'Invalid credentials' });
-
-//         const { accessToken, refreshToken } = generateTokens(fr);
-//         res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
-//         res.cookie('userType', 'FIRST_RESPONDER', { sameSite: 'Strict' });
-//         userole = 'FIRST_RESPONDER';
-
+//     console.log("Admin"+admin.password)
+//     // console.log("Type"+admin.type)
+//     if (admin) {
+//       const match = await bcrypt.compare(password, admin.password);
+//       if (match) {
+//         user = admin;
+//         userType = 'ADMIN';
+//       }
 //     }
 
-//     console.log('User role:', userole);
+//     // If not Admin, try First Responder
+//     if (user === null) {
+//       console.log("First Responder")
+//       const fr = await FirstResponder.findOne({ where: { email } });
+//       console.log("fr", fr)
+//       if (fr) {
+//         const match = await bcrypt.compare(password, fr.password);
+//         if (match) {
+//           user = fr;
+//           userType = 'FIRST_RESPONDER';
+//         }
+//       }
+//     }
+//     // If no valid user found
+//     if (!user) {
+//       return res.status(401).json({ error: 'Invalid credentials' });
+//     }
+
+//     // Generate tokens and set cookies
+//     const { accessToken, refreshToken } = generateTokens(user);
+//     res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
+//     res.cookie('userType', userType, { sameSite: 'Strict' });
 
 //     res.json({
-//       message: 'Admin logged in successfully',
+//       message: `${userType} logged in successfully`,
 //       accessToken,
 //       refreshToken,
 //       expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
 //       admin: {
-//         id: admin.id,
-//         name: admin.name,
-//         email: admin.email,
-//         type: userole,
+//         id: user.id,
+//         name: user.name,
+//         email: user.email,
+//         type: userType,
 //       },
 //     });
 //   } catch (error) {
@@ -121,44 +138,58 @@ export const createAdmin = async (req, res) => {
 export const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
 
+  console.log("Admin login data:", req.body);
+
   try {
     let user = null;
     let userType = null;
- 
 
-    // First try to find Admin
+    // 1. Try to find Admin first
     const admin = await Admin.findOne({ where: { email } });
-
-    console.log("Admin"+admin.password)
-    // console.log("Type"+admin.type)
+    
     if (admin) {
+      console.log("Admin found:", admin.email);
       const match = await bcrypt.compare(password, admin.password);
+      
       if (match) {
+        console.log("Admin password matches");
         user = admin;
         userType = 'ADMIN';
+      } else {
+        console.log("Admin password mismatch");
       }
+    } else {
+      console.log("No admin found with email:", email);
     }
 
-    // If not Admin, try First Responder
+    // 2. Only check First Responder if no valid admin was found
     if (!user) {
+      console.log("Checking First Responders...");
       const fr = await FirstResponder.findOne({ where: { email } });
+      
       if (fr) {
+        console.log("First Responder found:", fr.email);
         const match = await bcrypt.compare(password, fr.password);
+        
         if (match) {
+          console.log("First Responder password matches");
           user = fr;
           userType = 'FIRST_RESPONDER';
+        } else {
+          console.log("First Responder password mismatch");
         }
+      } else {
+        console.log("No first responder found with email:", email);
       }
     }
 
-
-
-    // If no valid user found
+    // 3. Handle no valid user found
     if (!user) {
+      console.log("No valid user found for:", email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Generate tokens and set cookies
+    // 4. Generate tokens and respond
     const { accessToken, refreshToken } = generateTokens(user);
     res.cookie('accessToken', accessToken, { httpOnly: true, sameSite: 'Strict' });
     res.cookie('userType', userType, { sameSite: 'Strict' });
@@ -176,6 +207,7 @@ export const loginAdmin = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Login error:", error);
     res.status(500).json({ error: error.message });
   }
 };
