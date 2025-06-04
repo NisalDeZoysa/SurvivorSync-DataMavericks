@@ -3,7 +3,6 @@ import Sequelize from 'sequelize';
 
 
 export const createUserRequest = async (req, res) => {
-
   let {
     name,
     userId,
