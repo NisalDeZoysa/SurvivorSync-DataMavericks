@@ -120,22 +120,22 @@ export const createUserRequest = async (req, res) => {
       `;
 
   // //  // Call gateway server
-  // const gatewayResponse = await fetch('http://127.0.0.1:5005/tasks/send', {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify({ message: messageText.trim() }),
-  // });
+  const gatewayResponse = await fetch('http://127.0.0.1:5005/tasks/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: messageText.trim() }),
+  });
 
-  // const gatewayData = await gatewayResponse.json();
+  const gatewayData = await gatewayResponse.json();
 
-  // // Handle gateway response
-  // if (!gatewayResponse.ok) {
-  //   const errorText = await gatewayResponse.text();
-  //   console.log("\n Full gateway response when error comes:\n", gatewayData);
-  //   throw new Error(`Gateway error: ${gatewayResponse.status} - ${errorText}`);
+  // Handle gateway response
+  if (!gatewayResponse.ok) {
+    const errorText = await gatewayResponse.text();
+    console.log("\n Full gateway response when error comes:\n", gatewayData);
+    throw new Error(`Gateway error: ${gatewayResponse.status} - ${errorText}`);
 
-  // }
-  // console.log("\n Full gateway response when all process success:\n", gatewayData);
+  }
+  console.log("\n Full gateway response when all process success:\n", gatewayData);
 
   // Send WhatsApp message
   // get the text from the gatewayResponse
@@ -154,9 +154,9 @@ export const createUserRequest = async (req, res) => {
     message: 'User request created',
     success: true,
     request,
-    // gatewayResponse: {
-    //   gatewayData
-    // }
+    gatewayResponse: {
+      gatewayData
+    }
   });
 
 

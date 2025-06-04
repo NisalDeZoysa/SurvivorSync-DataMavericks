@@ -48,7 +48,7 @@ class TipsAgent:
         If the user asks for general disaster preparedness, provide a concise list of best practices suitable for all hazards.
 
         Use Tools for Updated Information:
-        If the question requires the latest or real-time data, use the brave mcp search tool to find accurate, current information.
+        If the question requires the latest or real-time data, use the brave_mcp_search() tool to find accurate, current information.
 
         Format the Response:
         Your final output must be a JSON object with the following fields:
@@ -107,10 +107,9 @@ class TipsAgent:
         
         if structured_response and isinstance(structured_response, TipsResponseFormat):
             return {
-                'is_task_complete': structured_response.status == 'completed',
+                'is_task_complete': True,
                 'content': structured_response,
             }
-        
         # Handle cases where no proper response was generated
         return {
             'is_task_complete': False,
@@ -161,47 +160,133 @@ async def get_agent_response(task_request,task_id):
         return jsonify({"error": str(e)}), 500
     
 # Endpoint to handle task 
+# @app.post("/tasks/send")
+# def handle_task():
+#     task_request = request.get_json()
+#     if not task_request:
+#         return jsonify({"error": "Invalid request"}), 400
+
+#     task_id = task_request.get("id", str(uuid.uuid4()))  # Use provided or generate new ID
+#     try:
+#         # Run the async agent response using asyncio
+#         response = asyncio.run(get_agent_response(task_request, task_id))
+#         agent_response = response['content']
+#         # Serialize Pydantic models to dictionaries
+#         if isinstance(agent_response, TipsResponseFormat):
+#             agent_response = agent_response.model_dump()
+#         # Formulate A2A response Task
+#         agent_response = {
+#             "tips_agent":{
+#                 "id": task_id,
+#                 "status": "success",
+#                 "agent": "tips-agent",
+#                 "initial_request": task_request.get("message", {}),
+#                 "response": agent_response
+#             },
+#         }
+        
+#         print ("\n Respond from Tips Agent: \n", response)
+
+#     except Exception as e:
+#         print(f"Agent error: {e}")
+#         agent_response ={
+#             "tips_agent":  {
+#                 "id": task_id,
+#                 "status": "error",
+#                 "error_message": f"Agent processing failed: {e}",
+#                 "agent": "tips-agent",
+#             }
+#         }
+#         print(f"Error processing task {task_id} with agent intake: {e}")
+            
+#     if not agent_response.get("is_task_complete", False):
+#         response = jsonify({
+#             "tips-agent": {
+#                 "id": task_id,
+#                 "status": "error",
+#                 "response": agent_response.get("content", {})
+#             },
+#             "agent_responses": task_request.get("agent_responses", [])
+#         })
+#         response.status_code = 500
+#         return response
+
+#     # Success: return status="success"
+#     return jsonify({
+#         "tips-agent": {
+#             "id": task_id,
+#             "status": "success",
+#             "response": agent_response.get("content", {})
+#         },
+#         "agent_responses": task_request.get("agent_responses", [])
+#     })
+# ... existing imports ...
+
 @app.post("/tasks/send")
 def handle_task():
     task_request = request.get_json()
     if not task_request:
         return jsonify({"error": "Invalid request"}), 400
 
-    task_id = task_request.get("id", str(uuid.uuid4()))  # Use provided or generate new ID
+    task_id = task_request.get("id", str(uuid.uuid4()))
+    agent_responses = task_request.get("agent_responses", [])
+    
     try:
-        # Run the async agent response using asyncio
+        # Run the async agent response
         response = asyncio.run(get_agent_response(task_request, task_id))
-        response_format = response['content']
-        # Serialize Pydantic models to dictionaries
-        if isinstance(response_format, TipsResponseFormat):
-            response_format = response_format.model_dump()
-        # Formulate A2A response Task
-        response_task = {
-            "tips_agent":{
-                "id": task_id,
-                "status": "success",
-                "agent": "tips-agent",
-                "initial_request": task_request.get("message", {}),
-                "response": response_format
-            },
+        
+        # Check if agent returned a valid response
+        if response is None:
+            raise ValueError("Agent returned no response")
+            
+        if not response.get("is_task_complete", False):
+            raise ValueError("Agent task not completed")
+            
+        # Extract agent response content
+        agent_content = response['content']
+        
+        # Serialize Pydantic model if needed
+        if isinstance(agent_content, TipsResponseFormat):
+            agent_content = agent_content.model_dump()
+            
+        # Formulate successful response
+        tips_response = {
+            "id": task_id,
+            "status": "success",
+            "agent": "tips-agent",
+            "initial_request": task_request.get("message", ""),
+            "response": agent_content
         }
         
-        print ("\n Respond from Tips Agent: \n", response)
-
+        # Add to agent responses
+        agent_responses.append({"tips_agent": tips_response})
+        
+        return jsonify({
+            "status": "success",
+            "agent_responses": agent_responses
+        })
+        
     except Exception as e:
-        print(f"Agent error: {e}")
-        response_task ={
-            "tips_agent":  {
+        error_msg = f"Agent processing failed: {str(e)}"
+        print(f"Error processing task {task_id}: {error_msg}")
+        
+        # Create error response
+        error_response = {
+            "tips_agent": {
                 "id": task_id,
                 "status": "error",
-                "error_message": f"Agent processing failed: {e}",
+                "error_message": error_msg,
                 "agent": "tips-agent",
             }
         }
-        print(f"Error processing task {task_id} with agent intake: {e}")
-            
-    return jsonify(response_task)
         
+        # Add to agent responses
+        agent_responses.append(error_response)
+        
+        return jsonify({
+            "status": "error",
+            "agent_responses": agent_responses
+        }), 500        
         
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5003))

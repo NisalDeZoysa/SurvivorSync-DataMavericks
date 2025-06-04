@@ -1,4 +1,7 @@
+from collections import defaultdict
 import datetime
+import math
+from typing import Any, Dict, List, Tuple
 import mysql.connector
 from mcp.server.fastmcp import FastMCP
 from PIL import Image
@@ -85,7 +88,7 @@ def get_disaster_requests_from_lat_long(lat: float, long: float, disasterId: int
         }
         
 @mcp.tool()
-def verify_disaster_request(requestId: int, verification_status: str) -> dict:
+async def verify_disaster_request(request_id: int, verification_status: str) -> dict:
     """
     If the disaster request is verified, go to mysql and update the status to 'verified'.
     If the request is not verified, return an error message.
@@ -98,36 +101,36 @@ def verify_disaster_request(requestId: int, verification_status: str) -> dict:
             database="survivorsync"
         )
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM disaster_requests WHERE id = %s", (requestId,))
+        cursor.execute("SELECT * FROM disaster_requests WHERE id = %s", (request_id,))
         request = cursor.fetchone()
         if not request:
             return {
-                "error": f"No disaster request found with ID {requestId}",
+                "error": f"No disaster request found with ID {request_id}",
                 "results": {
                     "status": "not_found",
                 }
             }
         if request.get("status") == "IN_PROGRESS":
             return {
-                "message": f"Disaster request {requestId} is already IN_PROGRESS.",
+                "message": f"Disaster request {request_id} is already IN_PROGRESS.",
                 "results": request
             }
         # Update the disaster request status to 'VERIFIED' if verification_status is 'verified'
         if verification_status.lower() != "verified":
             return {
-                "error": f"Disaster request {requestId} is not verified.",
+                "error": f"Disaster request {request_id} is not verified.",
                 "results": {
                     "status": "NOT_VERIFIED",
                     "disaster_request": request
                 }
         }
         update_query = "UPDATE disaster_requests SET status = 'VERIFIED' WHERE id = %s"
-        cursor.execute(update_query, ( requestId,))
+        cursor.execute(update_query, ( request_id,))
         conn.commit()
         cursor.close()
         conn.close()
         return {
-            "message": f"Disaster request {requestId} has been verified and status updated.",
+            "message": f"Disaster request {request_id} has been verified and status updated.",
             "results": {
                 "status": "VERIFIED",
                 "disaster_request": request
@@ -218,7 +221,211 @@ def track_resources(request_id: int) -> dict:
         }
 
 @mcp.tool()
-def assign_resources(request_id: int, resource_center_ids: list[int], amounts: list[int]) -> dict:
+def optimize_resources_for_request(request: Dict[str, Any], resources: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Optimize resource assignment for a single emergency request from multiple resource centers.
+    
+    Args:
+        request: Emergency request containing:
+            - request_id: unique identifier
+            - location: [latitude, longitude]
+            - required_resources: list of {'name': str, 'quantity': int}
+            - (other fields as defined in DisasterRequestResponseFormat)
+            
+        resources: List of resource centers, each containing:
+            - resource_center_id: unique identifier
+            - location: [latitude, longitude]
+            - name: resource type
+            - quantity: available quantity
+    
+    Returns:
+        Dictionary containing:
+            - status: 'completed', 'pending', or 'error'
+            - request_id: original request ID
+            - assignment: list of resource assignments
+            - shortfalls: list of unmet resources
+            - total_distance: sum of distances for all assignments
+    """
+    
+    def euclidean_distance(coord1: List[float], coord2: List[float]) -> float:
+        """Calculate Euclidean distance between two points."""
+        return math.sqrt((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)
+
+    # Validate inputs
+    if not request:
+        return {"status": "error", "message": "Missing emergency request"}
+    
+    if not resources:
+        return {"status": "error", "message": "No resources available"}
+    
+    # Extract request details
+    request_id = request["request_id"]
+    request_loc = request["location"]
+    required_resources = request.get("required_resources", [])
+    
+    # Convert required resources to dictionary
+    required_dict = defaultdict(int)
+    for item in required_resources:
+        required_dict[item["name"]] += item["quantity"]
+    
+    # Aggregate resources by center
+    centers = {}
+    for res in resources:
+        center_id = res["resource_center_id"]
+        if center_id not in centers:
+            centers[center_id] = {
+                "id": center_id,
+                "location": res["location"],
+                "resources": defaultdict(int),
+                "distance": euclidean_distance(request_loc, res["location"])
+            }
+        centers[center_id]["resources"][res["name"]] += res["quantity"]
+    
+    center_list = list(centers.values())
+    n = len(center_list)
+    
+    # Helper function to evaluate a solution
+    def evaluate_solution(selected_centers: List[Dict]) -> Tuple[float, Dict]:
+        """Evaluate a solution and return (total_distance, resource_shortfall)"""
+        allocated = defaultdict(int)
+        total_distance = 0
+        
+        for center in selected_centers:
+            total_distance += center["distance"]
+            for res, qty in center["resources"].items():
+                allocated[res] += qty
+        
+        shortfall = {}
+        for res, need in required_dict.items():
+            if allocated[res] < need:
+                shortfall[res] = need - allocated[res]
+                
+        return total_distance, shortfall
+
+    # Optimization strategies
+    def greedy_optimization() -> List[Dict]:
+        """Greedy algorithm for large number of resource centers"""
+        selected = []
+        remaining_demand = required_dict.copy()
+        
+        while any(remaining_demand.values()):
+            best_center = None
+            best_benefit = 0
+            
+            for center in center_list:
+                if center in selected:
+                    continue
+                    
+                benefit = 0
+                for res, available in center["resources"].items():
+                    if res in remaining_demand:
+                        benefit += min(available, remaining_demand[res]) / center["distance"]
+                
+                if benefit > best_benefit:
+                    best_benefit = benefit
+                    best_center = center
+            
+            if not best_center:
+                break
+                
+            selected.append(best_center)
+            for res, available in best_center["resources"].items():
+                if res in remaining_demand:
+                    taken = min(available, remaining_demand[res])
+                    remaining_demand[res] -= taken
+        
+        return selected
+
+    def exhaustive_search() -> List[Dict]:
+        """Exhaustive search for small number of resource centers"""
+        best_solution = []
+        best_distance = float('inf')
+        best_shortfall = None
+        
+        # Generate all possible subsets
+        for i in range(1, 1 << n):
+            subset = [center_list[j] for j in range(n) if i & (1 << j)]
+            distance, shortfall = evaluate_solution(subset)
+            
+            # Prioritize solutions with less shortfall
+            shortfall_score = sum(shortfall.values()) if shortfall else 0
+            
+            if (not best_shortfall and shortfall) or \
+               (shortfall_score < sum(best_shortfall.values())) or \
+               (shortfall_score == sum(best_shortfall.values()) and distance < best_distance):
+                
+                best_solution = subset
+                best_distance = distance
+                best_shortfall = shortfall
+        
+        return best_solution
+
+    # Select optimization strategy
+    if n <= 20:  # Use exhaustive search for small instances
+        selected_centers = exhaustive_search()
+    else:  # Use greedy for larger instances
+        selected_centers = greedy_optimization()
+
+    # Generate assignment details
+    assignment = []
+    allocated_resources = defaultdict(int)
+    remaining_demand = required_dict.copy()
+    
+    for center in selected_centers:
+        center_assignment = {
+            "resource_center_id": center["id"],
+            "location": center["location"],
+            "distance": center["distance"],
+            "resources_assigned": []
+        }
+        
+        for res, available in center["resources"].items():
+            if res in remaining_demand and remaining_demand[res] > 0:
+                taken = min(available, remaining_demand[res])
+                center_assignment["resources_assigned"].append({
+                    "resource_type": res,
+                    "quantity": taken
+                })
+                allocated_resources[res] += taken
+                remaining_demand[res] -= taken
+        
+        assignment.append(center_assignment)
+    
+    # Calculate shortfalls
+    shortfalls = []
+    for res, need in required_dict.items():
+        allocated = allocated_resources[res]
+        if allocated < need:
+            shortfalls.append({
+                "resource_type": res,
+                "required": need,
+                "allocated": allocated,
+                "shortfall": need - allocated
+            })
+    
+    # Calculate total distance
+    total_distance = sum(center["distance"] for center in selected_centers)
+    
+    # Prepare response
+    response = {
+        "status": "completed" if not shortfalls else "pending",
+        "request_id": request_id,
+        "assignment": assignment,
+        "shortfalls": shortfalls,
+        "total_distance": total_distance
+    }
+    
+    # Include original request fields
+    for field in ["disaster", "disasterId", "disaster_status", "location", 
+                  "time", "affected_count", "contact_info", 
+                  "image_description", "voice_description", "text_description"]:
+        if field in request:
+            response[field] = request[field]
+    
+    return response
+
+@mcp.tool()
+async def assign_resources(request_id: int, resource_center_ids: list[int], quantities: list[int]) -> dict:
     """
     Assigns resources from multiple resource centers to a disaster request.
     """
@@ -242,7 +449,7 @@ def assign_resources(request_id: int, resource_center_ids: list[int], amounts: l
 
         # Allocation process
         allocations = []
-        for resource_center_id, amount in zip(resource_center_ids, amounts):
+        for resource_center_id, amount in zip(resource_center_ids, quantities):
             # Insert into allocated_resources
             insert_query = """
                 INSERT INTO allocated_resources (disasterRequestId, resourceCenterId, amount, isAllocated)
@@ -323,6 +530,7 @@ def change_status_after_assign_resources(request_id: int, status: str) -> dict:
             "error": str(e),
             "results": {}
         }
+
 
 @mcp.tool()
 def web_search(query: str) -> dict:

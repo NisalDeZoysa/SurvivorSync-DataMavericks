@@ -150,7 +150,7 @@ sequelize
   )
   .then(async () => {
     console.log('Database connected');
-    //  await seedDatabase();
+      //await seedDatabase();
     // Start HTTP server (not app.listen)
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
