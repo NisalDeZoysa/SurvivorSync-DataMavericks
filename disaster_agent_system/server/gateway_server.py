@@ -116,7 +116,7 @@
 #     app.run(host="0.0.0.0", port=port)
 
 
-    
+from flask_cors import CORS    
 import re
 import datetime
 import requests
@@ -130,6 +130,7 @@ load_dotenv()
 
 llm = ChatOllama(model="qwen3:4b", temperature=0.2, num_predict=256)
 app = Flask(__name__)
+CORS(app)
 
 # Define all agent URLs
 REQUEST_INTAKE_AGENT = "http://localhost:5010"

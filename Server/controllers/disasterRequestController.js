@@ -140,13 +140,13 @@ export const createUserRequest = async (req, res) => {
   // Send WhatsApp message
   // get the text from the gatewayResponse
 
-  // const agentResponses = gatewayResponse.gatewayResponse?.gatewayData?.agent_responses || [];
-  // const userCommAgent = agentResponses.find(a => a.agent === "user-communication-agent");
-  // const title  = userCommAgent.title
-  // const description = userCommAgent.description
-  // const msg = "You have request for " + title + "this is the verification precess result" + description
+  const agentResponses = gatewayResponse.gatewayResponse?.gatewayData?.agent_responses || [];
+  const userCommAgent = agentResponses.find(a => a.agent === "user-communication-agent");
+  const title  = userCommAgent.title
+  const description = userCommAgent.description
+  const msg = "You have request for " + title + "this is the verification precess result" + description
 
-  // await sendWhatsAppMessage(request.contactNo, msg);
+  await sendWhatsAppMessage(request.contactNo, msg);
 
 
   // Include gateway response in your final output if needed

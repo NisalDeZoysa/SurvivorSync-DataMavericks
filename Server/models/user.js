@@ -17,9 +17,6 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
-    validate: {
-      is: /^[0-9]{9}[vV]$|^[0-9]{12}$/, 
-    },
   },
   address: {
     type: DataTypes.STRING,
