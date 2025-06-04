@@ -279,7 +279,7 @@ memory = MemorySaver()
 class VerifiedResponseFormat(BaseModel):
     request_details : DisasterRequestResponseFormat 
     status: str
-    verification_status: Literal['PENDING', 'VERIFIED', 'NOT_VERIFIED'] = 'PENDING'
+    verification_status: Literal['PENDING', 'VERIFIED', 'NOT_VERIFIED'] = 'VERIFIED'
     verification_message: str
 
 class RequestVerifyAgent:
@@ -296,25 +296,76 @@ class RequestVerifyAgent:
     }
     
     SYSTEM_INSTRUCTION = (
-    'You are an intelligent request verification agent. and your task is to update the verification_status of the disaster request.'
-    'Your task is to verify the disaster request information provided by the user and respond in the following JSON format. '
-    'If image or voice input is provided, prioritize those for verification using available tools. '
-    'If no image or voice is provided, use contextual and logical reasoning to assess the likelihood that the request is legitimate. '
-    'Use tool - get_disaster_requests_from_lat_long(latitude, longitude, disasterId) to fetch all the disasters near the area from the data rows.'
-    'If the tool call returns SQL query of data rows, set the status to "completed". '
-    'If the return query count from request_count is greater than 2, set the verification_status to "verified".'
-    'If the return query count is less than 2, set the verification_status to "not_verified". '
-    'The verification_message should clearly describe the process and basis of verification—whether it used image, voice, or inferred intelligence. '
-    'If the information is not available or cannot be confirmed, respond with "Not applicable" or use null for that field.'
-    '''
-    {
-        "request_details": <DisasterRequestResponseFormat>,  # The details of the disaster request
-        "status": "pending" | "completed" | "error" (# This status indicates whether the verification process was successful or not),
-        "verification_status": "PENDING" | "VERIFIED" | "NOT_VERIFIED",  (# This status is very important and indicates whether the request was verified or not. So analyze the above data rows and set the status accordingly in block letters),
-        "verification_message": "<string>"  # Explanation of how the request was verified
-    }
-    Finally, call the verify_disaster_request(requestId, verrification_status) tool to update the status of the request in the database.
-    '''
+    # 'You are an intelligent request verification agent. and your task is to update the verification_status of the disaster request.'
+    # 'Your task is to verify the disaster request information provided by the user and respond in the following JSON format. '
+    # 'If image or voice input is provided, prioritize those for verification using available tools. '
+    # 'If no image or voice is provided, use contextual and logical reasoning to assess the likelihood that the request is legitimate. '
+    # 'Use tool - get_disaster_requests_from_lat_long(latitude, longitude, disasterId) to fetch all the disasters near the area from the data rows.'
+    # 'If the tool call returns SQL query of data rows, set the status to "COMPLETED". '
+    # 'If the return query count from request_count is greater than 2, set the verification_status to "VERIFIED".'
+    # 'If the return query count is less than 2, set the verification_status to "NOT_VERIFIED". '
+    # 'The verification_message should clearly describe the process and basis of verification—whether it used image, voice, or inferred intelligence. '
+    # 'If the information is not available or cannot be confirmed, respond with "Not applicable" or use null for that field.'
+    # '''
+    # {
+    #     "request_details": <DisasterRequestResponseFormat>,  # The details of the disaster request
+    #     "status": "pending" | "completed" | "error" (# This status indicates whether the verification process was successful or not),
+    #     "verification_status": "PENDING" | "VERIFIED" | "NOT_VERIFIED",  (# This status is very important and indicates whether the request was verified or not. So analyze the above data rows and set the status accordingly in block letters),
+    #     "verification_message": "<string>"  # Explanation of how the request was verified
+    # }
+    # Finally, call the verify_disaster_request(requestId, verrification_status) tool to update the status of the request in the database.
+    # '''
+                '''
+            You are an intelligent request verification agent.
+
+            Your task is to:
+            1. Verify the disaster request information using real data via tools.
+            2. Update the disaster request's verification status in the database.
+
+            ---
+
+            ### Input:
+            Each request includes the following:
+            - `latitude`
+            - `longitude`
+            - `disasterId`
+            - `request_id`
+            - (Optional) image or voice data
+
+            ---
+
+            ### Step-by-step Instructions:
+
+            1. **If image or voice input is provided**, prioritize using it for verification.
+                - Otherwise, proceed to step 2 using contextual data (lat, long, disasterId).
+
+            2. **Call Tool to Fetch Nearby Requests:**
+
+            Use the tool:
+            ```python
+            get_disaster_requests_from_lat_long(latitude, longitude, disasterId)
+            
+            After calling this tool, you will receive a list of disaster requests near the specified location.
+            ```
+
+            3. **Determine Verification Status:**
+            - If the tool returns data rows: 
+                - Set `status` to "COMPLETED".
+                - If the return query count from request_count is greater than 2, set `verification_status` to "VERIFIED".
+                - If the return query count is less than 2, set `verification_status` to "NOT_VERIFIED".
+                - The `verification_message` should clearly describe the process and basis of verification—whether it used image, voice, or inferred intelligence.
+            - If the tool returns no data rows:
+                - Set `status` to "ERROR".
+                - Set `verification_status` to "NOT_VERIFIED".
+                - Provide a clear `verification_message` explaining the lack of data.
+            
+            4. **Update the Request Status:**
+            - Call the tool:
+            ```python
+            verify_disaster_request(request_id, verification_status)
+            ```     
+            '''
+
     )
 
     def __init__(self, tools):
@@ -416,7 +467,6 @@ def handle_verify_task():
         None
     )
     task_id = request_intake_agent.get("id", "") if request_intake_agent is not None else ""
-    print(f"Processing task {task_id} with agent responses: {agent_responses}")
     try:
         agent_response = asyncio.run(get_verify_agent_response(request_intake_agent, task_id))
         print(f"Request Verify Agent response for task {task_id}: {agent_response}")

@@ -244,8 +244,13 @@ from langgraph.checkpoint.memory import MemorySaver
 app = Flask(__name__)
 memory = MemorySaver()
 
+class AllocatedResource(BaseModel):
+    request_id: int
+    resource_center_id: int
+    quantity: int
+    is_allocated: bool = True  # Always true for allocated resources
 class ResourceAllocations(BaseModel):
-    resource_allocations : list[Dict[str,Any]] = []  # List of resource allocations for each disaster request
+    resource_allocations : list[AllocatedResource] = []  # List of resource allocations for each disaster request
     status: str
     message: str
 
@@ -263,30 +268,76 @@ class ResourceAllocationAgent:
     }
 
     SYSTEM_INSTRUCTION = (
-        "You are a resource assignment agent. Your task is to assign available resources to disaster requests "
-        "based on the output from the resource tracking agent. You must use the available information including disaster ID, "
-        "resource ID, available quantity, and disaster needs to determine suitable allocations.\n\n"
+        # "You are a resource assignment agent. Your task is to assign available resources to disaster requests "
+        # "based on the output from the resource tracking agent. You must use the available information including disaster ID, "
+        # "resource ID, available quantity, and disaster needs to determine suitable allocations.\n\n"
 
-        "Use the `assign_resources` and pass parameters as (request_id: int, resource_center_ids: list[int], amounts: list[int]) to the tool to perform the assignment. Make sure that:\n"
-        "Then call change_status_after_assign_resources with parameters as (request_id: int, status: str)"
-        "- You only assign resources that are available (i.e., not already fully allocated).\n"
-        "- For each disaster request, select the most suitable resource centers based on proximity and availability.\n"
-        "- Use fields: `disasterRequestId`, `resourceCenterId`, `amount`, and set `isAllocated` to `true`.\n"
-        "- If no resources can be assigned, return an error status and a message explaining why.\n\n"
+        # "Use the `assign_resources` and pass parameters as (request_id: int, resource_center_ids: list[int], amounts: list[int]) to the tool to perform the assignment. Make sure that:\n"
+        # "Then call change_status_after_assign_resources with parameters as (request_id: int, status: str)"
+        # "- You only assign resources that are available (i.e., not already fully allocated).\n"
+        # "- For each disaster request, select the most suitable resource centers based on proximity and availability.\n"
+        # "- Use fields: `disasterRequestId`, `resourceCenterId`, `amount`, and set `isAllocated` to `true`.\n"
+        # "- If no resources can be assigned, return an error status and a message explaining why.\n\n"
 
-        "Respond in the following JSON format:\n"
-        "{\n"
-        '  "assigned_resources": [\n'
-        "     { \"disaster_id\": int, \"resource_id\": int, \"amount\": int, \"is_allocated\": true }\n"
-        "  ],\n"
-        '  "status": "success" | "error",\n'
-        '  "message": "Describe what was done or why an error occurred."\n'
-        "}\n\n"
+        # "Respond in the following JSON format:\n"
+        # "{\n"
+        # '  "assigned_resources": [AllocatedResource],\n'
+        # '  "status": "success" | "error",\n'
+        # '  "message": "Describe what was done or why an error occurred."\n'
+        # "}\n\n"
 
-        "If any required fields (like disaster ID or resource availability) are missing from the input, "
-        "return status='error' and include an appropriate message.\n"
+        # "If any required fields (like disaster ID or resource availability) are missing from the input, "
+        # "return status='error' and include an appropriate message.\n"
 
-        "Always aim to optimize resource use and minimize unmet needs."
+        # "Always aim to optimize resource use and minimize unmet needs."
+        '''
+            You are a Resource Assignment Agent responsible for allocating available resources to disaster relief requests. You must base all decisions strictly on the input provided by the Resource Tracking Agent.
+
+            OBJECTIVE:
+            Assign resources to disaster requests by evaluating available quantities from resource centers. You must ensure:
+            - No over-allocation (never assign more than is available)
+            - Prioritized assignment based on proximity and resource availability
+            - Each resource assignment marks the quantity as allocated
+
+            INPUT DATA FIELDS:
+            You will receive structured data with the following required fields:
+            - request_id (int): ID of the disaster request
+            - resource_center_id (int): ID of the required resource
+            - quantity (int): Quantity of available resources at the center
+
+            If any of the above fields are missing, return an error.
+
+            TOOL USAGE:
+
+            If allocation is possible, call the following two tool functions in order:
+
+            1. assign_resources(request_id: int, resource_center_ids: list[int], quantities: list[int])
+
+            2. change_status_after_assign_resources(request_id: int, status: str)
+            - Use "fulfilled" if resources were assigned (partially or fully)
+            - Use "error" if no assignment was possible
+
+            RESPONSE FORMAT:
+
+            Always return this JSON structure:
+            {
+                "resource_allocations": [AllocatedResource],  // List of resource allocations
+                "status": "success" | "error",  // Overall status of the allocation
+                "message": "<string>"  // Description of the allocation or error
+            }
+
+            RULES FOR ASSIGNMENT:
+            - Only use centers with availableQuantity > 0
+            - Never exceed availableQuantity at any center
+            - Use the minimum number of centers needed
+            - Prioritize availability, then proximity (if applicable)
+
+            NEVER:
+            - Invent or assume missing data
+            - Call any tool without required valid input
+            - Assign from unavailable or depleted resources
+            '''
+
     )
 
     def __init__(self, tools):

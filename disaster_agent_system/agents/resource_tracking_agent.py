@@ -258,9 +258,16 @@ from disaster_agent_system.models.models import DisasterRequestResponseFormat
 app = Flask(__name__)
 memory = MemorySaver()
 
+class Resources(BaseModel):
+    """Model for resources tracked by the agent."""
+    resource_center_id: int
+    location: list[float]
+    name: str
+    quantity: int
+
 class ResourceTrackingResponse(BaseModel):
     disaster_data : DisasterRequestResponseFormat
-    resources: list[Dict[str, Any]]
+    resources: list[Resources] = []
     status: Literal['success', 'error'] = 'success'
     message: str
 
@@ -285,6 +292,7 @@ class ResourceTrackingAgent:
     "Select the most appropriate resources from the fetched data and include them in the final response. "
     "Ensure you use the disaster data provided by the previous response (disaster ID, location, and any other context). "
     "Your structured JSON response must include:\n"
+    "- disaster_data: The disaster request data in the DisasterRequestResponseFormat, which includes:\n"
     "- resources: A list of the most suitable resources selected from the (track_resources) tool response.\n"
     "- status: 'success' or 'error'.\n"
     "- message: A clear message describing what was done, including how many resources were found and how selection was made.\n"
@@ -292,8 +300,8 @@ class ResourceTrackingAgent:
     "If tool data is missing or response is empty, return an error with explanation.\n"
     "Respond using the following format:\n"
     "{\n"
-    '  "disaster_data": { },\n'
-    '  "resources": [<filtered resources>],\n'
+    '  "disaster_data": DisasterRequestResponseFormat,\n'
+    '  "resources": list[Resources],\n'
     '  "status": "success|error",\n'
     '  "message": "..." \n'
     "}"
