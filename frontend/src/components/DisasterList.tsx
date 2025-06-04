@@ -447,7 +447,7 @@ const DisasterList: React.FC = () => {
       </div>
 
 {/* PDF Download button, should remove from here */}
-      <PDFDownloadLink
+      {/* <PDFDownloadLink
         document={<EmergencyReportPDF disasters={filteredDisasters} />}
         fileName="emergency-reports.pdf"
       >
@@ -456,7 +456,7 @@ const DisasterList: React.FC = () => {
             {loading ? "Preparing PDF..." : "Download All as PDF"}
           </Button>
         )}
-      </PDFDownloadLink>
+      </PDFDownloadLink> */}
 
       {/* Detailed View Dialog */}
       <Dialog

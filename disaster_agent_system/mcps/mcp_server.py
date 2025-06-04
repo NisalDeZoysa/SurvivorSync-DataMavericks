@@ -124,7 +124,8 @@ async def verify_disaster_request(request_id: int, verification_status: str) -> 
                     "disaster_request": request
                 }
         }
-        update_query = "UPDATE disaster_requests SET status = 'VERIFIED' WHERE id = %s"
+        # update status and isVerified in the database
+        update_query = "UPDATE disaster_requests SET status = 'VERIFIED', isVerified = TRUE WHERE id = %s"
         cursor.execute(update_query, ( request_id,))
         conn.commit()
         cursor.close()

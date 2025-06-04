@@ -70,13 +70,13 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import seedDatabase from './seed.js'; // Your seeder function
 
-import {whatsappClient} from './controllers/whatsAppConroller.js';
+import { whatsappClient } from './controllers/whatsAppConroller.js';
 
 
 
 dotenv.config();
 
-// whatsappClient.initialize();
+whatsappClient.initialize();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -134,10 +134,29 @@ app.use('/api/availability', availabilityRoutes);
 app.use('/api/whatsapp', whatsAppRoutes); // Add WhatsApp routes
 app.use('/api/assignments', assignmentRoutes);
 
+
+const globalChatHistory = [];
 // Optional: Socket.io connection event for logging
 io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
+  socket.emit('chatHistory', globalChatHistory);
+
+  socket.on('newMessage', (message) => {
+    const newMessage = {
+      ...message,
+      timestamp: new Date().toISOString(),
+    };
+
+    // Add to in-memory history (limit to 100 messages)
+    globalChatHistory.push(newMessage);
+    if (globalChatHistory.length > 100) {
+      globalChatHistory.shift();
+    }
+
+    // Broadcast to all connected clients
+    io.emit('newMessage', newMessage);
+  });
   socket.on('disconnect', () => {
     console.log(`Client disconnected: ${socket.id}`);
   });
@@ -145,12 +164,12 @@ io.on('connection', (socket) => {
 
 // DB Sync + Start server
 sequelize
-  .sync( 
-    // { force: true }
-  )
+  .sync(
+   //{ force: true }
+)
   .then(async () => {
     console.log('Database connected');
-      //await seedDatabase();
+    //await seedDatabase();
     // Start HTTP server (not app.listen)
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

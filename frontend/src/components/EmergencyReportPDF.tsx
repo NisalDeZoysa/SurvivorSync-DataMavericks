@@ -1,33 +1,167 @@
-// EmergencyReportPDF.js
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 
 const styles = StyleSheet.create({
-  page: { padding: 24 },
-  section: { marginBottom: 12, padding: 12, borderBottom: '1 solid #eee' },
-  heading: { fontSize: 18, marginBottom: 8, fontWeight: 'bold' },
-  label: { fontWeight: 'bold' },
-  text: { marginBottom: 4 }
+  page: { padding: 24, fontFamily: 'Helvetica' },
+  header: { marginBottom: 20, borderBottom: '1 solid #333', paddingBottom: 10 },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 8 },
+  section: { marginBottom: 15 },
+  heading: { fontSize: 16, fontWeight: 'bold', marginBottom: 6, color: '#2c5282' },
+  subheading: { fontSize: 14, fontWeight: 'bold', marginBottom: 4, color: '#4a5568' },
+  row: { flexDirection: 'row', marginBottom: 4 },
+  label: { width: '30%', fontWeight: 'bold' },
+  value: { width: '70%' },
+  agentSection: { marginBottom: 12, border: '1 solid #e2e8f0', padding: 10, borderRadius: 4 },
+  agentHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  agentName: { fontWeight: 'bold', color: '#2b6cb0' },
+  agentStatus: { color: '#38a169', fontWeight: 'bold' },
+  responseContainer: { backgroundColor: '#f7fafc', padding: 8, borderRadius: 4, marginTop: 4 },
+  statusError: { color: '#e53e3e' },
+  statusSuccess: { color: '#38a169' },
+  timestamp: { fontSize: 10, color: '#718096', marginTop: 4 }
 });
 
-const EmergencyReportPDF = ({ disasters }) => (
-  <Document>
-    <Page style={styles.page}>
-      <Text style={styles.heading}>Emergency Reports</Text>
-      {disasters.map((disaster, idx) => (
-        <View key={disaster.id || idx} style={styles.section}>
-          <Text style={styles.label}>Type: <Text style={styles.text}>{disaster.type}</Text></Text>
-          <Text style={styles.label}>Location: <Text style={styles.text}>{disaster.location.address}</Text></Text>
-          <Text style={styles.label}>Reported: <Text style={styles.text}>{new Date(disaster.timestamp).toLocaleString()}</Text></Text>
-          <Text style={styles.label}>Severity: <Text style={styles.text}>{disaster.severity}</Text></Text>
-          <Text style={styles.label}>Affected: <Text style={styles.text}>{disaster.affectedCount} people</Text></Text>
-          <Text style={styles.label}>Contact: <Text style={styles.text}>{disaster.contactNo || 'N/A'}</Text></Text>
-          <Text style={styles.label}>Status: <Text style={styles.text}>{disaster.status}</Text></Text>
-          <Text style={styles.label}>Details: <Text style={styles.text}>{disaster.details}</Text></Text>
-        </View>
-      ))}
-    </Page>
-  </Document>
-);
+const DisasterRequestReportPDF = ({ request, gatewayResponse }) => {
+  if (!request || !gatewayResponse) {
+    return (
+      <Document>
+        <Page style={styles.page}>
+          <Text>Error: Report data is missing</Text>
+        </Page>
+      </Document>
+    );
+  }
 
-export default EmergencyReportPDF;
+  const { gatewayData } = gatewayResponse || {};
+  const agentResponses = gatewayData?.agent_responses || [];
+
+  return (
+    <Document>
+      <Page style={styles.page}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Disaster Request Report</Text>
+          <Text style={styles.subheading}>Request ID: {request?.id ?? 'N/A'}</Text>
+          <Text style={styles.subheading}>Generated: {new Date().toLocaleString()}</Text>
+        </View>
+
+        {/* Request Details Section */}
+        <View style={styles.section}>
+          <Text style={styles.heading}>Request Details</Text>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Name:</Text>
+            <Text style={styles.value}>{request?.name ?? 'N/A'}</Text>
+          </View>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Status:</Text>
+            <Text style={styles.value}>{request?.status ?? 'N/A'}</Text>
+          </View>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Disaster ID:</Text>
+            <Text style={styles.value}>{request?.disasterId ?? 'N/A'}</Text>
+          </View>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Severity:</Text>
+            <Text style={styles.value}>{request?.severity ?? 'N/A'}</Text>
+          </View>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Details:</Text>
+            <Text style={styles.value}>{request?.details ?? 'N/A'}</Text>
+          </View>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Affected Count:</Text>
+            <Text style={styles.value}>{request?.affectedCount ?? 'N/A'}</Text>
+          </View>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Contact:</Text>
+            <Text style={styles.value}>{request?.contactNo ?? 'N/A'}</Text>
+          </View>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Location:</Text>
+            <Text style={styles.value}>
+              {(request?.latitude ?? 'N/A')}, {(request?.longitude ?? 'N/A')}
+            </Text>
+          </View>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>District:</Text>
+            <Text style={styles.value}>{request?.district ?? 'N/A'}</Text>
+          </View>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Province:</Text>
+            <Text style={styles.value}>{request?.province ?? 'N/A'}</Text>
+          </View>
+          
+          <View style={styles.row}>
+            <Text style={styles.label}>Created At:</Text>
+            <Text style={styles.value}>
+              {request?.created_at ? new Date(request.created_at).toLocaleString() : 'N/A'}
+            </Text>
+          </View>
+        </View>
+
+        {/* Agent Responses Section */}
+        <View style={styles.section}>
+          <Text style={styles.heading}>Agent Processing Results</Text>
+          
+          {Array.isArray(agentResponses) && agentResponses.length > 0 ? agentResponses.map((agent, index) => (
+            <View key={index} style={styles.agentSection} wrap={false}>
+              <View style={styles.agentHeader}>
+                <Text style={styles.agentName}>
+                  {(agent?.agent ?? 'N/A').replace(/-/g, ' ').toUpperCase()}
+                </Text>
+                <Text style={agent?.status === 'success' ? styles.statusSuccess : styles.statusError}>
+                  {(agent?.status ?? 'N/A').toUpperCase()}
+                </Text>
+              </View>
+              
+              <Text style={styles.subheading}>Response:</Text>
+              <View style={styles.responseContainer}>
+                {agent?.response?.response
+                  ? Object.entries(agent.response.response).map(([key, value]) => (
+                      <View key={key} style={{ marginBottom: 4 }}>
+                        <Text style={{ fontWeight: 'bold' }}>
+                          {key.replace(/_/g, ' ').toUpperCase()}:
+                        </Text>
+                        <Text>
+                          {value === null || value === undefined
+                            ? 'N/A'
+                            : typeof value === 'object'
+                              ? JSON.stringify(value, null, 2)
+                              : value.toString()}
+                        </Text>
+                      </View>
+                    ))
+                  : <Text>N/A</Text>
+                }
+              </View>
+              
+              <Text style={styles.timestamp}>
+                Processed: {agent?.timestamp ? new Date(agent.timestamp).toLocaleString() : 'N/A'}
+              </Text>
+            </View>
+          )) : <Text>No agent responses available.</Text>}
+          
+          <View style={{ marginTop: 10 }}>
+            <Text style={styles.subheading}>Overall Status:</Text>
+            <Text style={gatewayData?.overall_status === 'completed' 
+                  ? styles.statusSuccess 
+                  : styles.statusError}>
+              {(gatewayData?.overall_status ?? 'N/A').toUpperCase()}
+            </Text>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+};
+
+export default DisasterRequestReportPDF;
