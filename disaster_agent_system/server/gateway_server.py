@@ -165,7 +165,7 @@ def route_query_with_ollama(user_text: str) -> str:
 # - The 'TIPS_AGENT' This agent is just a bot provide tips and chat with users about disasters, health and safety.
 # If the user query contains data about a disaster and an affected count value, pick 'REQUEST_INTAKE_AGENT'.
 # If the user is asking for tips, advice, or general safety information, pick 'TIPS_AGENT'.
-# Respond with ONLY 'REQUEST_INTAKE_AGENT' or 'TIPS_AGENT'.
+# Respond with ONLY 'REQUEST_INTAKE_AGENT' or 'TIPS_AGENT'. Do not include any other text or explanation or <THINK> tags.
 # This is User query: {user_text}
 # """
     try:

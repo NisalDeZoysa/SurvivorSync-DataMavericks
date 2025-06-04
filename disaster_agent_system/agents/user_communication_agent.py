@@ -37,25 +37,15 @@ class UserCommunicationAgent:
             Your tasks are:
             - Receive disaster request data and resources tracked provided by the resource tracking agent.
             - Create a summary of the disaster request and allocated resources.
-            - Extract the mobile phone number from the disaster request data.
-            - Compose a message that includes the summary title and a brief description combining the disaster request details and allocated resources.
-            - The summary and message should include the following fields:
             - status: The status of the disaster request (pending, completed, error)
             - title: The title of the disaster request
             - description: A brief description of the disaster request with allocated resources
-            - phone: The mobile phone number extracted from the disaster request data
-            - message: The combined text message to be sent via SMS, including title and description
-
-            The output should be structured in the following JSON format:
-
-            {
+        The output should be structured in the following JSON format:
+        {
             "status": "pending",
             "title": "Disaster Request Title",
-            "description": "Brief description of the disaster request with allocated resources.",
-            "phone": "+1234567890",
-            "message": "Disaster Request Title\nBrief description of the disaster request with allocated resources."
-            }
-
+            "description": "Brief description of the disaster request with allocated resources."
+        }
         '''
     )
     def __init__(self, tools):
@@ -105,14 +95,7 @@ async def get_user_agent_response(task_request, task_id):
     #     }}
     try:
         # Initialize tools and agent
-        client = MultiServerMCPClient(
-        {
-            "message-send": {
-                "transport": "stdio", 
-                "command": "python",
-                "args": ["disaster_agent_system/mcps/message_mcp.py"]
-            }
-        })
+        client = MultiServerMCPClient({})
         tools = await client.get_tools()
         print(f"Loaded {len(tools)} tools from MCP servers.")
         print("Creating Request Verify Agent...")
@@ -135,12 +118,12 @@ def handle_user_task():
     print(f"Received task request for User Communication Agent: {task_request}")
     if not task_request:
         return jsonify({"error": "Invalid request"}), 400
-
-    task_id = task_request.get("task_id", "")
-    intake_data = next((agent_resp.get("response") for agent_resp in task_request.get("agent_responses", []) if agent_resp.get("agent") == "resource-tracking-agent"), None)
-    print(f"Processing task {task_id} with intake data: {intake_data}")
+    agent_responses = task_request.get("agent_responses", [])
+    # Extract the response dict for "request-intake-agent" to another variable
+    resource_assign_agent = next((agent_resp.get("response") for agent_resp in agent_responses if agent_resp.get("agent") == "resource-assign-agent"),None)
+    task_id = resource_assign_agent.get("id", "") if resource_assign_agent is not None else ""
     try:
-        agent_response = asyncio.run(get_user_agent_response(intake_data, task_id))
+        agent_response = asyncio.run(get_user_agent_response(resource_assign_agent, task_id))
         print(f"User Communication Agent response for task {task_id}: {agent_response}")
     except Exception as e:
         agent_response = {

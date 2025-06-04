@@ -1,5 +1,6 @@
 import { DisasterRequest, Disaster, User } from "../models/index.js";
 import Sequelize from 'sequelize';
+import { getDisasterById } from "./disasterController.js";
 
 
 export const createUserRequest = async (req, res) => {
@@ -88,7 +89,12 @@ export const createUserRequest = async (req, res) => {
     province
   });
 
-  const io = req.app.get('io');
+  // Get disaster name
+  const disaster = await Disaster.findByPk(disasterId);
+
+  console.log("Disaster ID:", disaster.dataValues.name);
+
+   const io = req.app.get('io');
 
   // Fetch updated stats data (not route handler)
   const updatedStats = await fetchDisasterStatsData();
@@ -98,7 +104,9 @@ export const createUserRequest = async (req, res) => {
   // call gateway_server to get a response
   const messageText = `
       User ID: ${request.userId}
-      Disaster Id: ${request.disasterId}
+      Disaster: ${disaster.dataValues.name}
+      Disaster ID: ${request.disasterId}
+      Request Id: ${request.id}
       Severity: ${request.severity}
       Details: ${request.details}
       Affected Count: ${request.affectedCount}
@@ -106,9 +114,8 @@ export const createUserRequest = async (req, res) => {
       Location: Latitude ${request.latitude}, Longitude ${request.longitude}
       District: ${request.district}
       Province: ${request.province}
-      Address: ${request.address}
-      Image_path: ${request.image}
-      Voice_path: ${request.voice}
+      Image_path: Server\\${request.image}
+      Voice_path: Server\\${request.voice}
       `;
 
   // //  // Call gateway server

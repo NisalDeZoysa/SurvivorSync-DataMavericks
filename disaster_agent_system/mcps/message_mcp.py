@@ -141,6 +141,6 @@ def output_requests(phone: str, title: str, description: str) -> dict:
 
 if __name__ == "__main__":
     # mcp.run(transport="stdio")
-    print(output_requests("+94711570452", "title", "description"))
+    print(output_requests("+940711570452", "title", "description"))
 
 

@@ -264,6 +264,7 @@
 import asyncio
 import datetime
 import os
+from typing import Literal
 from flask import Flask, request, jsonify
 from pydantic import BaseModel
 from disaster_agent_system.models.models import DisasterRequestResponseFormat
@@ -278,7 +279,7 @@ memory = MemorySaver()
 class VerifiedResponseFormat(BaseModel):
     request_details : DisasterRequestResponseFormat 
     status: str
-    verification_status: str
+    verification_status: Literal['PENDING', 'VERIFIED', 'NOT_VERIFIED'] = 'PENDING'
     verification_message: str
 
 class RequestVerifyAgent:
@@ -295,25 +296,24 @@ class RequestVerifyAgent:
     }
     
     SYSTEM_INSTRUCTION = (
-    'You are an intelligent request verification agent. '
+    'You are an intelligent request verification agent. and your task is to update the verification_status of the disaster request.'
     'Your task is to verify the disaster request information provided by the user and respond in the following JSON format. '
     'If image or voice input is provided, prioritize those for verification using available tools. '
     'If no image or voice is provided, use contextual and logical reasoning to assess the likelihood that the request is legitimate. '
-    'Use the available tools to verify the information wherever possible. '
-    'Get all the disasterIds from the data rows returned by the request_count tool and add them to the help_needed_requests list as comma-separated integers. '
-    'If the tool call returns SQL query data rows, set the status to "completed". '
-    'If the return query count from request_count is greater than 2, set the verification_status to "verified". '
-    'If the return query count is greater than 5, set the verification_status to "already_verified". '
+    'Use tool - get_disaster_requests_from_lat_long(latitude, longitude, disasterId) to fetch all the disasters near the area from the data rows.'
+    'If the tool call returns SQL query of data rows, set the status to "completed". '
+    'If the return query count from request_count is greater than 2, set the verification_status to "verified".'
     'If the return query count is less than 2, set the verification_status to "not_verified". '
     'The verification_message should clearly describe the process and basis of verification—whether it used image, voice, or inferred intelligence. '
     'If the information is not available or cannot be confirmed, respond with "Not applicable" or use null for that field.'
     '''
     {
         "request_details": <DisasterRequestResponseFormat>,  # The details of the disaster request
-        "status": "pending" | "completed" | "error",  # The status of the verification process
-        "verification_status": "pending" | "verified" | "already_verified" | "not_verified",  # The verification result
+        "status": "pending" | "completed" | "error" (# This status indicates whether the verification process was successful or not),
+        "verification_status": "PENDING" | "VERIFIED" | "NOT_VERIFIED",  (# This status is very important and indicates whether the request was verified or not. So analyze the above data rows and set the status accordingly in block letters),
         "verification_message": "<string>"  # Explanation of how the request was verified
     }
+    Finally, call the verify_disaster_request(requestId, verrification_status) tool to update the status of the request in the database.
     '''
     )
 
@@ -342,10 +342,11 @@ class RequestVerifyAgent:
                 "request_details": DisasterRequestResponseFormat(
                     status = 'error',
                     request_id = 0,
+                    disaster = 'unknown',
+                    disasterId = 0,
                     disaster_status = 'medium',
                     location = [0.0, 0.0],
                     time = '2023-11-15T10:00:00Z',
-                    type = 'unknown',
                     affected_count = 0,
                     contact_info = 'Not applicable',
                     image_description = 'Not applicable',
@@ -367,10 +368,11 @@ async def get_verify_agent_response(task_request, task_id):
         # Initialize tools and agent
         client = MultiServerMCPClient(
         {
-            "near-requests": {
-                "transport": "stdio", 
-                "command": "python",
-                "args": ["disaster_agent_system/mcps/near_requests.py"]
+            "mcp-server": 
+            {
+            "transport": "stdio", 
+            "command": "python",
+            "args": ["disaster_agent_system/mcps/mcp_server.py"]
             }
         })
         tools = await client.get_tools()
@@ -388,9 +390,10 @@ async def get_verify_agent_response(task_request, task_id):
                     status = 'error',
                     request_id = 0,
                     disaster_status = 'medium',
+                    disaster = 'unknown',
+                    disasterId=0,
                     location = [0.0, 0.0],
                     time = '2023-11-15T10:00:00Z',
-                    type = 'unknown',
                     affected_count = 0,
                     contact_info = 'Not applicable',
                     image_description = 'Not applicable',
@@ -405,15 +408,17 @@ async def get_verify_agent_response(task_request, task_id):
 @app.post("/tasks/send")
 def handle_verify_task():
     task_request = request.get_json()
-    print(f"Received task request for Request Verify Agent: {task_request}")
-    if not task_request:
-        return jsonify({"error": "Invalid request"}), 400
-
-    task_id = task_request.get("task_id", "")
-    intake_data = next((agent_resp.get("response") for agent_resp in task_request.get("agent_responses", []) if agent_resp.get("agent") == "request-intake-agent"), None)
-    print(f"Processing task {task_id} with intake data: {intake_data}")
+    print("Task request received for Request Verify Agent:", task_request)
+    agent_responses = task_request.get("agent_responses", [])
+    # Extract the response dict for "request-intake-agent" to another variable
+    request_intake_agent = next(
+        (agent_resp.get("response") for agent_resp in agent_responses if agent_resp.get("agent") == "request-intake-agent"),
+        None
+    )
+    task_id = request_intake_agent.get("id", "") if request_intake_agent is not None else ""
+    print(f"Processing task {task_id} with agent responses: {agent_responses}")
     try:
-        agent_response = asyncio.run(get_verify_agent_response(intake_data, task_id))
+        agent_response = asyncio.run(get_verify_agent_response(request_intake_agent, task_id))
         print(f"Request Verify Agent response for task {task_id}: {agent_response}")
     except Exception as e:
         agent_response = {
@@ -423,9 +428,10 @@ def handle_verify_task():
                     status = 'error',
                     request_id = 0,
                     disaster_status = 'medium',
+                    disaster = 'unknown',
+                    disasterId=0,
                     location = [0.0, 0.0],
                     time = '2023-11-15T10:00:00Z',
-                    type = 'unknown',
                     affected_count = 0,
                     contact_info = 'Not applicable',
                     image_description = 'Not applicable',

@@ -34,7 +34,7 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
     allowNull: false,
   },
   status:{
-    type: DataTypes.ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'),
+    type: DataTypes.ENUM('PENDING', 'VERIFIED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'),
     allowNull: false,
     defaultValue: 'PENDING',
   },

@@ -277,23 +277,33 @@ class RequestIntakeAgent:
         }
     }
     SYSTEM_INSTRUCTION = (
-        'You are an intelligent request intake agent.' 
-        'Your task is to extract information from the user query into the following JSON format'
-        'If the information is not available, respond with "Not applicable" or keep null for that field.'
-        'Use tools if needed only'
-        '''{
-            "status": "pending" # or "completed" or "error" (if encountered an error use "error" status, if completed use "completed" status, if more than 4 fields are not available use "pending" status)
-            "request_id": <int>, # Unique request identifier
-            "disaster_status": "low" | "medium" | "high" | "critical", # Extract The status of the disaster
-            "location": [<latitude>, <longitude>], # Extract Location in latitude and longitude format
-            "time": "<ISO 8601 format>", # Extract Time of the event in ISO 8601 format
-            "type": "<string>", # Extract Type of request, e.g., "fire", "medical", "flood"
-            "affected_count": <int>, # Extract Number of people affected
-            "contact_info": "<string>", # Extract Contact information such as phone number or email
-            "image_description": "<string>", # Get image_caption using tools"
-            "voice_description": "<string>", # Get voice_transcript using tools"
-            "text_description": "<string>" # Extract Description of if text messages provided else "Not applicable"
-            }'''
+        '''
+        You are an intelligent request intake agent.
+        Your role is to extract structured information from user input regarding emergency or disaster-related events. You must return the data in the following JSON format:
+        {
+            "status": "pending",  // Use "completed" if all required fields are filled. Use "pending" if more than 4 fields are missing. Use "error" if the input is malformed or unusable.
+            "request_id": <int>,  // Take Request ID from user request only
+            "disaster": "<string>",  // Extract the type of disaster or emergency from the input, e.g., "fire", "medical", "flood".
+            "disaster_id: : <int>,  // Unique identifier for the disaster.
+            "disaster_status": "low" | "medium" | "high" | "critical",  // Severity level of the disaster.
+            "location": [<latitude>, <longitude>],  // Coordinates of the event as [lat, long].
+            "time": "<ISO 8601 format>",  // Time of the event in ISO 8601 format (e.g., "2025-06-03T14:30:00Z").
+            "affected_count": <int>,  // Number of people affected.
+            "contact_info": "<string>",  // Phone number or email.
+            "image_description": "<string>",  // Generated using image captioning tool.
+            "voice_description": "<string>",  // Generated using voice transcription tool.
+            "text_description": "<string>"  // Free-form text description, or "Not applicable".
+        }
+        If any field is not available in the input, use `"Not applicable"` or `null` as appropriate.
+        Use tools **only when needed**:
+        - If an `imagepath` is provided, call the image captioning tool:
+        `tool("image_captioning", {"imagepath": <imagepath>})`  
+        Use the returned caption as `"image_description"`.
+        - If a `voicepath` is provided, call the voice transcription tool:
+        `tool("voice_transcription", {"voicepath": <voicepath>})`  
+        Use the returned transcript as `"voice_description"`.
+        Always return only the final JSON output. Do not include explanations or any other text.
+        '''
         )
     def __init__(self, tools):
         self.llm = ChatOllama(model="qwen3:4b", temperature=0.8)
@@ -308,7 +318,7 @@ class RequestIntakeAgent:
 
     def get_agent_response(self, state):
         structured_response = state.get("structured_response")
-        print(f"Structured response from request intake agent: {structured_response}")
+        # print(f"Structured response from request intake agent: {structured_response}")
         if structured_response and isinstance(structured_response, DisasterRequestResponseFormat):
             return {
                 'is_task_complete': True,
@@ -319,11 +329,12 @@ class RequestIntakeAgent:
             'is_task_complete': False,
             'content': {
                 "status": "error", 
+                "disaster": "unknown",
+                "disaster_id": 0,
                 "request_id": 0,
                 "disaster_status": "medium", 
                 "location": [0.0, 0.0],
-                "time": datetime.datetime.now().isoformat(),
-                "type": "unknown", 
+                "time": datetime.datetime.now().isoformat(), 
                 "affected_count": 0,
                 "contact_info": "Not applicable", 
                 "image_description": "Not applicable",
@@ -339,30 +350,32 @@ def get_agent_card():
 async def get_agent_response(task_request, task_id):
     try:
         user_text = task_request["message"]
-        print(f"User sent message: '{user_text}'")
+        # print(f"User sent message: '{user_text}'")
     except (KeyError, TypeError) as e:
         # Respond with immediate error content if message is missing
         return {
             "error": "Bad message format", 
             "content": {
             "status": "error", "request_id": 0,
+            "disaster": "unknown",
+            "disaster_id": 0,
             "disaster_status": "medium", 
             "location": [0.0, 0.0],
             "time": datetime.datetime.now().isoformat(),
-            "type": "unknown", "affected_count": 0,
+            "affected_count": 0,
             "contact_info": "Not applicable", "image_description": "Not applicable",
             "voice_description": "Not applicable", "text_description": "Not applicable"
         }}
     try:
-        print(f"Request Intake Agent received task {task_id} with text: '{user_text}'")
+        # print(f"Request Intake Agent received task {task_id} with text: '{user_text}'")
         # Initialize tools and agent
         client = MultiServerMCPClient(
         { 
-            "image_voice_caption": 
+            "captioning-mcp": 
             {
             "transport": "stdio", 
             "command": "python",
-            "args": ["disaster_agent_system/mcps/image_voice_caption.py"]
+            "args": ["disaster_agent_system/mcps/captioning_mcp.py"]
         }})
         
         tools = await client.get_tools()
@@ -376,9 +389,10 @@ async def get_agent_response(task_request, task_id):
             "status": "error", 
             "request_id": 0,
             "disaster_status": "medium", 
+            "disaster": "unknown",
+            "disaster_id": 0,
             "location": [0.0, 0.0],
             "time": datetime.datetime.now().isoformat(),
-            "type": "unknown", 
             "affected_count": 0,
             "contact_info": "Not applicable", 
             "image_description": "Not applicable",
@@ -392,7 +406,7 @@ def handle_task():
     if not task_request:
         return jsonify({"error": "Invalid request"}), 400
 
-    print(f"Received task request: {task_request}")
+    # print(f"Received task request: {task_request}")
     # Extract task ID or generate a new one
     task_id = task_request.get("id", "")
     try:
@@ -406,9 +420,10 @@ def handle_task():
             "status": "error", 
             "request_id": 0,
             "disaster_status": "medium", 
+            "disaster": "unknown",
+            "disaster_id": 0,
             "location": [0.0, 0.0],
             "time": datetime.datetime.now().isoformat(),
-            "type": "unknown", 
             "affected_count": 0,
             "contact_info": "Not applicable", 
             "image_description": "Not applicable",

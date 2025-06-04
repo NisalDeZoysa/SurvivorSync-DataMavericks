@@ -18,6 +18,7 @@ News.belongsTo(Disaster, { foreignKey: 'disasterId' });
 News.belongsTo(DisasterRequest, { foreignKey: 'disasterRequestId' });
 
 User.hasMany(DisasterRequest, { foreignKey: 'userId' });
+// DisasterRequest.hasOne(User, { foreignKey: 'userId' });
 
 Disaster.hasMany(SafetyPrecaution, { foreignKey: 'disasterId' });
 
