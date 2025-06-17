@@ -79,7 +79,7 @@ class TipsAgent:
 
     def __init__(self,tools):
         self.llm = ChatOllama(
-        model="qwen3:4b",temperature=0.8)
+        model="disaster_qwen_4B:latest",temperature=0.8)
         self.tools = tools
 
         self.graph = create_react_agent(

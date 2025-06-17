@@ -59,7 +59,7 @@ class FRCommunicationAgent:
         )
 
     def __init__(self, tools):
-        self.llm = ChatOllama(model="qwen3:4b", temperature=0.8)
+        self.llm = ChatOllama(model="qwen-gpro-3:latest", temperature=0.8)
         self.graph = create_react_agent(self.llm, tools=tools, checkpointer=memory,
                                         prompt=self.SYSTEM_INSTRUCTION,
                                         response_format=VerifiedResponseFormat)

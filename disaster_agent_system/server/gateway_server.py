@@ -125,10 +125,19 @@ import os
 from flask import Flask, request, jsonify
 from langchain_ollama import ChatOllama
 from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
 
 load_dotenv()
 
-llm = ChatOllama(model="qwen3:4b", temperature=0.2, num_predict=256)
+#llm = ChatOllama(model="disaster_qwen_4B:latest", temperature=0.2, num_predict=256)
+
+llm = ChatOpenAI(
+    model="gpt-4o",      # Or "gpt-4", "gpt-3.5-turbo"
+    temperature=0.2,
+    max_tokens=256,
+    openai_api_key=os.getenv("OPENAI_API_KEY")  # Make sure .env has the key
+)
+
 app = Flask(__name__)
 
 # Define all agent URLs
