@@ -291,7 +291,7 @@ class ResourceAllocationAgent:
 
         # "Always aim to optimize resource use and minimize unmet needs."
         '''
-            You are a Resource Assignment Agent responsible for allocating available resources to disaster relief requests. You must base all decisions strictly on the input provided by the Resource Tracking Agent.
+            You are a Resource Assignment and Allocation Create Agent responsible for allocating available resources to disaster relief requests. You must base all decisions strictly on the input provided by the Resource Tracking Agent.
 
             OBJECTIVE:
             Assign resources to disaster requests by evaluating available quantities from resource centers. You must ensure:
@@ -302,7 +302,7 @@ class ResourceAllocationAgent:
             INPUT DATA FIELDS:
             You will receive structured data with the following required fields:
             - request_id (int): ID of the disaster request
-            - resource_center_id (int): ID of the required resource
+            - resource_center_id (int): ID of the required resource centers
             - quantity (int): Quantity of available resources at the center
 
             If any of the above fields are missing, return an error.
@@ -314,8 +314,7 @@ class ResourceAllocationAgent:
             1. assign_resources(request_id: int, resource_center_ids: list[int], quantities: list[int])
 
             2. change_status_after_assign_resources(request_id: int, status: str)
-            - Use "fulfilled" if resources were assigned (partially or fully)
-            - Use "error" if no assignment was possible
+            - Use "IN_PROGRESS" if resources were assigned (partially or fully)
 
             RESPONSE FORMAT:
 
@@ -362,10 +361,9 @@ class ResourceAllocationAgent:
         return {
             'is_task_complete': False,
             'content': {
-                "help_needed_requests": [],
+                "resource_allocations": [],
                 "status": "error",
-                "verification_status": "not_verified",
-                "verification_message": "Failed to generate proper response"
+                "message": "Failed to generate a valid resource allocation response."
             }
         }
 
@@ -378,16 +376,16 @@ async def get_verify_agent_response(task_request, task_id):
         # Initialize tools and agent
         client = MultiServerMCPClient(
         {
-            # "resource-assign": {
-            #     "transport": "stdio", 
-            #     "command": "python",
-            #     "args": ["disaster_agent_system/mcps/resource_assign.py"]
-            # }
-            "mcp-server": 
-            {
-            "transport": "stdio", 
-            "command": "python",
-            "args": ["disaster_agent_system/mcps/mcp_server.py"]}
+            "resource-assign": {
+                "transport": "stdio", 
+                "command": "python",
+                "args": ["disaster_agent_system/mcps/resource_assign.py"]
+            }
+            # "mcp-server": 
+            # {
+            # "transport": "stdio", 
+            # "command": "python",
+            # "args": ["disaster_agent_system/mcps/mcp_server.py"]}
         })
         tools = await client.get_tools()
         print(f"Loaded {len(tools)} tools from MCP servers.")

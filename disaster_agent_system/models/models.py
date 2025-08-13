@@ -8,7 +8,7 @@ class DisasterRequestResponseFormat(BaseModel):
     status: Literal['pending','completed', 'error'] = 'pending'
     request_id: int
     disaster: str
-    disasterId: int
+    disaster_id: int
     disaster_status : Literal['low', 'medium', 'high', 'critical'] = 'medium'
     location: list[float]
     time: str
