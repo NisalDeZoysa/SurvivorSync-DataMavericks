@@ -5,7 +5,7 @@ from mcp.server.fastmcp import FastMCP
 mcp = FastMCP("near-responders")
 
 @mcp.tool()
-def output_requests(lat: float, long: float, disasterId: int) -> dict:
+def output_requests(lat: float, long: float, disaster_id: int) -> dict:
     """
     Fetch and print all requests based on location and disaster ID on the current day within ~5km,
     then return the matching rows.
@@ -34,10 +34,10 @@ def output_requests(lat: float, long: float, disasterId: int) -> dict:
             AND ST_Distance_Sphere(
                 POINT(longitude, latitude),
                 POINT(%s, %s)
-            ) <= 10000
+            ) <= 20000
             """
 
-        cursor.execute(query, (disasterId, today_start, tomorrow_start, long, lat))
+        cursor.execute(query, (disaster_id, today_start, tomorrow_start, long, lat))
         disaster_data = cursor.fetchall()
 
         cursor.close()
@@ -45,7 +45,7 @@ def output_requests(lat: float, long: float, disasterId: int) -> dict:
 
         return {
             "disaster_data": disaster_data,
-            "message": f"Found {len(disaster_data)} requests for disaster ID {disasterId} near coordinates ({lat}, {long}) on {now.date()}."
+            "message": f"Found {len(disaster_data)} requests for disaster ID {disaster_id} near coordinates ({lat}, {long}) on {now.date()}."
         }
     except mysql.connector.Error as err:
         print(f"Database error: {err}")

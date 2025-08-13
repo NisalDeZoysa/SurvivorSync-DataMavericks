@@ -95,7 +95,7 @@ export const createUserRequest = async (req, res) => {
 
   console.log("Disaster ID:", disaster.dataValues.name);
 
-   const io = req.app.get('io');
+  const io = req.app.get('io');
 
   // Fetch updated stats data (not route handler)
   const updatedStats = await fetchDisasterStatsData();
@@ -115,8 +115,8 @@ export const createUserRequest = async (req, res) => {
       Location: Latitude ${request.latitude}, Longitude ${request.longitude}
       District: ${request.district}
       Province: ${request.province}
-      Image_path: Server\\${request.image}
-      Voice_path: Server\\${request.voice}
+      Image_path: Server/${request.image}
+      Voice_path: Server/${request.voice}
       `;
 
   // //  // Call gateway server
@@ -126,29 +126,28 @@ export const createUserRequest = async (req, res) => {
     body: JSON.stringify({ message: messageText.trim() }),
   });
 
+  // 1. Get the parsed JSON response
   const gatewayData = await gatewayResponse.json();
+  console.log("Gateway Response:", JSON.stringify(gatewayData, null, 2));
 
-  // Handle gateway response
-  if (!gatewayResponse.ok) {
-    const errorText = await gatewayResponse.text();
-    console.log("\n Full gateway response when error comes:\n", gatewayData);
-    throw new Error(`Gateway error: ${gatewayResponse.status} - ${errorText}`);
+  // 2. CORRECTED: Access agent_responses directly from gatewayData
+  const agentResponses = gatewayData.agent_responses || [];
 
+  // 3. Now find the user-communication-agent
+  const userCommAgent = agentResponses.find(
+    (a) => a.agent === "user-communication-agent"
+  );
+
+  console.log("User Communication Agent Response:", JSON.stringify(userCommAgent, null, 2));
+
+  // 4. Safely check the response structure
+  if (userCommAgent?.response?.response) {
+    const { title, description } = userCommAgent.response.response;
+    const msg = `You have a request for "${title}".\n\nVerification process result:\n${description}`;
+    await sendMessage(request.contactNo, msg);
+  } else {
+    console.error("User communication agent response missing:", userCommAgent);
   }
-  console.log("\n Full gateway response when all process success:\n", gatewayData);
-
-  // Send WhatsApp message
-  // get the text from the gatewayResponse
-
-  const agentResponses = gatewayResponse.gatewayResponse?.gatewayData?.agent_responses || [];
-  const userCommAgent = agentResponses.find(a => a.agent === "user-communication-agent");
-  const title  = userCommAgent.title
-  const description = userCommAgent.description
-  const msg = "You have request for " + title + "this is the verification precess result" + description
-
-  await sendWhatsAppMessage(request.contactNo, msg);
-
-
   // Include gateway response in your final output if needed
   res.status(201).json({
     message: 'User request created',

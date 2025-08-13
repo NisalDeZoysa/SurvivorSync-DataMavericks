@@ -285,26 +285,75 @@ class ResourceTrackingAgent:
     }
     
     SYSTEM_INSTRUCTION = (
-    "If the verification status is not 'verified', return an error with appropriate message. "
-    "You are a resource tracking agent. Your task is to identify and recommend resource centers near verified disaster locations. "
-    "Start by retrieving all available resources within a 10km radius using the `track_resources` tool, providing the disaster ID, latitude, and longitude from the verified disaster data. "
-    "Once the nearby resources are fetched, evaluate them based on their relevance and suitability for the specific disaster request (e.g., type of disaster, needed supplies, urgency, etc.). "
-    "Select the most appropriate resources from the fetched data and include them in the final response. "
-    "Ensure you use the disaster data provided by the previous response (disaster ID, location, and any other context). "
-    "Your structured JSON response must include:\n"
-    "- disaster_data: The disaster request data in the DisasterRequestResponseFormat, which includes:\n"
-    "- resources: A list of the most suitable resources selected from the (track_resources) tool response.\n"
-    "- status: 'success' or 'error'.\n"
-    "- message: A clear message describing what was done, including how many resources were found and how selection was made.\n"
-    "If the disaster ID, latitude, or longitude is missing, return an error with an appropriate message. "
-    "If tool data is missing or response is empty, return an error with explanation.\n"
-    "Respond using the following format:\n"
-    "{\n"
-    '  "disaster_data": DisasterRequestResponseFormat,\n'
-    '  "resources": list[Resources],\n'
-    '  "status": "success|error",\n'
-    '  "message": "..." \n'
-    "}"
+    # "If the verification status is not 'verified', return an error with appropriate message. "
+    # "You are a resource tracking agent. Your task is to identify the nearest resources to a verified disaster request. "
+    # "Start by retrieving all available resources within a 15km radius using the `track_resources` tool, providing the disaster_id, latitude, and longitude from the verified disaster data."
+    # "Select the most appropriate resources from the fetched data and include them in the final response."
+    # "Ensure you use the disaster data provided by the previous response (disaster_id, location, and any other context). "
+    # "Your structured JSON response must include:\n"
+    # "- disaster_data: The disaster request data in the DisasterRequestResponseFormat\n"
+    # "- resources: A list of the most suitable resources selected from the (track_resources) tool response.\n"
+    # "- status: 'success' or 'error'.\n"
+    # "- message: A clear message describing what was done, including how many resources were found and how selection was made.\n"
+    # "If the disaster_iD, latitude, or longitude is missing, return an error with an appropriate message. "
+    # "If tool data is missing or response is empty, return an error with explanation.\n"
+    # "Respond using the following format:\n"
+    # "{\n"
+    # '  "disaster_data": DisasterRequestResponseFormat,\n'
+    # '  "resources": list[Resources],\n'
+    # '  "status": "success|error",\n'
+    # '  "message": "..." \n'
+    # "}"
+    '''
+        You are a resource fetching agent responsible for a verified disaster request.
+
+        1. Verification Check:
+        - First, check if the disaster request's verification status is 'VERIFIED'.
+        - If it is not 'VERIFIED', return an error with an appropriate message.
+
+        2. Disaster Data Validation:
+        - Ensure the disaster data includes 'disaster_id', 'latitude', and 'longitude'.
+        - If any of these are missing, return an error indicating the missing field(s).
+
+        3. Resource Retrieval (CRITICAL STEP):
+        - Use returned data from the `track_resources` tool and MCP-defined functions to query and store all the resources data inside resources array.
+        - Resource data must conform to the following model:
+
+            class Resources(BaseModel):
+                resource_center_id: int(id of the resource centers data)
+                location: list[float] (lat, long)
+                name: str (name of the resource)
+                quantity: int (available quantity of the resource)
+
+        - Ensure the SQL logic leverages spatial queries (e.g., ST_Distance or Haversine formula) to filter by proximity.
+        - Resource centers and resources must be joined appropriately through their defined foreign key relationships (e.g., resources.resource_center_id = resource_centers.id).
+        - Use the disaster’s latitude and longitude to filter nearby centers and their resources.
+        - Only include resources that are currently available (e.g., quantity > 0 and not already assigned).
+
+        4. Resource Selection and Update:
+        - From the fetched data, select the most suitable resources based on proximity, availability, and relevance.
+        - After selecting, use the appropriate MCP function to update the resource status (e.g., mark as 'assigned').
+
+        5. Final Structured JSON Response:
+        - Your response must use the following model:
+
+            class ResourceTrackingResponse(BaseModel):
+                disaster_data: DisasterRequestResponseFormat
+                resources: list[Resources]
+                status: Literal['success', 'error']
+                message: str
+
+        - The JSON output must contain:
+            - disaster_data: The original disaster request data.
+            - resources: The final list of selected resources.
+            - status: 'success' if resources were selected and updated, otherwise 'error'.
+            - message: A clear description of what was done, including number of resources found, how selection was made, and any issues encountered.
+
+        6. Error Handling:
+        - If no nearby resources are found, or if the MCP function returns no data, respond with 'error' and an appropriate message.
+        - Always ensure clarity and completeness in the message field to support traceability and debugging.
+        '''
+
     )
 
     def __init__(self, tools):
@@ -333,7 +382,7 @@ class ResourceTrackingAgent:
                     status = 'error',
                     request_id = 0,
                     disaster = 'unknown',
-                    disasterId=0,
+                    disaster_id=0,
                     disaster_status = 'medium',
                     location = [0.0, 0.0],
                     time = '2023-11-15T10:00:00Z',
@@ -357,16 +406,16 @@ async def get_tracking_agent_response(task_request, task_id):
         # Initialize tools and agent
         client = MultiServerMCPClient(
         {
-            # "resource-track": {
-            #     "transport": "stdio", 
-            #     "command": "python",
-            #     "args": ["disaster_agent_system/mcps/resource_track.py"]
-            # }
-            "mcp-server": 
-            {
-            "transport": "stdio", 
-            "command": "python",
-            "args": ["disaster_agent_system/mcps/mcp_server.py"]}
+            "resource-track": {
+                "transport": "stdio", 
+                "command": "python",
+                "args": ["disaster_agent_system/mcps/resource_track.py"]
+            }
+            # "mcp-server": 
+            # {
+            # "transport": "stdio", 
+            # "command": "python",
+            # "args": ["disaster_agent_system/mcps/mcp_server.py"]}
         })
         tools = await client.get_tools()
         print(f"Loaded {len(tools)} tools from MCP servers.")
@@ -384,7 +433,7 @@ async def get_tracking_agent_response(task_request, task_id):
                     request_id=0,
                     disaster_status='medium',
                     disaster='unknown',
-                    disasterId=0,
+                    disaster_id=0,
                     location=[0.0, 0.0],
                     time=datetime.datetime.now().isoformat(),
                     affected_count=0,

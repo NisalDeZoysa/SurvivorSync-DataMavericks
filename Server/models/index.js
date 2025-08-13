@@ -22,23 +22,23 @@ User.hasMany(DisasterRequest, { foreignKey: 'userId' });
 
 Disaster.hasMany(SafetyPrecaution, { foreignKey: 'disasterId' });
 
-DisasterRequest.hasMany(AllocatedResource, { foreignKey: 'disasterRequestId', onDelete: 'CASCADE' });
-AllocatedResource.hasOne(ResourceCenter, { foreignKey: 'resourceCenterId' });
+DisasterRequest.hasMany(AllocatedResource, { foreignKey: 'disasterRequestId' });
+ResourceCenter.hasMany(AllocatedResource, { foreignKey: 'resourceCenterId'});
 
 //DisasterRequest.hasOne(Disaster, { foreignKey: 'disasterId' });
 //DisasterRequest.belongsTo(Disaster, { foreignKey: 'disasterId' });
 DisasterRequest.belongsTo(Disaster, { foreignKey: 'disasterId' });
 Disaster.hasMany(DisasterRequest, { foreignKey: 'disasterId' });
 
+
 Resource.hasMany(ResourceCenter, { foreignKey: 'resourceId', onDelete: 'CASCADE' });
 ResourceCenter.belongsTo(Resource, { foreignKey: 'resourceId' });
 
 // AllocatedResource belongs to ResourceCenter
-AllocatedResource.belongsTo(ResourceCenter, { foreignKey: 'resourceCenterId' });
 AllocatedResource.belongsTo(DisasterRequest, { foreignKey: 'disasterRequestId' });
+AllocatedResource.belongsTo(ResourceCenter, { foreignKey: 'id' });
 DisasterRequest.hasMany(AllocatedResource, { foreignKey: 'disasterRequestId', onDelete: 'CASCADE' });
 
-FirstResponder.belongsTo(ResourceCenter, { foreignKey: 'resourceCenterId' });
 
 //Assignment
 Assignment.belongsTo(User, { foreignKey: 'Volunteerid' });

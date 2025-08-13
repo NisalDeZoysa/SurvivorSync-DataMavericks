@@ -3,8 +3,9 @@ from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("resource-assign")
 
+
 @mcp.tool()
-def assign_resources(request_id: int, resource_center_ids: list[int], amounts: list[int]) -> dict:
+async def assign_resources(request_id: int, resource_center_ids: list[int], quantities: list[int]) -> dict:
     """
     Assigns resources from multiple resource centers to a disaster request.
     """
@@ -28,7 +29,7 @@ def assign_resources(request_id: int, resource_center_ids: list[int], amounts: l
 
         # Allocation process
         allocations = []
-        for resource_center_id, amount in zip(resource_center_ids, amounts):
+        for resource_center_id, amount in zip(resource_center_ids, quantities):
             # Insert into allocated_resources
             insert_query = """
                 INSERT INTO allocated_resources (disasterRequestId, resourceCenterId, amount, isAllocated)
@@ -66,7 +67,7 @@ def assign_resources(request_id: int, resource_center_ids: list[int], amounts: l
         }
         
 @mcp.tool()
-def change_status(request_id: int, status: str) -> dict:
+def change_status_after_assign_resources(request_id: int, status: str) -> dict:
     """
     Change the status of a disaster request.
     """
@@ -80,7 +81,12 @@ def change_status(request_id: int, status: str) -> dict:
         cursor = conn.cursor(dictionary=True)
 
         # Update the disaster request status
-        update_query = "UPDATE disaster_requests SET status = %s WHERE id = %s"
+        if status.lower() != "success":
+            return {
+                "error": f"Invalid status '{status}'. Only 'success' allocations are allowed.",
+                "results": {}
+            }
+        update_query = "UPDATE disaster_requests SET status = IN_PROGRESS WHERE id = %s"
         cursor.execute(update_query, (status, request_id))
         conn.commit()
 
@@ -88,7 +94,7 @@ def change_status(request_id: int, status: str) -> dict:
         conn.close()
 
         return {
-            "status": "COMPLETED",
+            "status": "IN_PROGRESS",
             "message": f"Status of disaster request {request_id} changed to '{status}'."
         }
 

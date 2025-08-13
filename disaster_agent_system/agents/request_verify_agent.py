@@ -296,25 +296,6 @@ class RequestVerifyAgent:
     }
     
     SYSTEM_INSTRUCTION = (
-    # 'You are an intelligent request verification agent. and your task is to update the verification_status of the disaster request.'
-    # 'Your task is to verify the disaster request information provided by the user and respond in the following JSON format. '
-    # 'If image or voice input is provided, prioritize those for verification using available tools. '
-    # 'If no image or voice is provided, use contextual and logical reasoning to assess the likelihood that the request is legitimate. '
-    # 'Use tool - get_disaster_requests_from_lat_long(latitude, longitude, disasterId) to fetch all the disasters near the area from the data rows.'
-    # 'If the tool call returns SQL query of data rows, set the status to "COMPLETED". '
-    # 'If the return query count from request_count is greater than 2, set the verification_status to "VERIFIED".'
-    # 'If the return query count is less than 2, set the verification_status to "NOT_VERIFIED". '
-    # 'The verification_message should clearly describe the process and basis of verification—whether it used image, voice, or inferred intelligence. '
-    # 'If the information is not available or cannot be confirmed, respond with "Not applicable" or use null for that field.'
-    # '''
-    # {
-    #     "request_details": <DisasterRequestResponseFormat>,  # The details of the disaster request
-    #     "status": "pending" | "completed" | "error" (# This status indicates whether the verification process was successful or not),
-    #     "verification_status": "PENDING" | "VERIFIED" | "NOT_VERIFIED",  (# This status is very important and indicates whether the request was verified or not. So analyze the above data rows and set the status accordingly in block letters),
-    #     "verification_message": "<string>"  # Explanation of how the request was verified
-    # }
-    # Finally, call the verify_disaster_request(requestId, verrification_status) tool to update the status of the request in the database.
-    # '''
                 '''
             You are an intelligent request verification agent.
 
@@ -328,7 +309,7 @@ class RequestVerifyAgent:
             Each request includes the following:
             - `latitude`
             - `longitude`
-            - `disasterId`
+            - `disaster_id`
             - `request_id`
             - (Optional) image or voice data
 
@@ -343,7 +324,7 @@ class RequestVerifyAgent:
 
             Use the tool:
             ```python
-            get_disaster_requests_from_lat_long(latitude, longitude, disasterId)
+            get_disaster_requests_from_lat_long(latitude, longitude, disaster_id)
             
             After calling this tool, you will receive a list of disaster requests near the specified location.
             ```
@@ -364,9 +345,7 @@ class RequestVerifyAgent:
             ```python
             verify_disaster_request(request_id, verification_status)
             ```     
-            '''
-
-    )
+            ''')
 
     def __init__(self, tools):
         self.llm = ChatOllama(model="qwen3:4b", temperature=0.8)
@@ -394,7 +373,7 @@ class RequestVerifyAgent:
                     status = 'error',
                     request_id = 0,
                     disaster = 'unknown',
-                    disasterId = 0,
+                    disaster_id = 0,
                     disaster_status = 'medium',
                     location = [0.0, 0.0],
                     time = '2023-11-15T10:00:00Z',
@@ -419,11 +398,16 @@ async def get_verify_agent_response(task_request, task_id):
         # Initialize tools and agent
         client = MultiServerMCPClient(
         {
-            "mcp-server": 
-            {
-            "transport": "stdio", 
-            "command": "python",
-            "args": ["disaster_agent_system/mcps/mcp_server.py"]
+            # "mcp-server": 
+            # {
+            # "transport": "stdio", 
+            # "command": "python",
+            # "args": ["disaster_agent_system/mcps/mcp_server.py"]
+            # }
+            "near-requests":{
+                "transport": "stdio",
+                "command": "python",
+                "args": ["disaster_agent_system/mcps/near_requests.py"]
             }
         })
         tools = await client.get_tools()
@@ -442,7 +426,7 @@ async def get_verify_agent_response(task_request, task_id):
                     request_id = 0,
                     disaster_status = 'medium',
                     disaster = 'unknown',
-                    disasterId=0,
+                    disaster_id=0,
                     location = [0.0, 0.0],
                     time = '2023-11-15T10:00:00Z',
                     affected_count = 0,
@@ -479,7 +463,7 @@ def handle_verify_task():
                     request_id = 0,
                     disaster_status = 'medium',
                     disaster = 'unknown',
-                    disasterId=0,
+                    disaster_id=0,
                     location = [0.0, 0.0],
                     time = '2023-11-15T10:00:00Z',
                     affected_count = 0,

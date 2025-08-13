@@ -40,11 +40,21 @@ def track_resources(request_id: int) -> dict:
 
         # Find nearby resource centers within 10km
         # Find nearby resource centers within 10km (uses correct column names)
+        # resource_query = """
+        #     SELECT *, 
+        #     ST_Distance_Sphere(POINT(`long`, `lat`), POINT(%s, %s)) AS distance
+        #     FROM resource_centers
+        #     WHERE ST_Distance_Sphere(POINT(`long`, `lat`), POINT(%s, %s)) <= 20000
+        # """
         resource_query = """
-            SELECT *, 
-            ST_Distance_Sphere(POINT(`long`, `lat`), POINT(%s, %s)) AS distance
-            FROM resource_centers
-            WHERE ST_Distance_Sphere(POINT(`long`, `lat`), POINT(%s, %s)) <= 10000
+            SELECT 
+                rc.id, rc.name, rc.lat, rc.long, rc.district, rc.province,
+                rc.count, rc.used, rc.contactNumber,
+                r.id AS resource_id, r.name AS resource_name, r.type AS resource_type,
+                ST_Distance_Sphere(POINT(rc.`long`, rc.`lat`), POINT(%s, %s)) AS distance
+            FROM resource_centers rc
+            JOIN resources r ON rc.resourceId = r.id
+            WHERE ST_Distance_Sphere(POINT(rc.`long`, rc.`lat`), POINT(%s, %s)) <= 20000
         """
         cursor.execute(resource_query, (lon, lat, lon, lat))
         resources = cursor.fetchall()
@@ -72,3 +82,4 @@ def track_resources(request_id: int) -> dict:
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")
+    # print("Resource tracking service", track_resources(28)) 

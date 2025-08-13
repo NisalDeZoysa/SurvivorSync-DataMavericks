@@ -152,8 +152,6 @@ async def verify_disaster_request(request_id: int, verification_status: str) -> 
     finally:
         print("Database connection closed.")
     
-    
-
 @mcp.tool()
 def track_resources(request_id: int) -> dict:
     """

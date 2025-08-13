@@ -265,7 +265,8 @@ def handle_task():
         "request-verify-agent",
         "resource-tracking-agent",
         "resource-assign-agent",
-        "user-communication-agent"
+        "user-communication-agent",
+        
     ]
 
     # Execute agent chain

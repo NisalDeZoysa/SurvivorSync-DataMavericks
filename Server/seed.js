@@ -72,7 +72,7 @@ async function seedDatabase() {
     { type: "Infrastructure", name: "Waste management equipment" },
   ]);
 
-    await User.bulkCreate([
+  await User.bulkCreate([
     {
       name: "Nimal Perera",
       nic: "902345678V",
@@ -122,6 +122,112 @@ async function seedDatabase() {
 
   await DisasterRequest.bulkCreate([
     {
+      name: "Tharindu Rathnayeka",
+      userId: 2,
+      disasterId: 1,
+      severity: "MEDIUM",
+      status: "PENDING",
+      details: "Train derailment near railway station.",
+      affectedCount: 20,
+      contactNo: "0756677889",
+      latitude: 6.9934,
+      longitude: 81.0550,
+      image: null,
+      voice: null,
+      isVerified: false,
+      created_at: new Date("2021-06-01T10:00:00Z"),
+      updated_at: new Date("2021-06-01T10:00:00Z"),
+    },
+    {
+      name: "Kalpana Perera",
+      userId: 2,
+      disasterId: 2,
+      severity: "MEDIUM",
+      status: "PENDING",
+      details: "Train derailment near railway station.",
+      affectedCount: 20,
+      contactNo: "0756677889",
+      latitude: 5.9449,
+      longitude: 80.5488,
+      image: null,
+      voice: null,
+      isVerified: false,
+      created_at: new Date("2024-06-01T10:00:00Z"),
+      updated_at: new Date("2024-06-01T10:00:00Z"),
+    },
+    {
+      name: "Kamal Fernando",
+      userId: 2,
+      disasterId: 3,
+      severity: "HIGH",
+      status: "IN_PROGRESS",
+      details: "Flooding reported in town area.",
+      affectedCount: 100,
+      contactNo: "0712345678",
+      latitude: 8.3114,
+      longitude: 80.4037,
+      image: null,
+      voice: null,
+      isVerified: false,
+      created_at: new Date("2022-07-15T09:00:00Z"),
+      updated_at: new Date("2022-07-15T10:00:00Z"),
+    },
+    {
+      name: "Kamal Fernando",
+      userId: 2,
+      disasterId: 4,
+      severity: "HIGH",
+      status: "IN_PROGRESS",
+      details: "Flooding reported in town area.",
+      affectedCount: 100,
+      contactNo: "0712345678",
+      latitude: 8.3114,
+      longitude: 80.4037,
+      image: null,
+      voice: null,
+      isVerified: false,
+      created_at: new Date("2022-07-15T09:00:00Z"),
+      updated_at: new Date("2022-07-15T10:00:00Z"),
+    },
+    {
+      name: "Dilani Perera",
+      userId: 2,
+      disasterId: 5,
+      severity: "LOW",
+      status: "IN_PROGRESS",
+      details: "Minor earthquake with no damage reported.",
+      affectedCount: 0,
+      contactNo: "0771234567",
+      latitude: 6.7056,
+      longitude: 80.3847,
+      image: null,
+      voice: null,
+      isVerified: false,
+      created_at: new Date("2024-08-20T11:00:00Z"),
+      updated_at: new Date("2024-08-20T12:00:00Z"),
+    },
+    {
+      name: "Aruna Prasad",
+      userId: 2,
+      disasterId: 3,
+      severity: "LOW",
+      status: "IN_PROGRESS",
+      details: "Minor earthquake with no damage reported.",
+      affectedCount: 0,
+      contactNo: "0771234567",
+      latitude: 6.7056,
+      longitude: 80.3847,
+      image: null,
+      voice: null,
+      isVerified: false,
+      created_at: new Date("2024-08-20T11:00:00Z"),
+      updated_at: new Date("2024-08-20T12:00:00Z"),
+    },
+
+
+
+
+    {
       name: "Nimal",
       userId: 1,
       disasterId: 1,
@@ -138,7 +244,7 @@ async function seedDatabase() {
       voice: null,
       isVerified: false,
     },
-     {
+    {
       name: "Nimal",
       userId: 1,
       disasterId: 5,
@@ -217,7 +323,7 @@ async function seedDatabase() {
       contactNo: "0769876543",
       latitude: 6.51298,
       longitude: 80.1225,
-district: "Kalutara District",
+      district: "Kalutara District",
       province: "Western Province",
       image: null,
       voice: null,
@@ -549,40 +655,40 @@ district: "Kalutara District",
   ]);
 
   await Admin.bulkCreate([
-  {
-    name: "Inspector Wickramasinghe",
-    NIC: "8012345618",
-    contactNumber: "0771234561",
-    email: "admin@gmail.com",
-    description: "Head of local police operations",
-    password: "1234"
-  },
-  {
-    name: "Officer Janaka Perera",
-    NIC: "7512345690",
-    contactNumber: "0712345678",
-    email: "admin2@gmail.com",
-    description: "Disaster response coordinator - Southern Province",
-    password: "adminpass1"
-  },
-  {
-    name: "Chief Kamalini De Silva",
-    NIC: "6812345678",
-    contactNumber: "0723456789",
-    email: "admin3@gmail.com",
-    description: "National emergency response supervisor",
-    password: "adminpass2"
-  },
-  {
-    name: "Inspector Gunasekara",
-    NIC: "7812345678",
-    contactNumber: "0734567890",
-    email: "admin20@gmail.com",
-    description: "Head of local police operations",
-    password: "$2b$10$pGhNLektPGSqwPyi334TYOdyhPYWFiFyBLpzfUhXk2UcXPVh3aLBm"
+    {
+      name: "Inspector Wickramasinghe",
+      NIC: "8012345618",
+      contactNumber: "0771234561",
+      email: "admin@gmail.com",
+      description: "Head of local police operations",
+      password: "1234"
+    },
+    {
+      name: "Officer Janaka Perera",
+      NIC: "7512345690",
+      contactNumber: "0712345678",
+      email: "admin2@gmail.com",
+      description: "Disaster response coordinator - Southern Province",
+      password: "adminpass1"
+    },
+    {
+      name: "Chief Kamalini De Silva",
+      NIC: "6812345678",
+      contactNumber: "0723456789",
+      email: "admin3@gmail.com",
+      description: "National emergency response supervisor",
+      password: "adminpass2"
+    },
+    {
+      name: "Inspector Gunasekara",
+      NIC: "7812345678",
+      contactNumber: "0734567890",
+      email: "admin20@gmail.com",
+      description: "Head of local police operations",
+      password: "$2b$10$pGhNLektPGSqwPyi334TYOdyhPYWFiFyBLpzfUhXk2UcXPVh3aLBm"
 
-  }
-]
+    }
+  ]
   );
 
 
@@ -614,7 +720,7 @@ district: "Kalutara District",
     {
       resourceId: 1,
       name: "Medical Center",
-      lat: 	6.0732,
+      lat: 6.0732,
       long: 80.1027,
       district: "Galle",
       province: "Southern",
@@ -691,7 +797,7 @@ district: "Kalutara District",
     {
       resourceId: 8,
       name: "Water Point",
-      lat: 	6.1225,
+      lat: 6.1225,
       long: 80.1376,
       district: "Galle",
       province: "Southern",
@@ -767,7 +873,7 @@ district: "Kalutara District",
     },
     {
       resourceId: 15,
-      name:  "Food Station",
+      name: "Food Station",
       lat: 6.53938,
       long: 80.0990,
       district: "Kalutara",
@@ -780,7 +886,7 @@ district: "Kalutara District",
       resourceId: 16,
       name: "Medical Center",
       lat: 6.534522,
-      long:	80.10780,
+      long: 80.10780,
       district: "Kalutara",
       province: "Western",
       count: 100,
@@ -792,62 +898,62 @@ district: "Kalutara District",
   await ResourceCenter.bulkCreate(resourceCentersData);
 
   await FirstResponder.bulkCreate([
-  {
-    name: "Inspector Wickramasinghe",
-    nic: "801234561V",
-    resourceCenterId: 1,
-    address: "456 Police Station Road",
-    contactNumber: "0771234561",
-    email: "wick@example1.com",
-    type: "police",
-    description: "Head of local police operations",
-    password: "SecurePass123"
-  },
-  {
-    name: "Officer Nadeesha Silva",
-    nic: "902345678V",
-    resourceCenterId: 2,
-    address: "123 Main Street, Galle",
-    contactNumber: "0712345678",
-    email: "nadeesha@example.com",
-    type: "police",
-    description: "Officer in charge of regional response unit",
-    password: "StrongPass456"
-  },
-  {
-    name: "Sergeant Dilan Jayasuriya",
-    nic: "911234567V",
-    resourceCenterId: 3,
-    address: "78 Station Lane, Kandy",
-    contactNumber: "0756781234",
-    email: "dilan@example.com",
-    type: "police",
-    description: "Emergency deployment specialist",
-    password: "SafePassword789"
-  },
-  {
-    name: "Chief Inspector Suranga Perera",
-    nic: "861234567V",
-    resourceCenterId: 1,
-    address: "99 Defense Avenue, Colombo",
-    contactNumber: "0765432187",
-    email: "suranga@example.com",
-    type: "police",
-    description: "Chief inspector of national coordination",
-    password: "TopSecret321"
-  },
-  {
-    name: "Officer Ishara Fernando",
-    nic: "951234567V",
-    resourceCenterId: 4,
-    address: "12 Central Road, Matara",
-    contactNumber: "0781234567",
-    email: "ishara@example.com",
-    type: "police",
-    description: "Handles ground-level emergency coordination",
-    password: "Secure456Pass"
-  }
-]);
+    {
+      name: "Inspector Wickramasinghe",
+      nic: "801234561V",
+      resourceCenterId: 1,
+      address: "456 Police Station Road",
+      contactNumber: "0771234561",
+      email: "wick@example1.com",
+      type: "police",
+      description: "Head of local police operations",
+      password: "SecurePass123"
+    },
+    {
+      name: "Officer Nadeesha Silva",
+      nic: "902345678V",
+      resourceCenterId: 2,
+      address: "123 Main Street, Galle",
+      contactNumber: "0712345678",
+      email: "nadeesha@example.com",
+      type: "police",
+      description: "Officer in charge of regional response unit",
+      password: "StrongPass456"
+    },
+    {
+      name: "Sergeant Dilan Jayasuriya",
+      nic: "911234567V",
+      resourceCenterId: 3,
+      address: "78 Station Lane, Kandy",
+      contactNumber: "0756781234",
+      email: "dilan@example.com",
+      type: "police",
+      description: "Emergency deployment specialist",
+      password: "SafePassword789"
+    },
+    {
+      name: "Chief Inspector Suranga Perera",
+      nic: "861234567V",
+      resourceCenterId: 1,
+      address: "99 Defense Avenue, Colombo",
+      contactNumber: "0765432187",
+      email: "suranga@example.com",
+      type: "police",
+      description: "Chief inspector of national coordination",
+      password: "TopSecret321"
+    },
+    {
+      name: "Officer Ishara Fernando",
+      nic: "951234567V",
+      resourceCenterId: 4,
+      address: "12 Central Road, Matara",
+      contactNumber: "0781234567",
+      email: "ishara@example.com",
+      type: "police",
+      description: "Handles ground-level emergency coordination",
+      password: "Secure456Pass"
+    }
+  ]);
 
 
   console.log("Seeding completed");

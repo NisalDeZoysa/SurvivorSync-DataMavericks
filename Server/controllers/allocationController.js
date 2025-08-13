@@ -136,7 +136,7 @@ export const getAllocationSummaries = async (req, res) => {
         }
       ]
     });
-
+    console.log('Allocations fetched:', allocations);
     const result = allocations.map((allocation) => ({
       id: allocation.id,
       disasterId: allocation?.DisasterRequest?.id || null,
