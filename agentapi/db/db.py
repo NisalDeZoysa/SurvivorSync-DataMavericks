@@ -42,7 +42,7 @@ def resource_fetch(request_id: int) -> dict:
             SELECT *, 
             ST_Distance_Sphere(POINT(`long`, `lat`), POINT(%s, %s)) AS distance
             FROM resource_centers
-            WHERE ST_Distance_Sphere(POINT(`long`, `lat`), POINT(%s, %s)) <= 10000
+            WHERE ST_Distance_Sphere(POINT(`long`, `lat`), POINT(%s, %s)) <= 10000  AND `count` > 0
         """
         cursor.execute(resource_query, (lon, lat, lon, lat))
         resources = cursor.fetchall()
@@ -189,21 +189,43 @@ def assign_resources(request_id: int, resource_center_ids: list[int], quantities
                 "results": {}
             }
 
+        print(f"Disaster request found: {disaster}")
+
         # Allocation process
         allocations = []
         for resource_center_id, amount in zip(resource_center_ids, quantities):
+
+            print(f"Allocating {amount} units from resource center {resource_center_id} to request {request_id}")
             # Insert into allocated_resources
             insert_query = """
                 INSERT INTO allocated_resources (disasterRequestId, resourceCenterId, amount, isAllocated)
                 VALUES (%s, %s, %s, %s)
             """
-            cursor.execute(insert_query, (request_id, resource_center_id, amount, True))
+            cursor.execute(insert_query, (request_id, resource_center_id, amount, True))    
+
+            print("Allocation successful.")
+
+            # Update resource center (subtract count, add used)
+            update_query = """
+                UPDATE resource_centers
+                SET count = count - %s,
+                    used = used + %s
+                WHERE resourceId = %s
+            """
+
+            cursor.execute(update_query, (amount, amount, resource_center_id))
+
+            print("Resource center updated successfully.")
+
             allocations.append({
                 "disasterRequestId": request_id,
                 "resourceCenterId": resource_center_id,
                 "amount": amount,
                 "isAllocated": True
             })
+
+
+
 
         conn.commit()
         cursor.close()

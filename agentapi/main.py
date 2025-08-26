@@ -1,5 +1,5 @@
 from flask import Flask
-from server.gateway_agent import gateway_bp
+from gateway.gateway_agent import gateway_bp
 
 def create_app():
     app = Flask(__name__)

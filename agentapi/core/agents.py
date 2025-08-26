@@ -1,3 +1,4 @@
+from enum import Enum
 from langgraph.graph import StateGraph, END
 from pydantic import BaseModel
 from typing import Dict, Any, Optional, List
@@ -10,13 +11,15 @@ import threading
 import base64
 import datetime
 from pathlib import Path
-
+from openai import OpenAI
 from db.db import change_status_after_assign_resources, resource_fetch, update_request_status, requests_fetch,assign_resources
 
 load_dotenv()
 
 QWEN_API_KEY = os.getenv("QWEN_API_KEY")
-PROJECT_ROOT = Path(__file__).resolve().parents[2]  # go 3 levels up from agents.py
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
 
 class AgentState(BaseModel):
     input: Optional[Dict[str, Any]] = None
@@ -31,6 +34,14 @@ class AgentState(BaseModel):
     disaster_status: Optional[str] = "PENDING"
     user_msg:Optional[str]= None
 
+class StatusEnum(str, Enum):
+    pending = "pending"
+    verified = "verified"
+    invalid = "invalid"
+
+class RequestStatus(BaseModel):
+    status: StatusEnum
+    
 def run_agent_workflow(input_data: str):
     initial_state = AgentState(**input_data)
     agent_workflow = create_workflow()
@@ -164,7 +175,7 @@ def media_extraction_agent(state: AgentState):
                     image_bytes = img_file.read()
                     image_b64 = base64.b64encode(image_bytes).decode("utf-8")  # ✅ Encode
                 res = requests.post(
-                    "https://e037d0b95762.ngrok-free.app/api/generate",
+                    "https://c6e71855f5ee.ngrok-free.app/api/generate",
                     headers={"Content-Type": "application/json"},
                     json={
                         "model": "llava:7b",
@@ -182,26 +193,43 @@ def media_extraction_agent(state: AgentState):
                 state.request["image_description"] = "Not applicable"
                 print(f"⚠️ Image extraction error: {e}")
 
-    # def process_voice():
-    #     if state.voice_path:
-    #         try:
-    #             import whisper
-    #             model = whisper.load_model("small")
-    #             result = model.transcribe(state.voice_path)
-    #             state.request["voice_description"] = result.get("text", "").strip() or "Not applicable"
-    #         except Exception as e:
-    #             state.request["voice_description"] = "Not applicable"
-    #             print(f"⚠️ Voice extraction error: {e}")
+    def process_voice():
+        if state.voice_path:
+            try:
+                resolved_path = resolve_media_path(state.voice_path)
+                print(f"Resolved path: {resolved_path}")
+
+                if not resolved_path.exists():
+                    print(f"⚠️ File not found at: {resolved_path}")
+                    state.request["voice_description"] = "Not applicable"
+                    return
+                
+                with open(resolved_path, "rb") as f:
+                    files = {"file": (resolved_path.name, f, "audio/mpeg")}
+                    response = requests.post(
+                        "https://f310433be080.ngrok-free.app/transcribe", 
+                        files=files,
+                        data={"language": "en"}  # optional
+                    )
+                    response.raise_for_status()
+                    transcription = response.json().get("text", "")
+                    print(f"Voice transcription response: {transcription}")
+                    state.voice_description = transcription
+
+            except Exception as e:
+                state.request["voice_description"] = "Not applicable"
+                print(f"⚠️ Voice extraction error: {e}")
 
     process_image()
+    process_voice()
 
-    # # Run both in parallel
-    # img_thread = threading.Thread(target=process_image)
-    # # voice_thread = threading.Thread(target=process_voice)
-    # img_thread.start()
-    # # voice_thread.start()
-    # img_thread.join()
-    # # voice_thread.join()
+    # Run both in parallel
+    img_thread = threading.Thread(target=process_image)
+    voice_thread = threading.Thread(target=process_voice)
+    img_thread.start()
+    voice_thread.start()
+    img_thread.join()
+    voice_thread.join()
 
     return state
    
@@ -240,30 +268,65 @@ def request_verify_agent(state: AgentState):
     - If none of the above conditions are met, status is "invalid".
     """
 
+    schema = {
+        "type": "object",
+        "properties": {
+            "status": {
+                "type": "string",
+                "enum": ["pending", "verified", "invalid"]
+            }
+        },
+        "required": ["status"]
+    }
+    
+
     try:
-        res = requests.post(
-                "https://e037d0b95762.ngrok-free.app/api/generate",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "model": "qwen3:4b",
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.2}
+        client = OpenAI()
+        # Open API Code
+        res = client.responses.parse(
+            model="gpt-4o-2024-08-06",
+            input=[
+                {"role": "system", "content": "Give the proper structured output."},
+                {
+                    "role": "user",
+                    "content": prompt,
                 },
-            )
-        res.raise_for_status()
+            ],
+            text_format=RequestStatus,
+        )
 
-        model_output = res.text.strip()
-        try:
-            parsed_output = json.loads(model_output)
+        print(f"Status output: {res}")
+        status_res = res.output_parsed
+
+        # # Ollama Call
+        # res = requests.post(
+        #         "https://c6e71855f5ee.ngrok-free.app/api/generate",
+        #         headers={"Content-Type": "application/json"},
+        #         json={
+        #             "model": "qwen3:4b",
+        #             "prompt": prompt,
+        #             "stream": False,
+        #             "options": {"temperature": 0.2},
+        #             "format": schema
+        #         },
+        #     )
+        # res.raise_for_status()
+
+
+
+        # model_output = res.text.strip()
+        # try:
+        #     parsed_output = json.loads(model_output)
                 
-        except json.JSONDecodeError:
-                print("⚠️ Model output is not valid JSON:", model_output)
-                parsed_output = {}
+        # except json.JSONDecodeError:
+        #         print("⚠️ Model output is not valid JSON:", model_output)
+        #         parsed_output = {}
 
-        response_text = parsed_output.get("response", "")
-        status_res = parse_workflow_response(response_text)
-        print(f"Status output: {status_res}")
+        # response_text = parsed_output.get("response", "")
+        # status_res = parse_workflow_response(response_text)
+        # print(f"Status output: {status_res}")
+
+        
 
         if status_res.get('status') == "verified":
             # Implement the function to update the database with the verified status
@@ -309,16 +372,14 @@ def resource_assign_agent(state: AgentState):
     PROMPT = f"""
     You are an intelligent resource assignment agent.
     Your task is to allocate the available resources from {state.available_resources} to the disaster request {state.request}.
-    RULES:
-    
-    
-    In the available resources
-            - count means all the resources at that center
-            - used means already allocated resources
-            - resourceId mean resource center id
+         
+    Definitions:
+        - count = total resources at a center
+        - used = already allocated resources
+        - available = count - used
+        - resourceId = resource center id
 
-    Then you need to analyze the resource allocation and make decisions based on the available data. 
-    Give the output in the following format:
+    Output format:
     {{
         "request_id": "<id>", id from state.request
         "resource_center_ids": [<list of resource center ids which can assign to this request>],
@@ -326,21 +387,41 @@ def resource_assign_agent(state: AgentState):
     }}
 
     Rules:
-    Assign resources to disaster requests by evaluating available quantities from resource centers. You must ensure:
-            - No over-allocation (never assign more than is available)
-            - Prioritized assignment based on proximity and resource availability
-            - Each resource assignment marks the quantity as allocated
+            1. Never allocate more than available (no over-allocation).
+            2. Do not exhaust all resources at once (keep reserves).
+            3. Consider disaster urgency when deciding quantities.
+            4. Apply an optimal allocation strategy (balanced + fair).
+            5. Prioritize centers by proximity and availability.
+            6. Mark allocated quantities as used after assignment.
     """
+
+    schema = {
+        "type": "object",
+        "properties": {
+            "request_id": {"type": "integer"},
+            "resource_center_ids": {
+                "type": "array",
+                "items": {"type": "integer"}
+            },
+            "quantities": {
+                "type": "array",
+                "items": {"type": "integer"}
+            }
+        },
+        "required": ["request_id", "resource_center_ids", "quantities"]
+    }
+
 
     try:
         res = requests.post(
-                "https://e037d0b95762.ngrok-free.app/api/generate",
+                "https://c6e71855f5ee.ngrok-free.app/api/generate",
                 headers={"Content-Type": "application/json"},
                 json={
                     "model": "qwen3:4b",
                     "prompt": PROMPT,
                     "stream": False,
-                    "options": {"temperature": 0.2}
+                    "options": {"temperature": 0.2},
+                    "format": schema
                 },
             )
         res.raise_for_status()
@@ -401,15 +482,25 @@ def user_communication_agent(state: AgentState):
         Now, based on the above rules and given information, write one clear and supportive message for the user.
         """
     
+    schema = {
+        "type": "object",
+        "properties": {
+            "message": {"type": "string"}
+        },
+        "required": ["message"]
+    }
+
+    
     try:
         res = requests.post(
-                "https://e037d0b95762.ngrok-free.app/api/generate",
+                "https://c6e71855f5ee.ngrok-free.app/api/generate",
                 headers={"Content-Type": "application/json"},
                 json={
                     "model": "qwen3:4b",
                     "prompt": PROMPT,
                     "stream": False,
-                    "options": {"temperature": 0.2}
+                    "options": {"temperature": 0.2},
+                    "format": schema
                 },
             )
         res.raise_for_status()
@@ -426,7 +517,6 @@ def user_communication_agent(state: AgentState):
         res_clear = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL).strip()
         print(f"User MSG: {res_clear}")
 
-        # Save the allocation results to the database
         state.user_msg = res_clear
 
     except requests.RequestException as e:
