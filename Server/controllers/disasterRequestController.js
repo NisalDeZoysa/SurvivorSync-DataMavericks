@@ -130,35 +130,44 @@ export const createUserRequest = async (req, res) => {
   const gatewayData = await gatewayResponse.json();
   console.log("Gateway Response:", JSON.stringify(gatewayData, null, 2));
 
-  // 2. CORRECTED: Access agent_responses directly from gatewayData
-  const agentResponses = gatewayData.agent_responses || [];
+  // 2. Extract required fields from workflow_result
+  const workflow = gatewayData.workflow_result || {};
+  const allocated = workflow.allocated_resources || {};
 
-  // 3. Now find the user-communication-agent
-  const userCommAgent = agentResponses.find(
-    (a) => a.agent === "user-communication-agent"
-  );
+  const resourceCenterIds = allocated.resource_center_ids || [];
+  const disasterStatus = workflow.disaster_status || "PENDING";
+  const status = workflow.status || "INVALID";
 
-  console.log("User Communication Agent Response:", JSON.stringify(userCommAgent, null, 2));
+  // Ensure user_msg is user friendly
+    let userMsg = "We are doing our best to help! Our team is reviewing your request.";
+    try {
+      if (workflow.user_msg) {
+        // user_msg comes as JSON string → parse safely
+        const parsedMsg = JSON.parse(workflow.user_msg);
+        if (parsedMsg.message) {
+          userMsg = parsedMsg.message;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to parse user_msg:", err);
+    }
 
-  // 4. Safely check the response structure
-  if (userCommAgent?.response?.response) {
-    const { title, description } = userCommAgent.response.response;
-    const msg = `You have a request for "${title}".\n\nVerification process result:\n${description}`;
-    await sendMessage(request.contactNo, msg);
-  } else {
-    console.error("User communication agent response missing:", userCommAgent);
-  }
+    // await sendMessage(request.contactNo, userMsg);
   // Include gateway response in your final output if needed
   res.status(201).json({
-    message: 'User request created',
+    message: "User request created",
     success: true,
     request,
+    // completeResponse:{
+    //   gatewayData
+    // },
     gatewayResponse: {
-      gatewayData
+      resource_center_ids: resourceCenterIds,
+      disaster_status: disasterStatus,
+      status: status,
+      user_msg: userMsg
     }
   });
-
-
 };
 
 export const exportDisasterStats = async (req, res) => {
