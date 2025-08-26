@@ -484,6 +484,7 @@ async def assign_resources(request_id: int, resource_center_ids: list[int], quan
             "error": str(e),
             "results": {}
         }
+
         
 @mcp.tool()
 def change_status_after_assign_resources(request_id: int, status: str) -> dict:

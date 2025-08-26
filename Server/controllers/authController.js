@@ -26,7 +26,7 @@ const generateTokens = (user) => {
 };
 
 export const register = async (req, res) => {
-  const { name, nic, address, contactNo, email, type, password } = req.body;
+  const { name, nic, address, contactNumber, email, type, password } = req.body;
 
   console.log("Registering user with data:", req.body);
 
@@ -37,7 +37,7 @@ export const register = async (req, res) => {
       name,
       nic,
       address,
-      contactNumber: contactNo,
+      contactNumber: contactNumber,
       email,
       type,
       password: hashedPassword,

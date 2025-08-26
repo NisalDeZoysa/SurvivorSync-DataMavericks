@@ -317,7 +317,6 @@ class ResourceAllocationAgent:
             - Use "IN_PROGRESS" if resources were assigned (partially or fully)
 
             RESPONSE FORMAT:
-
             Always return this JSON structure:
             {
                 "resource_allocations": [AllocatedResource],  // List of resource allocations

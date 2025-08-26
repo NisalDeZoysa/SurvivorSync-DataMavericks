@@ -120,7 +120,7 @@ export const createUserRequest = async (req, res) => {
       `;
 
   // //  // Call gateway server
-  const gatewayResponse = await fetch('http://127.0.0.1:5005/tasks/send', {
+  const gatewayResponse = await fetch('http://127.0.0.1:5000/api/agent', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message: messageText.trim() }),
