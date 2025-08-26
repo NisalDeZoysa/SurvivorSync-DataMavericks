@@ -1,5 +1,7 @@
 from flask import Blueprint, jsonify, request
 import uuid
+
+import requests
 from core.agents import run_agent_workflow
 import os
 from pydantic import BaseModel
@@ -8,6 +10,10 @@ UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)  # Create if not exists
 
 gateway_bp = Blueprint('gateway_bp', __name__)
+
+AGENT_CHAIN = {
+    "tips-agent": "http://localhost:5003",
+}
 
 # ---------------- Utility ----------------
 def to_serializable(obj):
@@ -30,13 +36,14 @@ def to_serializable(obj):
 # ---------------- Routes ----------------
 
 # Endpoint 1: /api/tip
-@gateway_bp.route('/api/tip', methods=['GET'])
+@gateway_bp.route('/api/tip', methods=['POST'])
 def get_tip():
-    tip_data = {
-        "message": "Always comment your code!",
-        "category": "Programming"
-    }
-    return jsonify(tip_data), 200
+    user_text = request.json.get("message", "")
+    response = requests.post(f"{AGENT_CHAIN['tips-agent']}/tasks/send", json={"message": user_text})
+    try:
+        return jsonify(response.json()), response.status_code
+    except Exception:
+        return jsonify({"error": "Tips agent did not return JSON", "content": response.text}), 500
 
 
 # Endpoint 2: /api/agent
