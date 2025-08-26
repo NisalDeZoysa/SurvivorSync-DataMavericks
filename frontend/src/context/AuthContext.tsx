@@ -32,7 +32,7 @@ interface AuthContextType {
     role: string,
     nic: string,
     address: string,
-    contactNo: string
+    contactNumber: string
   ) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -179,7 +179,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         name: response.data.user.name,
         email: response.data.user.email,
         role: userType, // by changing the role can navigate to different pages
-        contactNo: response.data.user.contactNo,
+        contactNumber: response.data.user.contactNumber,
         nic: response.data.user.nic,
       };
 
@@ -219,7 +219,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     role: string,
     nic: string,
     address: string,
-    contactNo: string
+    contactNumber: string
   ) => {
     setIsLoading(true);
     try {
@@ -227,7 +227,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         name,
         nic,
         address,
-        contactNo,
+        contactNumber,
         email,
         type: role,
         password,

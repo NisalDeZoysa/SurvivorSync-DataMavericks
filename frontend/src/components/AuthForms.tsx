@@ -39,7 +39,7 @@ interface RegisterFormValues {
   role: UserRole;
   nic?: string;
   address?: string;
-  contactNo?: string;
+  contactNumber?: string;
 }
 
 const AuthForms: React.FC = () => {
@@ -48,8 +48,7 @@ const AuthForms: React.FC = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const navigate = useNavigate();
-  const { userLogin, userRegister} = useAuth();
-  
+  const { userLogin, userRegister } = useAuth();
 
   const loginForm = useForm<LoginFormValues>({
     defaultValues: {
@@ -67,7 +66,7 @@ const AuthForms: React.FC = () => {
       role: UserRole.USER,
       nic: '',
       address: '',
-      contactNo: '',
+      contactNumber: '',
     },
   });
 
@@ -117,7 +116,7 @@ const AuthForms: React.FC = () => {
       data.role,
       data.nic,
       data.address,
-      data.contactNo
+      data.contactNumber
     );
 
       toast({
@@ -335,7 +334,7 @@ const AuthForms: React.FC = () => {
                     />
                     <FormField
                       control={registerForm.control}
-                      name="contactNo"
+                      name="contactNumber"
                       rules={{ required: 'Contact Number is required' }}
                       render={({ field }) => (
                         <FormItem>

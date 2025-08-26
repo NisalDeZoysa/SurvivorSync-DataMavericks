@@ -46,7 +46,7 @@ export interface User {
     latitude: number;
     longitude: number;
   };
-  contactNo?: string;
+  contactNumber?: string;
 }
 
 
