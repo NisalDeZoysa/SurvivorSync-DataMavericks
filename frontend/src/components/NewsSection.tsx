@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,96 +6,61 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { AlertTriangle, Clock, MapPin, Users, Phone, Search } from 'lucide-react';
 import { Disaster, DisasterType, DisasterSeverity } from '@/types';
+import axios from 'axios';
 
-// Mock verified disaster news
-const mockVerifiedDisasters: Disaster[] = [
-  {
-    id: '1',
-    location: {
-      latitude: 7.8731,
-      longitude: 80.7718,
-      address: 'Colombo 03, Wellawatta'
-    },
-    timestamp: new Date(Date.now() - 1800000).toISOString(), // 30 mins ago
-    type: DisasterType.FLOOD,
-    name: 'Major Flooding in Wellawatta',
-    severity: DisasterSeverity.HIGH,
-    details: 'Severe flooding has affected the Wellawatta area in Colombo 03 following heavy monsoon rains that began early this morning. Water levels have risen to 3-4 feet in residential areas, forcing many families to evacuate to higher ground. The Sri Lanka Navy has deployed rescue boats to assist with evacuations. Several main roads including Galle Road are currently impassable. Local authorities have set up temporary shelters at nearby schools and community centers.',
-    affectedCount: 250,
-    contactNo: '119',
-    status: 'in-progress'
-  },
-  {
-    id: '2',
-    location: {
-      latitude: 6.9271,
-      longitude: 79.8612,
-      address: 'Kandy City Center'
-    },
-    timestamp: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-    type: DisasterType.FIRE,
-    name: 'Commercial Complex Fire Contained',
-    severity: DisasterSeverity.CRITICAL,
-    details: 'A major fire that broke out at the Central Plaza commercial complex in Kandy has been successfully contained by the fire department after a 4-hour operation. The blaze started on the 3rd floor and quickly spread to adjacent floors before firefighters could bring it under control. No casualties have been reported, but several people were treated for smoke inhalation. The building has been evacuated and will remain closed pending a safety inspection. Traffic diversions are in place around the area.',
-    affectedCount: 120,
-    contactNo: '110',
-    status: 'resolved'
-  },
-  {
-    id: '3',
-    location: {
-      latitude: 6.0535,
-      longitude: 80.2210,
-      address: 'Galle Hill Country'
-    },
-    timestamp: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-    type: DisasterType.LANDSLIDE,
-    name: 'Landslide Warning Issued',
-    severity: DisasterSeverity.MEDIUM,
-    details: 'The Disaster Management Center has issued a landslide warning for hill country areas around Galle following continuous rainfall over the past 48 hours. Geological surveys have identified several areas with unstable soil conditions. Residents in high-risk zones have been advised to remain vigilant and be prepared for possible evacuation. Emergency response teams are on standby and monitoring the situation closely.',
-    affectedCount: 300,
-    contactNo: '117',
-    status: 'pending'
-  },
-  {
-    id: '4',
-    location: {
-      latitude: 9.6615,
-      longitude: 80.0255,
-      address: 'Jaffna Coastal Areas'
-    },
-    timestamp: new Date(Date.now() - 14400000).toISOString(), // 4 hours ago
-    type: DisasterType.TSUNAMI,
-    name: 'Tsunami Alert Lifted - All Clear',
-    severity: DisasterSeverity.LOW,
-    details: 'The tsunami warning issued earlier today for the northern coastal areas has been officially lifted by the Department of Meteorology. The alert was triggered by a 6.2 magnitude earthquake detected in the Indian Ocean, but subsequent analysis confirmed no tsunami threat to Sri Lankan coasts. Coastal communities that were evacuated as a precautionary measure have been given the all-clear to return to their homes. Normal activities have resumed in all affected areas.',
-    affectedCount: 500,
-    contactNo: '118',
-    status: 'resolved'
-  },
-  {
-    id: '5',
-    location: {
-      latitude: 7.2906,
-      longitude: 80.6337,
-      address: 'Kurunegala Industrial Zone'
-    },
-    timestamp: new Date(Date.now() - 21600000).toISOString(), // 6 hours ago
-    type: DisasterType.FIRE,
-    name: 'Factory Fire Under Investigation',
-    severity: DisasterSeverity.HIGH,
-    details: 'A fire at a textile manufacturing facility in the Kurunegala Industrial Zone has been extinguished after a coordinated effort by multiple fire stations. The incident occurred during the night shift, but all workers were safely evacuated with no reported injuries. Initial investigations suggest an electrical fault may have caused the fire. The factory will remain closed while authorities conduct a thorough investigation and assess structural damage.',
-    affectedCount: 80,
-    contactNo: '110',
-    status: 'resolved'
-  }
-];
+interface ApiNewsItem {
+  id: number;
+  title: string;
+  disasterId: number | null;
+  disasterRequestId: number | null;
+  type: 'natural' | 'man-made';
+  severity: DisasterSeverity;
+  details: string | null;
+  affectedCount: number | null;
+  contactNo: string | null;
+  latitude: string | number | null;
+  longitude: string | number | null;
+  district: string | null;
+  province: string | null;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+  createdAt: string;
+}
 
 const NewsSection: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDisaster, setSelectedDisaster] = useState<Disaster | null>(null);
+  const [news, setNews] = useState<Disaster[]>([]);
 
-  const filteredNews = mockVerifiedDisasters.filter(disaster =>
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const res = await axios.get<ApiNewsItem[]>(`http://localhost:7000/api/news`);
+        const mapped: Disaster[] = res.data.map((n) => ({
+          id: String(n.id),
+          name: n.title,
+          type: Number(n.disasterId || 6) as unknown as DisasterType,
+          severity: n.severity,
+          details: n.details || '',
+          affectedCount: n.affectedCount || 0,
+          contactNo: n.contactNo || undefined,
+          status: n.status.toLowerCase(),
+          timestamp: n.createdAt,
+          location: {
+            latitude: typeof n.latitude === 'string' ? parseFloat(n.latitude) : (n.latitude || 0),
+            longitude: typeof n.longitude === 'string' ? parseFloat(n.longitude) : (n.longitude || 0),
+            address: `${n.district || ''} ${n.province || ''}`.trim(),
+          },
+        }));
+        setNews(mapped);
+      } catch (e) {
+        // Fallback: keep empty state
+        setNews([]);
+      }
+    };
+    fetchNews();
+  }, []);
+
+  const filteredNews = news.filter(disaster =>
     disaster.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     disaster.location.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     String(disaster.type).toLowerCase().includes(searchTerm.toLowerCase())

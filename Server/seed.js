@@ -6,6 +6,7 @@ import ResourceCenter from "./models/ResourceCenter.js";
 import User from "./models/user.js";
 import Admin from "./models/admin.js";
 import FirstResponder from "./models/FirstResponder.js";
+import News from "./models/News.js";
 
 async function seedDatabase() {
   // Insert disasters
@@ -80,7 +81,7 @@ async function seedDatabase() {
       contactNumber: "0771234567",
       email: "nimal.perera@example.com",
       type: "victim",
-      password: "hashedpassword1",
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma",
     },
     {
       name: "Kamalani Fernando",
@@ -89,7 +90,7 @@ async function seedDatabase() {
       contactNumber: "0719876543",
       email: "kamalani.fernando@example.com",
       type: "victim",
-      password: "hashedpassword2",
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma",
     },
     {
       name: "Sunil Jayawardena",
@@ -98,7 +99,7 @@ async function seedDatabase() {
       contactNumber: "0751112233",
       email: "sunil.j@example.com",
       type: "victim",
-      password: "hashedpassword3",
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma",
     },
     {
       name: "Dilani Rathnayake",
@@ -107,7 +108,7 @@ async function seedDatabase() {
       contactNumber: "0782223344",
       email: "dilani.r@example.com",
       type: "victim",
-      password: "hashedpassword4",
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma",
     },
     {
       name: "Tharindu Senanayake",
@@ -116,7 +117,7 @@ async function seedDatabase() {
       contactNumber: "0763456789",
       email: "tharindu.s@example.com",
       type: "victim",
-      password: "hashedpassword5",
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma",
     },
   ]);
 
@@ -640,7 +641,7 @@ async function seedDatabase() {
       contactNumber: "0771234561",
       email: "admin@gmail.com",
       description: "Head of local police operations",
-      password: "1234"
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma"
     },
     {
       name: "Officer Janaka Perera",
@@ -648,7 +649,7 @@ async function seedDatabase() {
       contactNumber: "0712345678",
       email: "admin2@gmail.com",
       description: "Disaster response coordinator - Southern Province",
-      password: "adminpass1"
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma"
     },
     {
       name: "Chief Kamalini De Silva",
@@ -656,7 +657,7 @@ async function seedDatabase() {
       contactNumber: "0723456789",
       email: "admin3@gmail.com",
       description: "National emergency response supervisor",
-      password: "adminpass2"
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma"
     },
     {
       name: "Inspector Gunasekara",
@@ -664,7 +665,7 @@ async function seedDatabase() {
       contactNumber: "0734567890",
       email: "admin20@gmail.com",
       description: "Head of local police operations",
-      password: "$2b$10$pGhNLektPGSqwPyi334TYOdyhPYWFiFyBLpzfUhXk2UcXPVh3aLBm"
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma"
 
     }
   ]
@@ -886,7 +887,7 @@ async function seedDatabase() {
       email: "wick@example1.com",
       type: "police",
       description: "Head of local police operations",
-      password: "SecurePass123"
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma"
     },
     {
       name: "Officer Nadeesha Silva",
@@ -897,7 +898,7 @@ async function seedDatabase() {
       email: "nadeesha@example.com",
       type: "police",
       description: "Officer in charge of regional response unit",
-      password: "StrongPass456"
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma"
     },
     {
       name: "Sergeant Dilan Jayasuriya",
@@ -908,7 +909,7 @@ async function seedDatabase() {
       email: "dilan@example.com",
       type: "police",
       description: "Emergency deployment specialist",
-      password: "SafePassword789"
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma"
     },
     {
       name: "Chief Inspector Suranga Perera",
@@ -919,7 +920,7 @@ async function seedDatabase() {
       email: "suranga@example.com",
       type: "police",
       description: "Chief inspector of national coordination",
-      password: "TopSecret321"
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma"
     },
     {
       name: "Officer Ishara Fernando",
@@ -930,8 +931,60 @@ async function seedDatabase() {
       email: "ishara@example.com",
       type: "police",
       description: "Handles ground-level emergency coordination",
-      password: "Secure456Pass"
+      password: "$2b$10$GXGJL7f1/rin7rAkkWrVi.XztQBbtXMQO.B3A351CaS71F5MxA1Ma"
     }
+  ]);
+
+  // Seed dummy news
+  await News.bulkCreate([
+    {
+      title: "Major Flooding in Wellawatta",
+      disasterId: 1,
+      disasterRequestId: null,
+      type: "natural",
+      severity: "HIGH",
+      details:
+        "Severe flooding affecting Wellawatta area after heavy monsoon rains. Evacuations underway and temporary shelters opened.",
+      affectedCount: 250,
+      contactNo: "119",
+      latitude: 6.8700,
+      longitude: 79.8650,
+      district: "Colombo",
+      province: "Western",
+      status: "IN_PROGRESS",
+    },
+    {
+      title: "Commercial Complex Fire Contained in Kandy",
+      disasterId: 3,
+      disasterRequestId: null,
+      type: "man-made",
+      severity: "CRITICAL",
+      details:
+        "Fire at Central Plaza commercial complex contained after 4-hour operation. Building closed for safety inspection.",
+      affectedCount: 120,
+      contactNo: "110",
+      latitude: 7.2906,
+      longitude: 80.6337,
+      district: "Kandy",
+      province: "Central",
+      status: "COMPLETED",
+    },
+    {
+      title: "Landslide Warning Issued for Hill Country",
+      disasterId: 6,
+      disasterRequestId: null,
+      type: "natural",
+      severity: "MEDIUM",
+      details:
+        "Disaster Management Center issues landslide warning after continuous rainfall. Residents advised to be vigilant.",
+      affectedCount: 300,
+      contactNo: "117",
+      latitude: 6.0535,
+      longitude: 80.2210,
+      district: "Galle",
+      province: "Southern",
+      status: "PENDING",
+    },
   ]);
 
 
