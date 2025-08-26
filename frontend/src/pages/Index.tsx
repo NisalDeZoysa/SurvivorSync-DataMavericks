@@ -200,14 +200,41 @@ const Index = () => {
                   our comprehensive disaster management platform.
                 </p>
                 <div className="flex flex-wrap gap-4">
-                  <Button
+                  {/* <Button
                     size="lg"
                     className="bg-emergency-500 hover:bg-emergency-600"
                     onClick={() => navigate("/report")}
                   >
                     <AlertTriangle className="mr-2 h-5 w-5" />
                     Report Emergency
-                  </Button>
+                  </Button> */}
+
+                  <Button
+                                  variant="outline"
+                                  className="flex items-center gap-2 text-white font-bold bg-emergency-600 hover:bg-emergency-900 hover:text-white shadow-lg"
+                                  style={{
+                                    animation: "pulseGlow 1.5s infinite",
+                                    border: "2px solid #dc2626", // stronger red border
+                                  }}
+                                >
+                                  <AlertTriangle className="h-5 w-5" />
+                                  Report Emergency
+                                </Button>
+
+                    <style>
+                    {`
+                    @keyframes pulseGlow {
+                      0%, 100% {
+                        box-shadow: 0 0 10px 2px rgba(220, 38, 38, 0.8);
+                        transform: scale(1);
+                      }
+                      50% {
+                        box-shadow: 0 0 20px 6px rgba(220, 38, 38, 1);
+                        transform: scale(1.05);
+                      }
+                    }
+                    `}
+                    </style>
                   <Button
                     size="lg"
                     variant="outline"

@@ -13,40 +13,58 @@ const AssignmentsList = () => {
   const { toast } = useToast();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [socket,setSocket] = useState(null);
   console.log("Current User:", currentUser);
   
   useEffect(() => {
     // Initialize socket connection
-    const socket = io('http://localhost:7000');
+    // const socket = io('http://localhost:7000');
+    const newSocket = io("http://localhost:7000", {
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000,
+        });
 
     // Fetch initial assignments
     fetchAssignments();
 
     // Socket event listeners
-    socket.on('assignmentUpdate', ({ action, assignment, assignmentId }) => {
-      switch (action) {
-        case 'create':
-          if (assignment.Volunteerid === currentUser?.id) {
-            setAssignments(prev => [assignment, ...prev]);
-            toast({
-              title: "New Assignment",
-              description: "You have been assigned a new task",
-            });
-          }
-          break;
-        case 'update':
-          setAssignments(prev => 
-            prev.map(a => a.id === assignment.id ? assignment : a)
-          );
-          break;
-        case 'delete':
-          setAssignments(prev => 
-            prev.filter(a => a.id !== assignmentId)
-          );
-          break;
-        default:
-          console.warn('Unknown assignment update action:', action);
-      }
+    // socket.on('assignmentUpdate', ({ action, assignment, assignmentId }) => {
+    //   switch (action) {
+    //     case 'create':
+    //       if (assignment.Volunteerid === currentUser?.id) {
+    //         setAssignments(prev => [assignment, ...prev]);
+    //         toast({
+    //           title: "New Assignment",
+    //           description: "You have been assigned a new task",
+    //         });
+    //       }
+    //       break;
+    //     case 'update':
+    //       setAssignments(prev => 
+    //         prev.map(a => a.id === assignment.id ? assignment : a)
+    //       );
+    //       break;
+    //     case 'delete':
+    //       setAssignments(prev => 
+    //         prev.filter(a => a.id !== assignmentId)
+    //       );
+    //       break;
+    //     default:
+    //       console.warn('Unknown assignment update action:', action);
+    //   }
+    // });
+
+    setSocket(newSocket);
+
+    newSocket.on('assignmentUpdate', () => {
+      console.log("Assignment updated");
+      fetchAssignments();
+    });
+
+    // Error handling
+    newSocket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err.message);
     });
 
     // Cleanup socket connection on unmount

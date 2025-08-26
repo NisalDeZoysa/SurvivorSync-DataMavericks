@@ -195,10 +195,11 @@ const DisasterReportForm: React.FC = () => {
       })
     );
     // store each name , contactNumber, resourceId
-    return allDetails.map(({ name, contactNumber, resourceId }) => ({
+    return allDetails.map(({ name, contactNumber, resourceId, province }) => ({
       name,
       contactNumber,
-      resourceId
+      resourceId,
+      province
     }));
   };
 

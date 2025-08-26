@@ -122,35 +122,95 @@ export const deleteAllocation = async (req, res) => {
 
 
 
+// export const getAllocationSummaries = async (req, res) => {
+//   try {
+//     let lastUpdated = null;
+
+//     if (allocation.updated_at) {
+//       const d = new Date(allocation.updated_at);
+//       if (!isNaN(d)) {
+//         lastUpdated = d.toISOString().split("T")[0];
+//       }
+//     }
+//     const allocations = await AllocatedResource.findAll({
+//       include: [
+//         {
+//           model: ResourceCenter,
+//           include: [Resource]
+//         },
+//         {
+//           model: DisasterRequest,
+//           include: [Disaster]
+//         }
+//       ]
+//     });
+//     console.log('Allocations fetched:', allocations);
+//     const result = allocations.map((allocation) => ({
+//       id: allocation.id,
+//       disasterId: allocation?.DisasterRequest?.id || null,
+//       disasterType: allocation?.DisasterRequest?.Disaster?.name || null,
+//       district: allocation?.DisasterRequest?.district || null,
+//       province: allocation?.DisasterRequest?.province || null,
+//       type: allocation.ResourceCenter?.Resource?.type || null,
+//       quantity: allocation.amount,
+//       status: allocation.isAllocated ? 'allocated' : 'available',
+//       lastUpdated,
+//     }));
+
+//     console.log('Allocation summaries:', result);
+
+//     res.json(result);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
+
 export const getAllocationSummaries = async (req, res) => {
   try {
     const allocations = await AllocatedResource.findAll({
       include: [
         {
           model: ResourceCenter,
-          include: [Resource]
+          include: [Resource],
         },
         {
           model: DisasterRequest,
-          include: [Disaster]
-        }
-      ]
+          include: [Disaster],
+        },
+      ],
     });
-    console.log('Allocations fetched:', allocations);
-    const result = allocations.map((allocation) => ({
-      id: allocation.id,
-      disasterId: allocation?.DisasterRequest?.id || null,
-      disasterType: allocation?.DisasterRequest?.Disaster?.name || null,
-      district: allocation?.DisasterRequest?.district || null,
-      province: allocation?.DisasterRequest?.province || null,
-      type: allocation.ResourceCenter?.Resource?.type || null,
-      quantity: allocation.amount,
-      status: allocation.isAllocated ? 'allocated' : 'available',
-      lastUpdated: allocation.updated_at?.toISOString().split('T')[0] || null
-    }));
+
+    console.log("Allocations fetched:", allocations);
+
+    const result = allocations.map((allocation) => {
+      let lastUpdated = null;
+
+      if (allocation.updated_at) {
+        const d = new Date(allocation.updated_at);
+        if (!isNaN(d)) {
+          lastUpdated = d.toISOString().split("T")[0];
+        }
+      }
+
+      return {
+        id: allocation.id,
+        disasterId: allocation?.DisasterRequest?.id || null,
+        disasterType: allocation?.DisasterRequest?.Disaster?.name || null,
+        district: allocation?.DisasterRequest?.district || null,
+        province: allocation?.DisasterRequest?.province || null,
+        type: allocation.ResourceCenter?.Resource?.type || null,
+        quantity: allocation.amount,
+        status: allocation.isAllocated ? "allocated" : "available",
+        lastUpdated,
+      };
+    });
+
+    console.log("Allocation summaries:", result);
 
     res.json(result);
   } catch (error) {
+    console.error("Error in getAllocationSummaries:", error);
     res.status(500).json({ error: error.message });
   }
 };

@@ -27,20 +27,50 @@ const Navigation: React.FC = () => {
             <span className="text-xl font-bold">SurvivorSync</span>
           </Link>
           
-          <div className="hidden md:flex items-center gap-4">
-            <Link to="/news">
-              <Button variant="ghost" className="text-gray-600 hover:text-safety-600">
-                News
-              </Button>
-            </Link>
-            <Link to="/report">
+          <div className="hidden md:flex items-center gap-5">
+            
+            {/* <Link to="/report">
               <Button variant="outline" className="flex items-center gap-2 border-emergency-300 text-emergency-600 hover:bg-emergency-50">
                 <AlertTriangle className="h-4 w-4" />
                 Report Emergency
               </Button>
+            </Link> */}
+            <Link to="/report">
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 text-white font-bold bg-emergency-600 hover:bg-emergency-900 hover:text-white shadow-lg"
+                style={{
+                  animation: "pulseGlow 1.5s infinite",
+                  border: "2px solid #dc2626", // stronger red border
+                }}
+              >
+                <AlertTriangle className="h-5 w-5" />
+                Report Emergency
+              </Button>
             </Link>
+
+            <style>
+            {`
+            @keyframes pulseGlow {
+              0%, 100% {
+                box-shadow: 0 0 10px 2px rgba(220, 38, 38, 0.8);
+                transform: scale(1);
+              }
+              50% {
+                box-shadow: 0 0 20px 6px rgba(220, 38, 38, 1);
+                transform: scale(1.05);
+              }
+            }
+            `}
+            </style>
+
             <Link to="/login">
               <Button className="bg-safety-500 hover:bg-safety-600">Sign In</Button>
+            </Link>
+            <Link to="/news">
+              <Button variant="ghost" className="text-gray-600 hover:text-safety-600">
+                News
+              </Button>
             </Link>
           </div>
 
@@ -59,12 +89,34 @@ const Navigation: React.FC = () => {
                   News
                 </Button>
               </Link>
-              <Link to="/report" onClick={() => setMobileNavOpen(false)}>
-                <Button variant="outline" className="w-full flex items-center gap-2 border-emergency-300 text-emergency-600 hover:bg-emergency-50">
-                  <AlertTriangle className="h-4 w-4" />
-                  Report Emergency
-                </Button>
-              </Link>
+              <Link to="/report">
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 text-white font-bold bg-emergency-600 hover:bg-emergency-900 hover:text-white shadow-lg"
+                style={{
+                  animation: "pulseGlow 1.5s infinite",
+                  border: "2px solid #dc2626", // stronger red border
+                }}
+              >
+                <AlertTriangle className="h-5 w-5" />
+                Report Emergency
+              </Button>
+            </Link>
+
+            <style>
+            {`
+            @keyframes pulseGlow {
+              0%, 100% {
+                box-shadow: 0 0 10px 2px rgba(220, 38, 38, 0.8);
+                transform: scale(1);
+              }
+              50% {
+                box-shadow: 0 0 20px 6px rgba(220, 38, 38, 1);
+                transform: scale(1.05);
+              }
+            }
+            `}
+            </style>
               <Link to="/login" onClick={() => setMobileNavOpen(false)}>
                 <Button className="w-full bg-safety-500 hover:bg-safety-600">Sign In</Button>
               </Link>

@@ -143,7 +143,7 @@ export const createUserRequest = async (req, res) => {
   const userMsg = workflow.user_msg || "We are doing our best to help! Our team is reviewing your request.";
   console.log("\nResource Center IDs:", resourceCenterIds);
 
-  // await sendMessage(request.contactNo, userMsg);
+  await sendMessage(request.contactNo, userMsg);
   // Include gateway response in your final output if needed
   res.status(201).json({
     message: "User request created",
@@ -249,8 +249,10 @@ export const deleteRequest = async (req, res) => {
 export const getVerifiedRequest = async (req, res) => {
   try {
     const request = await DisasterRequest.findAll({
-      where: { isVerified: true },
+      where: { isVerified: true ,},
     });
+
+    // Need to find all where the isVerified is true and createdAt is today day
 
     if (!request) return res.status(404).json({ error: "Request not found" });
     res.json(request);
