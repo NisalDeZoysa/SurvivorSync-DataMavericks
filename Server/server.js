@@ -120,6 +120,7 @@ import allocationRoutes from './routes/allocationRoutes.js';
 import availabilityRoutes from './routes/availabilityRoutes.js';
 import assignmentRoutes from './routes/assignmentRoutes.js';
 import whatsAppRoutes from './routes/whatsappRoutes.js';
+import newsRoutes from './routes/newsRoutes.js';
 
 app.use('/api/users', authRoutes);
 app.use('/api/admin', adminRoutes);
@@ -133,6 +134,7 @@ app.use('/api/allocations', allocationRoutes);
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/whatsapp', whatsAppRoutes); // Add WhatsApp routes
 app.use('/api/assignments', assignmentRoutes);
+app.use('/api/news', newsRoutes);
 
 
 const globalChatHistory = [];
