@@ -2,7 +2,10 @@ import { DisasterRequest, Disaster, User } from "../models/index.js";
 import Sequelize from 'sequelize';
 import { getDisasterById } from "./disasterController.js";
 import { sendMessage } from "./whatsAppConroller.js";
+import dotenv from 'dotenv';
 
+dotenv.config();
+const AGENTAPI_URL = process.env.AGENTAPI_URL;
 
 export const createUserRequest = async (req, res) => {
   let {
@@ -120,7 +123,7 @@ export const createUserRequest = async (req, res) => {
       `;
 
   // //  // Call gateway server
-  const gatewayResponse = await fetch('http://127.0.0.1:5000/api/agent', {
+  const gatewayResponse = await fetch(`${AGENTAPI_URL}/api/agent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message: messageText.trim() }),
@@ -137,24 +140,10 @@ export const createUserRequest = async (req, res) => {
   const resourceCenterIds = allocated.resource_center_ids || [];
   const disasterStatus = workflow.disaster_status || "PENDING";
   const status = workflow.status || "INVALID";
-
+  const userMsg = workflow.user_msg || "We are doing our best to help! Our team is reviewing your request.";
   console.log("\nResource Center IDs:", resourceCenterIds);
 
-  // Ensure user_msg is user friendly
-    let userMsg = "We are doing our best to help! Our team is reviewing your request.";
-    try {
-      if (workflow.user_msg) {
-        // user_msg comes as JSON string → parse safely
-        const parsedMsg = JSON.parse(workflow.user_msg);
-        if (parsedMsg.message) {
-          userMsg = parsedMsg.message;
-        }
-      }
-    } catch (err) {
-      console.error("Failed to parse user_msg:", err);
-    }
-
-    // await sendMessage(request.contactNo, userMsg);
+  // await sendMessage(request.contactNo, userMsg);
   // Include gateway response in your final output if needed
   res.status(201).json({
     message: "User request created",

@@ -70,11 +70,8 @@ export enum DisasterType {
   HOUSEHOLDFIRE = 3,
   WILDFIRE = 4,
   TSUNAMI = 5,
-  OTHER = 6,
-  // LANDSLIDE,
-  // FIRE,
-  // LANDSLIDE,
-  // FIRE
+  LANDSLIDE = 6,
+  OTHER = 7
 }
 
 export enum DisasterSeverity {

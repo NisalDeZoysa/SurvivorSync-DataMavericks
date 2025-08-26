@@ -223,10 +223,7 @@ def assign_resources(request_id: int, resource_center_ids: list[int], quantities
                 "amount": amount,
                 "isAllocated": True
             })
-
-
-
-
+            
         conn.commit()
         cursor.close()
         conn.close()

@@ -371,6 +371,7 @@ const DisasterReportForm: React.FC = () => {
                       <SelectItem value={DisasterType.HOUSEHOLDFIRE.toString()}>Household Fire</SelectItem>
                       <SelectItem value={DisasterType.WILDFIRE.toString()}>Wild Fire</SelectItem>
                       <SelectItem value={DisasterType.TSUNAMI.toString()}>Tsunami</SelectItem>
+                      <SelectItem value={DisasterType.LANDSLIDE.toString()}>Landslide</SelectItem>
                       <SelectItem value={DisasterType.OTHER.toString()}>Other</SelectItem>
                     </SelectContent>
                   </Select>
@@ -580,7 +581,7 @@ const DisasterReportForm: React.FC = () => {
                     fileName={`disaster-report-${createdDisaster.request.id}.pdf`}
                   >
                     {({ loading }) => (
-                      <Button className="bg-emergency-500 hover:bg-emergency-600" onClick={() => setShowSuccessPopup(false)}>
+                      <Button className="bg-emergency-500 hover:bg-emergency-600">
                         {loading ? "Generating PDF..." : "Download PDF"}
                       </Button>
                     )}

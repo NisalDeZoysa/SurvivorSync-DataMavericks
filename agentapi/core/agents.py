@@ -20,6 +20,13 @@ QWEN_API_KEY = os.getenv("QWEN_API_KEY")
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
+class AllocatedResources(BaseModel):
+    request_id: int
+    resource_center_ids: List[int]
+    quantities: List[int]
+
+class UserMessage(BaseModel):
+    message: str
 
 class AgentState(BaseModel):
     input: Optional[Dict[str, Any]] = None
@@ -29,10 +36,11 @@ class AgentState(BaseModel):
     image_description: Optional[str] = None
     voice_description: Optional[str] = None
     status: Optional[str] = "pending"
+    reason: Optional[str] = None
     available_resources: Optional[List[Dict[str, Any]]] = None
-    allocated_resources: Optional[dict] = None
+    allocated_resources: Optional[AllocatedResources] = None
     disaster_status: Optional[str] = "PENDING"
-    user_msg:Optional[str]= None
+    user_msg: Optional[UserMessage] = None
 
 class StatusEnum(str, Enum):
     pending = "pending"
@@ -41,6 +49,7 @@ class StatusEnum(str, Enum):
 
 class RequestStatus(BaseModel):
     status: StatusEnum
+    reason: str = ""
     
 def run_agent_workflow(input_data: str):
     initial_state = AgentState(**input_data)
@@ -62,12 +71,24 @@ def create_workflow():
     workflow.set_entry_point("request_intake")
     workflow.add_edge("request_intake", "media_extraction")
     workflow.add_edge("media_extraction", "verify_request")
-    workflow.add_edge("verify_request", "track_resources")
+    workflow.add_conditional_edges("verify_request", check_verification, {
+        "NoExecute": END,
+        "Execute": "track_resources"
+    })
     workflow.add_edge("track_resources", "assign_resources")
     workflow.add_edge("assign_resources", "communicate_with_user")
     workflow.add_edge("communicate_with_user", END)
-
+    
     return workflow.compile()
+
+
+def check_verification(state: AgentState) -> str:
+    if (
+        state.status in ["failed", "invalid", "pending"]
+        or state.request is None
+    ):
+        return "NoExecute"
+    return "Execute"
 
 
 def resolve_media_path(raw_path: str) -> Path:
@@ -209,6 +230,7 @@ def media_extraction_agent(state: AgentState):
                     files = {"file": (resolved_path.name, f, "audio/mpeg")}
                     response = requests.post(
                         "https://d59a3d3b185d.ngrok-free.app/transcribe", 
+                        "https://d59a3d3b185d.ngrok-free.app/transcribe", 
                         files=files,
                         data={"language": "en"}  # optional
                     )
@@ -220,9 +242,6 @@ def media_extraction_agent(state: AgentState):
             except Exception as e:
                 state.request["voice_description"] = "Not applicable"
                 print(f"⚠️ Voice extraction error: {e}")
-
-    process_image()
-    process_voice()
 
     # Run both in parallel
     img_thread = threading.Thread(target=process_image)
@@ -254,20 +273,21 @@ def request_verify_agent(state: AgentState):
     prompt = f"""
     You are an intelligent request verification agent.
 
-    Your task is to use {state.request} , image_description: {state.image_description} ,voice_description: {state.voice_description} :
+    Your task is to use this request: {state.request} , image_description: {state.image_description} ,voice_description: {state.voice_description}
             1. Verify the disaster request information using disaster and text_description in {state.request} , image_description and voice_description.
-            2. Update the status in to "pending", "verified", "invalid" as appropriate.
+            2. Update the status in to "pending", "verified", "invalid" as appropriate and give the reason for the status in very brief text.
 
     Give the output in the following format:
     {{
         "status": "<status>",
+        "reason": "<reason for status>"
     }}
 
     Rules:
-    - If only one is available(image_description or text_description or voice_description) status is "pending".
-    - If it has two or three and they are match with each other and disaster name, status is "verified".
+    - If image_description or text_description or voice_description is aligned with the request, status is "verified".
     - If none of the above conditions are met, status is "invalid".
     """
+    
 
     schema = {
         "type": "object",
@@ -282,59 +302,60 @@ def request_verify_agent(state: AgentState):
     
 
     try:
-        # client = OpenAI()
-        # # Open API Code
-        # res = client.responses.parse(
-        #     model="gpt-4o-2024-08-06",
-        #     input=[
-        #         {"role": "system", "content": "Give the proper structured output."},
-        #         {
-        #             "role": "user",
-        #             "content": prompt,
-        #         },
-        #     ],
-        #     text_format=RequestStatus,
-        # )
-
-        # print(f"Status output: {res}")
-        # status_res = res.output_parsed
-
-        # Ollama Call
-        res = requests.post(
-                "https://c6e71855f5ee.ngrok-free.app/api/generate",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "model": "qwen3:4b",
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {"temperature": 0.2},
-                    "format": schema
+        client = OpenAI()
+        # Open API Code
+        res = client.responses.parse(
+            model="gpt-4o-2024-08-06",
+            input=[
+                {"role": "system", "content": "Give the proper structured output."},
+                {
+                    "role": "user",
+                    "content": prompt,
                 },
-            )
-        res.raise_for_status()
+            ],
+            text_format=RequestStatus,
+        )
 
+        print(f"Status output: {res}")
+        output_status = res.output_parsed.status
 
-
-        model_output = res.text.strip()
-        try:
-            parsed_output = json.loads(model_output)
-                
-        except json.JSONDecodeError:
-                print("⚠️ Model output is not valid JSON:", model_output)
-                parsed_output = {}
-
-        response_text = parsed_output.get("response", "")
-        status_res = parse_workflow_response(response_text)
-        print(f"Status output: {status_res}")
-
-        
-
-        if status_res.get('status') == "verified":
+        if output_status == "verified":
             # Implement the function to update the database with the verified status
             update_request_status(state.request.get("request_id"), "verified")
+            
+        state.status = output_status
+        state.reason = res.output_parsed.reason
+        
 
-        state.status = status_res.get('status', '').strip()
+        # # Ollama Call
+        # res = requests.post(
+        #         "https://c6e71855f5ee.ngrok-free.app/api/generate",
+        #         headers={"Content-Type": "application/json"},
+        #         json={
+        #             "model": "qwen3:4b",
+        #             "prompt": prompt,
+        #             "stream": False,
+        #             "options": {"temperature": 0.2},
+        #             "format": schema
+        #         },
+        #     )
+        # res.raise_for_status()
+        # model_output = res.text.strip()
+        # try:
+        #     parsed_output = json.loads(model_output)
+                
+        # except json.JSONDecodeError:
+        #         print("⚠️ Model output is not valid JSON:", model_output)
+        #         parsed_output = {}
 
+        # response_text = parsed_output.get("response", "")
+        # status_res = parse_workflow_response(response_text)
+        # print(f"Status output: {status_res}")
+        # if status_res.get('status') == "verified":
+        #     # Implement the function to update the database with the verified status
+        #     update_request_status(state.request.get("request_id"), "verified")
+
+        # state.status = status_res.get('status', '').strip()
 
     except requests.RequestException as e:
         print(f"❌ Error calling LLM API: {e}")
@@ -414,42 +435,67 @@ def resource_assign_agent(state: AgentState):
 
 
     try:
-        res = requests.post(
-                "https://c6e71855f5ee.ngrok-free.app/api/generate",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "model": "qwen3:4b",
-                    "prompt": PROMPT,
-                    "stream": False,
-                    "options": {"temperature": 0.2},
-                    "format": schema
+        client = OpenAI()
+        # Open API Code
+        res = client.responses.parse(
+            model="gpt-4o-2024-08-06",
+            input=[
+                {"role": "system", "content": "Give the proper structured output."},
+                {
+                    "role": "user",
+                    "content": PROMPT,
                 },
-            )
-        res.raise_for_status()
+            ],
+            text_format=AllocatedResources,
+        )
 
-        model_output = res.text.strip()
-        try:
-            parsed_output = json.loads(model_output)
+        print(f"Status output: {res}")
+        resources = res.output_parsed
+        assign_complete = assign_resources(resources.request_id, resources.resource_center_ids, resources.quantities)
+        if assign_complete:
+            print("Resource assignment successful.")
+            state.allocated_resources = resources
+            response = change_status_after_assign_resources(resources.request_id, "success")
+            state.disaster_status = response.get('status')
+            print(f"Disaster Status change result: {response.get('status')}")
+        else:
+            print("Resource assignment failed.")
+        # res = requests.post(
+        #         "https://c6e71855f5ee.ngrok-free.app/api/generate",
+        #         headers={"Content-Type": "application/json"},
+        #         json={
+        #             "model": "qwen3:4b",
+        #             "prompt": PROMPT,
+        #             "stream": False,
+        #             "options": {"temperature": 0.2},
+        #             "format": schema
+        #         },
+        #     )
+        # res.raise_for_status()
+
+        # model_output = res.text.strip()
+        # try:
+        #     parsed_output = json.loads(model_output)
                 
-        except json.JSONDecodeError:
-                print("⚠️ Model output is not valid JSON:", model_output)
-                parsed_output = {}
+        # except json.JSONDecodeError:
+        #         print("⚠️ Model output is not valid JSON:", model_output)
+        #         parsed_output = {}
 
-        response_text = parsed_output.get("response", "")
-        res_clear = parse_workflow_response(response_text)
-        print(f"Allocation Resource: {res_clear}")
+        # response_text = parsed_output.get("response", "")
+        # res_clear = parse_workflow_response(response_text)
+        # print(f"Allocation Resource: {res_clear}")
 
-        # Save the allocation results to the database
-        if res_clear:
-            response = assign_resources(res_clear.get("request_id"),res_clear.get("resource_center_ids",[]),res_clear.get("quantities",[]))
-            if response.get("status") == "success":
-                state.allocated_resources = res_clear
-                print("Resource allocation successful.")
-                print(res_clear.get("request_id"))
-                get_status = change_status_after_assign_resources(res_clear.get("request_id"), "success")
-                print(f"Status change result: {get_status.get('status')}")
-                # Update the state with the new status
-                state.disaster_status = get_status.get('status')
+        # # Save the allocation results to the database
+        # if res_clear:
+        #     response = assign_resources(res_clear.get("request_id"),res_clear.get("resource_center_ids",[]),res_clear.get("quantities",[]))
+        #     if response.get("status") == "success":
+        #         state.allocated_resources = res_clear
+        #         print("Resource allocation successful.")
+        #         print(res_clear.get("request_id"))
+        #         get_status = change_status_after_assign_resources(res_clear.get("request_id"), "success")
+        #         print(f"Status change result: {get_status.get('status')}")
+        #         # Update the state with the new status
+        #         state.disaster_status = get_status.get('status')
 
     except requests.RequestException as e:
         print(f"❌ Error calling LLM API: {e}")
@@ -481,6 +527,10 @@ def user_communication_agent(state: AgentState):
         5. The message should be short, simple, and easy to understand by anyone (avoid technical jargon).
 
         Now, based on the above rules and given information, write one clear and supportive message for the user.
+        output format:
+        {{
+            "message": "Your supportive message goes here."
+        }}
         """
     
     schema = {
@@ -493,32 +543,48 @@ def user_communication_agent(state: AgentState):
 
     
     try:
-        res = requests.post(
-                "https://c6e71855f5ee.ngrok-free.app/api/generate",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "model": "qwen3:4b",
-                    "prompt": PROMPT,
-                    "stream": False,
-                    "options": {"temperature": 0.2},
-                    "format": schema
+        client = OpenAI()
+        # Open API Code
+        res = client.responses.parse(
+            model="gpt-4o-2024-08-06",
+            input=[
+                {"role": "system", "content": "Give the proper structured output."},
+                {
+                    "role": "user",
+                    "content": PROMPT,
                 },
-            )
-        res.raise_for_status()
+            ],
+            text_format=UserMessage,
+        )
+        
+        message = res.output_parsed.message
+        state.user_msg = message
+        # res = requests.post(
+        #         "https://c6e71855f5ee.ngrok-free.app/api/generate",
+        #         headers={"Content-Type": "application/json"},
+        #         json={
+        #             "model": "qwen3:4b",
+        #             "prompt": PROMPT,
+        #             "stream": False,
+        #             "options": {"temperature": 0.2},
+        #             "format": schema
+        #         },
+        #     )
+        # res.raise_for_status()
 
-        model_output = res.text.strip()
-        try:
-            parsed_output = json.loads(model_output)
+        # model_output = res.text.strip()
+        # try:
+        #     parsed_output = json.loads(model_output)
                 
-        except json.JSONDecodeError:
-                print("⚠️ Model output is not valid JSON:", model_output)
-                parsed_output = {}
+        # except json.JSONDecodeError:
+        #         print("⚠️ Model output is not valid JSON:", model_output)
+        #         parsed_output = {}
 
-        response_text = parsed_output.get("response", "")
-        res_clear = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL).strip()
-        print(f"User MSG: {res_clear}")
+        # response_text = parsed_output.get("response", "")
+        # res_clear = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL).strip()
+        # print(f"User MSG: {res_clear}")
 
-        state.user_msg = res_clear
+        # state.user_msg = res_clear
 
     except requests.RequestException as e:
         print(f"❌ Error calling LLM API: {e}")
