@@ -202,3 +202,6 @@ for idx, req_id in enumerate(best_order):
     assigned_responder = best_assignment[idx]
     responder_str = f"Responder {responders[assigned_responder]['id']}" if assigned_responder is not None else "No responder assigned"
     print(f"Request {req['id']} ({req['type']}) assigned to {responder_str}")
+
+
+
