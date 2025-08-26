@@ -1,5 +1,5 @@
-import React from 'react';
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+
 
 const styles = StyleSheet.create({
   page: { padding: 24, fontFamily: 'Helvetica' },
@@ -21,19 +21,22 @@ const styles = StyleSheet.create({
   timestamp: { fontSize: 10, color: '#718096', marginTop: 4 }
 });
 
-const DisasterRequestReportPDF = ({ request, gatewayResponse }) => {
-  if (!request || !gatewayResponse) {
-    return (
-      <Document>
-        <Page style={styles.page}>
-          <Text>Error: Report data is missing</Text>
-        </Page>
-      </Document>
-    );
-  }
 
-  const { gatewayData } = gatewayResponse || {};
-  const agentResponses = gatewayData?.agent_responses || [];
+const DisasterRequestReportPDF =  ({ request, gatewayResponse,resourceCenterDetails }) => {
+
+  if (!request || !gatewayResponse) {
+      return (
+        <Document>
+          <Page style={styles.page}>
+            <Text>Loading resource details...</Text>
+          </Page>
+        </Document>
+      );
+    }
+
+
+  console.log("Gateway Response:", gatewayResponse);
+  console.log("Resource Center Details:", resourceCenterDetails);
 
   return (
     <Document>
@@ -109,7 +112,7 @@ const DisasterRequestReportPDF = ({ request, gatewayResponse }) => {
         </View>
 
         {/* Agent Responses Section */}
-        <View style={styles.section}>
+        {/* <View style={styles.section}>
           <Text style={styles.heading}>Agent Processing Results</Text>
           
           {Array.isArray(agentResponses) && agentResponses.length > 0 ? agentResponses.map((agent, index) => (
@@ -158,6 +161,57 @@ const DisasterRequestReportPDF = ({ request, gatewayResponse }) => {
               {(gatewayData?.overall_status ?? 'N/A').toUpperCase()}
             </Text>
           </View>
+        </View> */}
+        {/* Agent Responses Section */}
+        <View style={styles.section}>
+          <Text style={styles.heading}>Agent Processing Results</Text>
+
+          {/* User-friendly status and message */}
+          <View style={styles.agentSection}>
+            <View style={styles.agentHeader}>
+              <Text style={styles.agentName}>REQUEST STATUS</Text>
+              <Text
+                style={
+                  gatewayResponse?.status === "verified"
+                    ? styles.statusSuccess
+                    : styles.statusError
+                }
+              >
+                {(gatewayResponse?.status ?? "N/A").toUpperCase()}
+              </Text>
+            </View>
+
+            <Text style={styles.subheading}>Message to You:</Text>
+            <View style={styles.responseContainer}>
+              <Text>
+                {gatewayResponse?.user_msg ??
+                  "We are processing your request and will update you soon."}
+              </Text>
+            </View>
+
+            <Text style={styles.subheading}>Current Disaster Status:</Text>
+            <Text>{gatewayResponse?.disaster_status ?? "N/A"}</Text>
+          </View>
+
+          {/* Allocated Resource Centers */}
+          {resourceCenterDetails.length > 0 && (
+            <View style={[styles.agentSection, { marginTop: 12 }]}>
+              <Text style={styles.subheading}>
+                Resources Allocated for You
+              </Text>
+              <Text style={{ marginBottom: 6 }}>
+                These are the resource centers assigned to help. If the
+                situation is urgent, you may directly contact them:
+              </Text>
+              {resourceCenterDetails.map((rc) => (
+                <View key={rc.resourceId} style={styles.responseContainer}>
+                  <Text style={{ fontWeight: "bold" }}>{rc.name}</Text>
+                  <Text>Contact: {rc.contactNumber}</Text>
+                  <Text>ID: {rc.resourceId}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </Page>
     </Document>

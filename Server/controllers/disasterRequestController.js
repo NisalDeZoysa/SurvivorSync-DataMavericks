@@ -138,6 +138,8 @@ export const createUserRequest = async (req, res) => {
   const disasterStatus = workflow.disaster_status || "PENDING";
   const status = workflow.status || "INVALID";
 
+  console.log("\nResource Center IDs:", resourceCenterIds);
+
   // Ensure user_msg is user friendly
     let userMsg = "We are doing our best to help! Our team is reviewing your request.";
     try {

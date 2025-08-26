@@ -46,7 +46,8 @@ def run_agent_workflow(input_data: str):
     initial_state = AgentState(**input_data)
     agent_workflow = create_workflow()
     config = {"recursion_limit": 100} 
-    return agent_workflow.invoke(initial_state, config=config)
+    agent_state = agent_workflow.invoke(initial_state, config=config)
+    return agent_state
 
 def create_workflow():
     workflow = StateGraph(AgentState)
@@ -207,7 +208,7 @@ def media_extraction_agent(state: AgentState):
                 with open(resolved_path, "rb") as f:
                     files = {"file": (resolved_path.name, f, "audio/mpeg")}
                     response = requests.post(
-                        "https://f310433be080.ngrok-free.app/transcribe", 
+                        "https://d59a3d3b185d.ngrok-free.app/transcribe", 
                         files=files,
                         data={"language": "en"}  # optional
                     )
@@ -281,50 +282,50 @@ def request_verify_agent(state: AgentState):
     
 
     try:
-        client = OpenAI()
-        # Open API Code
-        res = client.responses.parse(
-            model="gpt-4o-2024-08-06",
-            input=[
-                {"role": "system", "content": "Give the proper structured output."},
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-            ],
-            text_format=RequestStatus,
-        )
-
-        print(f"Status output: {res}")
-        status_res = res.output_parsed
-
-        # # Ollama Call
-        # res = requests.post(
-        #         "https://c6e71855f5ee.ngrok-free.app/api/generate",
-        #         headers={"Content-Type": "application/json"},
-        #         json={
-        #             "model": "qwen3:4b",
-        #             "prompt": prompt,
-        #             "stream": False,
-        #             "options": {"temperature": 0.2},
-        #             "format": schema
+        # client = OpenAI()
+        # # Open API Code
+        # res = client.responses.parse(
+        #     model="gpt-4o-2024-08-06",
+        #     input=[
+        #         {"role": "system", "content": "Give the proper structured output."},
+        #         {
+        #             "role": "user",
+        #             "content": prompt,
         #         },
-        #     )
-        # res.raise_for_status()
+        #     ],
+        #     text_format=RequestStatus,
+        # )
+
+        # print(f"Status output: {res}")
+        # status_res = res.output_parsed
+
+        # Ollama Call
+        res = requests.post(
+                "https://c6e71855f5ee.ngrok-free.app/api/generate",
+                headers={"Content-Type": "application/json"},
+                json={
+                    "model": "qwen3:4b",
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0.2},
+                    "format": schema
+                },
+            )
+        res.raise_for_status()
 
 
 
-        # model_output = res.text.strip()
-        # try:
-        #     parsed_output = json.loads(model_output)
+        model_output = res.text.strip()
+        try:
+            parsed_output = json.loads(model_output)
                 
-        # except json.JSONDecodeError:
-        #         print("⚠️ Model output is not valid JSON:", model_output)
-        #         parsed_output = {}
+        except json.JSONDecodeError:
+                print("⚠️ Model output is not valid JSON:", model_output)
+                parsed_output = {}
 
-        # response_text = parsed_output.get("response", "")
-        # status_res = parse_workflow_response(response_text)
-        # print(f"Status output: {status_res}")
+        response_text = parsed_output.get("response", "")
+        status_res = parse_workflow_response(response_text)
+        print(f"Status output: {status_res}")
 
         
 

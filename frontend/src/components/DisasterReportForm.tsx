@@ -32,8 +32,8 @@ import DisasterRequestReportPDF from '@/components/EmergencyReportPDF';
 
 interface DisasterFormValues {
   name: string;
-  disasterId: DisasterType; // changed from 'type'
-  emergencyName: string; // new field for brief name
+  disasterId: DisasterType;
+  emergencyName: string; 
   severity: DisasterSeverity;
   details: string;
   affectedCount: number;
@@ -55,6 +55,7 @@ const DisasterReportForm: React.FC = () => {
   const mimeTypeRef = useRef<string>('audio/wav'); // Default to WAV
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [createdDisaster, setCreatedDisaster] = useState<Disaster | null>(null);
+  const [resourceCenterDetails, setResourceCenterDetails] = useState([]);
 
 
 
@@ -185,6 +186,22 @@ const DisasterReportForm: React.FC = () => {
     }
   };
 
+  const getResourceCenterDetails = async (resourceCenterIds) => {
+    console.log("Getting resource center details for IDs:", resourceCenterIds);
+    const allDetails = await Promise.all(
+      resourceCenterIds.map(async (id) => {
+        const response = await axios.get(`http://localhost:7000/api/resource-centers/${id}`);
+        return response.data;
+      })
+    );
+    // store each name , contactNumber, resourceId
+    return allDetails.map(({ name, contactNumber, resourceId }) => ({
+      name,
+      contactNumber,
+      resourceId
+    }));
+  };
+
   const onSubmit = async (data: DisasterFormValues) => {
     if (!location) {
 
@@ -242,7 +259,15 @@ const DisasterReportForm: React.FC = () => {
 
       //  set the disaster 
       setCreatedDisaster(response.data);
-      console.log(createdDisaster)
+
+      // Get all resource center details
+      const details = await getResourceCenterDetails(
+            response.data.gatewayResponse.resource_center_ids
+          );
+      setResourceCenterDetails(details);
+      
+
+      console.log("Resource Center Details:", details);
       setShowSuccessPopup(true);
 
       console.log("Submission response:", response.data);
@@ -549,12 +574,13 @@ const DisasterReportForm: React.FC = () => {
                       <DisasterRequestReportPDF
                         request={createdDisaster.request}
                         gatewayResponse={createdDisaster.gatewayResponse}
+                        resourceCenterDetails={resourceCenterDetails}
                       />
                     }
                     fileName={`disaster-report-${createdDisaster.request.id}.pdf`}
                   >
                     {({ loading }) => (
-                      <Button className="bg-emergency-500 hover:bg-emergency-600">
+                      <Button className="bg-emergency-500 hover:bg-emergency-600" onClick={() => setShowSuccessPopup(false)}>
                         {loading ? "Generating PDF..." : "Download PDF"}
                       </Button>
                     )}
