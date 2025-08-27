@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
 Whisper Tiny API server (Flask) + ngrok, fixed & chatty
+
 """
 
+import json
 import os
 import sys
 import shutil
@@ -12,6 +14,14 @@ import subprocess
 import importlib.util
 from typing import Optional
 import imageio_ffmpeg as iio_ffmpeg
+import ollama
+from flask import request, jsonify
+import os, traceback
+from flask import Flask, request, jsonify
+import requests
+from tqdm import tqdm
+import whisper
+from pyngrok import ngrok
 from dotenv import load_dotenv
 
 # ---------------------- load env ----------------------
@@ -30,7 +40,8 @@ REQUIRED_PACKAGES = [
     "tqdm",
     "requests",
     "imageio-ffmpeg",
-    "python-dotenv"
+    "python-dotenv",
+    "ollama"
 ]
 
 MODEL_URLS = {
@@ -64,11 +75,7 @@ def ensure_packages():
 # install packages
 ensure_packages()
 
-from flask import Flask, request, jsonify
-import requests
-from tqdm import tqdm
-import whisper
-from pyngrok import ngrok
+
 
 # ---------------------- ffmpeg -----------------------
 ffmpeg_exe = iio_ffmpeg.get_ffmpeg_exe()
@@ -154,7 +161,47 @@ def transcribe():
     except Exception as e:
         print(f"[ERROR] Transcription failed: {e}")
         return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
+    
 
+
+UPLOAD_DIR = os.path.join(os.getcwd(), "_uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+@app.route('/llava/describe', methods=['POST'])
+def llava_describe():
+    try:
+        image_file = request.files.get('image')
+        if not image_file:
+            return jsonify({"error": "No image provided"}), 400
+
+        image_path = os.path.join(UPLOAD_DIR, image_file.filename)
+        image_file.save(image_path)
+        print(f"[REQ] Received image: {image_path}")
+
+        cmd = [
+            "ollama", "run", "llava:7b",
+            "--prompt", "Describe this image in detail focusing on disaster context.",
+            "--image", image_path,
+            "--json"
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            return jsonify({"error": "Ollama failed", "details": result.stderr}), 500
+
+        output = json.loads(result.stdout)
+        description = output.get("response", "").strip()
+
+        try:
+            os.remove(image_path)
+        except Exception as e:
+            print(f"[WARN] Failed to delete temp file: {e}")
+
+        return jsonify({"description": description}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e), "trace": traceback.format_exc()}), 500
+
+    
 # ---------------------- ngrok -----------------------
 def start_ngrok():
     token = os.getenv("NGROK_AUTHTOKEN")

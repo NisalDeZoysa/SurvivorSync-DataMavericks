@@ -229,7 +229,7 @@ def media_extraction_agent(state: AgentState):
                 with open(resolved_path, "rb") as f:
                     files = {"file": (resolved_path.name, f, "audio/mpeg")}
                     response = requests.post(
-                        "https://70b432a14450.ngrok-free.app/transcribe",  
+                        "https://d59a3d3b185d.ngrok-free.app/transcribe",  
                         files=files,
                         data={"language": "en"}  # optional
                     )
