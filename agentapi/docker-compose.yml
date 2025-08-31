@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  ai_workflow:
+    build: ./ai_workflow
+    container_name: ai_workflow_service
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - ./ai_workflow:/app
+    networks:
+      - agentnet
+
+  gateway:
+    build: ./gateway
+    container_name: gateway_service
+    env_file: .env
+    restart: unless-stopped
+    ports:
+      - "8080:8080"   # expose API port
+    volumes:
+      - ./gateway:/app
+    networks:
+      - agentnet
+
+  tips_agent:
+    build: ./tips_agent
+    container_name: tips_agent_service
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - ./tips_agent:/app
+    networks:
+      - agentnet
+
+  mcps:
+    build: ./mcps
+    container_name: mcps_service
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - ./mcps:/app
+    networks:
+      - agentnet
+
+networks:
+  agentnet:
+    driver: bridge

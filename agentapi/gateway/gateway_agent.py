@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 import uuid
 
 import requests
-from core.agents import run_agent_workflow
+from agentapi.ai_workflow.agents import run_agent_workflow
 import os
 from pydantic import BaseModel
 
