@@ -138,13 +138,13 @@ export const createUserRequest = async (req, res) => {
   console.log("Gateway Response:", JSON.stringify(gatewayData, null, 2));
 
   // 2. Extract required fields from workflow_result
-  const workflow = gatewayData.workflow_result || {};
+  const workflow = gatewayData.state || {};
   const allocated = workflow.allocated_resources || {};
 
   const resourceCenterIds = allocated.resource_center_ids || [];
   const disasterStatus = workflow.disaster_status || "PENDING";
   const status = workflow.status || "INVALID";
-  const userMsg = workflow.user_msg || "We are doing our best to help! Our team is reviewing your request.";
+  const userMsg = workflow.user_msg.message || "We are doing our best to help! Our team is reviewing your request.";
   console.log("\nResource Center IDs:", resourceCenterIds);
 
   //await sendMessage(request.contactNo, userMsg);
