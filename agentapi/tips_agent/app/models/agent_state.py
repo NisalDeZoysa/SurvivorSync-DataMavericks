@@ -10,7 +10,7 @@ class UserMessage(BaseModel):
     message: str
 
 class AgentState(BaseModel):
-    agent: Optional[str] = "workflow"
+    agent: Optional[str] = "tips_agent"
     input: Optional[Dict[str, Any]] = None
     image_path: Optional[str] = None
     voice_path: Optional[str] = None
