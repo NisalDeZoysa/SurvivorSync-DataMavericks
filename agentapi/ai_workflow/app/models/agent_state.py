@@ -22,3 +22,4 @@ class AgentState(BaseModel):
     allocated_resources: Optional[AllocatedResources] = None
     disaster_status: Optional[str] = "PENDING"
     user_msg: Optional[UserMessage] = None
+    error_msg: Optional[str] = None

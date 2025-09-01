@@ -14,7 +14,7 @@ import { whatsappClient } from './controllers/whatsAppConroller.js';
 
 dotenv.config();
 
-whatsappClient.initialize();
+//whatsappClient.initialize();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

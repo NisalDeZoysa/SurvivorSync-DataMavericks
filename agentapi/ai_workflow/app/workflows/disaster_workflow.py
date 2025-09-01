@@ -29,9 +29,14 @@ def create_workflow():
     
     return workflow.compile()
 
-def run_agent_workflow(input_data):
-    initial_state = AgentState(**input_data)
-    agent_workflow = create_workflow()
-    config = {"recursion_limit": 100} 
-    agent_state = agent_workflow.invoke(initial_state, config=config)
-    return agent_state
+def run_agent_workflow(initial_state: AgentState) -> AgentState:
+    try:
+        agent_workflow = create_workflow()
+        config = {"recursion_limit": 100} 
+        agent_state = agent_workflow.invoke(initial_state, config=config)
+        if isinstance(agent_state, dict):
+            agent_state = AgentState(**agent_state)
+        return agent_state
+    except Exception as e:
+        print("Error occurred while running agent workflow:", e)
+        return AgentState(error_msg=str(e))

@@ -57,8 +57,8 @@ def user_communication_agent(state: AgentState):
             text_format=UserMessage,
         )
         
-        message = res.output_parsed.message
-        state.user_msg = message
+        parsed: UserMessage = res.output_parsed
+        state.user_msg = parsed
         # res = requests.post(
         #         "https://c6e71855f5ee.ngrok-free.app/api/generate",
         #         headers={"Content-Type": "application/json"},

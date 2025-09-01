@@ -123,10 +123,14 @@ export const createUserRequest = async (req, res) => {
       `;
 
   // //  // Call gateway server
-  const gatewayResponse = await fetch(`${AGENTAPI_URL}/api/agent`, {
+  const gatewayResponse = await fetch(`http://localhost:8000/ai_workflow`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: messageText.trim() }),
+    body: JSON.stringify({
+      input: {
+       message : messageText.trim()
+      }
+    }),
   });
 
   // 1. Get the parsed JSON response
@@ -143,7 +147,7 @@ export const createUserRequest = async (req, res) => {
   const userMsg = workflow.user_msg || "We are doing our best to help! Our team is reviewing your request.";
   console.log("\nResource Center IDs:", resourceCenterIds);
 
-  await sendMessage(request.contactNo, userMsg);
+  //await sendMessage(request.contactNo, userMsg);
   // Include gateway response in your final output if needed
   res.status(201).json({
     message: "User request created",
