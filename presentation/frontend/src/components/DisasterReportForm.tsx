@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { AlertTriangle, MapPin, Check, Mic, Upload } from 'lucide-react';
+import { AlertTriangle, MapPin, Check, Mic, Upload, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -56,19 +55,17 @@ const DisasterReportForm: React.FC = () => {
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [createdDisaster, setCreatedDisaster] = useState<Disaster | null>(null);
   const [resourceCenterDetails, setResourceCenterDetails] = useState([]);
-
-
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const form = useForm<DisasterFormValues>({
     defaultValues: {
       name: currentUser?.name || '',
-      emergencyName: '', // new field for brief name
-      disasterId: DisasterType.OTHER, // changed from 'type'
+      emergencyName: '',
+      disasterId: DisasterType.OTHER,
       severity: DisasterSeverity.MEDIUM,
       details: '',
       affectedCount: 1,
       contactNo: currentUser?.contactNo || '',
-
     }
   });
 
@@ -81,14 +78,12 @@ const DisasterReportForm: React.FC = () => {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
           });
-          console.log("Location detected:", position.coords);
           toast({
             title: "Location detected",
             description: `Lat: ${position.coords.latitude.toFixed(4)}, Long: ${position.coords.longitude.toFixed(4)}`,
           });
         },
         (error) => {
-          console.error("Error getting location:", error);
           toast({
             variant: "destructive",
             title: "Location Error",
@@ -107,7 +102,6 @@ const DisasterReportForm: React.FC = () => {
 
   const toggleAudioRecording = async () => {
     if (isRecordingAudio) {
-      // Stop recording
       if (mediaRecorderRef.current) {
         mediaRecorderRef.current.stop();
       }
@@ -118,14 +112,12 @@ const DisasterReportForm: React.FC = () => {
       });
     } else {
       try {
-        // Clear previous recordings
         audioChunksRef.current = [];
         setAudioBlob(null);
 
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         streamRef.current = stream;
 
-        // Determine supported MIME type
         if (MediaRecorder.isTypeSupported('audio/wav')) {
           mimeTypeRef.current = 'audio/wav';
         } else if (MediaRecorder.isTypeSupported('audio/webm')) {
@@ -133,7 +125,7 @@ const DisasterReportForm: React.FC = () => {
         } else if (MediaRecorder.isTypeSupported('audio/mp3')) {
           mimeTypeRef.current = 'audio/mp3';
         } else {
-          mimeTypeRef.current = 'audio/webm'; // Fallback
+          mimeTypeRef.current = 'audio/webm';
         }
 
         const mediaRecorder = new MediaRecorder(stream, {
@@ -150,10 +142,7 @@ const DisasterReportForm: React.FC = () => {
           const blob = new Blob(audioChunksRef.current, {
             type: mimeTypeRef.current
           });
-
-          // Stop all tracks to release microphone
           stream.getTracks().forEach(track => track.stop());
-
           setAudioBlob(blob);
           audioChunksRef.current = [];
         };
@@ -165,7 +154,6 @@ const DisasterReportForm: React.FC = () => {
           description: "Speak clearly to describe the emergency.",
         });
       } catch (error) {
-        console.error("Error accessing microphone:", error);
         toast({
           title: "Error",
           description: "Microphone access was denied.",
@@ -187,14 +175,12 @@ const DisasterReportForm: React.FC = () => {
   };
 
   const getResourceCenterDetails = async (resourceCenterIds) => {
-    console.log("Getting resource center details for IDs:", resourceCenterIds);
     const allDetails = await Promise.all(
       resourceCenterIds.map(async (id) => {
         const response = await axios.get(`http://localhost:7000/api/resource-centers/${id}`);
         return response.data;
       })
     );
-    // store each name , contactNumber, resourceId
     return allDetails.map(({ name, contactNumber, resourceId, province }) => ({
       name,
       contactNumber,
@@ -205,7 +191,6 @@ const DisasterReportForm: React.FC = () => {
 
   const onSubmit = async (data: DisasterFormValues) => {
     if (!location) {
-
       toast({
         variant: "destructive",
         title: "Location Required",
@@ -217,15 +202,14 @@ const DisasterReportForm: React.FC = () => {
     const formData = new FormData();
     formData.append('name', currentUser?.name || data.name);
     formData.append('userId', currentUser?.id || '1');
-    formData.append('disasterId', String(Number(data.disasterId))); // ensure int
+    formData.append('disasterId', String(Number(data.disasterId)));
     formData.append('severity', data.severity);
     formData.append('details', data.details || '');
-    formData.append('affectedCount', String(Number(data.affectedCount))); // ensure int
+    formData.append('affectedCount', String(Number(data.affectedCount)));
     formData.append('contactNo', data.contactNo || '');
 
-
     if (location) {
-      formData.append('latitude', String(location.latitude)); // ensure float as string
+      formData.append('latitude', String(location.latitude));
       formData.append('longitude', String(location.longitude));
     }
 
@@ -236,42 +220,31 @@ const DisasterReportForm: React.FC = () => {
     if (audioBlob) {
       const extension = mimeTypeRef.current.split('/')[1] || 'wav';
       const filename = `recording.${extension}`;
-
       formData.append('voice', audioBlob, filename);
     }
     try {
       setIsSubmitting(true);
-      console.log("Submitting form data:", Object.fromEntries(formData.entries()));
 
       const response = await axios.post('http://localhost:7000/api/requests', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
         withCredentials: true,
-        // unlimited timeout
         timeout: 0,
       });
-
-
 
       if (!response.data.success) {
         throw new Error(response.data.message || "Submission failed");
       }
 
-      //  set the disaster 
       setCreatedDisaster(response.data);
 
-      // Get all resource center details
       const details = await getResourceCenterDetails(
-            response.data.gatewayResponse.resource_center_ids
-          );
+        response.data.gatewayResponse.resource_center_ids
+      );
       setResourceCenterDetails(details);
-      
 
-      console.log("Resource Center Details:", details);
       setShowSuccessPopup(true);
-
-      console.log("Submission response:", response.data);
 
       toast({
         title: "Report Submitted",
@@ -283,7 +256,6 @@ const DisasterReportForm: React.FC = () => {
       setSelectedImage(null);
       setImagePreview(null);
     } catch (error) {
-      console.error("Submission error:", error);
       toast({
         variant: "destructive",
         title: "Submission Failed",
@@ -294,199 +266,77 @@ const DisasterReportForm: React.FC = () => {
     }
   };
 
-  // Register the WAV encoder once on mount
   useEffect(() => {
     (async () => {
       await register(await connect());
     })();
   }, []);
 
-
-
   return (
-    <Card className="p-6 shadow-lg">
+    <Card className="p-6 shadow-lg max-w-2xl mx-auto">
       <div className="mb-6 text-center">
         <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-emergency-100 mb-4">
           <AlertTriangle className="h-8 w-8 text-emergency-500" />
         </div>
         <h2 className="text-2xl font-bold text-red-600">Report Emergency</h2>
         <p className="text-gray-600">
-          Please provide as much detail as possible about the emergency situation.
+          Please fill the most urgent details below. Advanced options are available if needed.
         </p>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-          {/* Location fetch button */}
-          <div className="flex items-center gap-4 mb-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex items-center gap-2"
-              onClick={getLocation}
-            >
-              <MapPin className="h-4 w-4" />
-              Detect Location
-            </Button>
-            {location && (
-              <span className="text-sm text-green-600 flex items-center">
-                <Check className="h-4 w-4 mr-1" /> Location detected
-              </span>
-            )}
+          {/* Row 1: Detect Location & Record Audio */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-2">
+            {/* Detect Location */}
+            <div className="flex-1 flex flex-col">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex items-center gap-2 w-full"
+                onClick={getLocation}
+              >
+                <MapPin className="h-4 w-4" />
+                Detect Location
+              </Button>
+              {location && (
+                <span className="text-sm text-green-600 flex items-center mt-2">
+                  <Check className="h-4 w-4 mr-1" /> Location detected
+                </span>
+              )}
+            </div>
+            {/* Record Audio */}
+            <div className="flex-1 flex flex-col">
+              <Button
+                type="button"
+                variant={isRecordingAudio ? "destructive" : "outline"}
+                className="flex items-center gap-2 w-full"
+                onClick={toggleAudioRecording}
+              >
+                <Mic className="h-4 w-4" />
+                {isRecordingAudio ? "Stop Recording" : "Record Audio"}
+              </Button>
+              {isRecordingAudio && (
+                <p className="text-sm text-red-500 mt-2">Recording in progress...</p>
+              )}
+              {audioBlob && !isRecordingAudio && (
+                <p className="text-xs text-green-600 mt-2">Audio recorded</p>
+              )}
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Name (contact person name)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="your name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="disasterId"
-              rules={{ required: "Type is required" }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Emergency Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value?.toString()}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={DisasterType.FLOOD.toString()}>Flood</SelectItem>
-                      <SelectItem value={DisasterType.EARTHQUAKE.toString()}>Earthquake</SelectItem>
-                      <SelectItem value={DisasterType.HOUSEHOLDFIRE.toString()}>Household Fire</SelectItem>
-                      <SelectItem value={DisasterType.WILDFIRE.toString()}>Wild Fire</SelectItem>
-                      <SelectItem value={DisasterType.TSUNAMI.toString()}>Tsunami</SelectItem>
-                      <SelectItem value={DisasterType.LANDSLIDE.toString()}>Landslide</SelectItem>
-                      <SelectItem value={DisasterType.OTHER.toString()}>Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="emergencyName"
-              rules={{ required: "Emergency name is required" }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Emergency Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Brief name for this emergency" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="severity"
-              rules={{ required: "Severity is required" }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Severity Level</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select severity" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={DisasterSeverity.LOW}>Low</SelectItem>
-                      <SelectItem value={DisasterSeverity.MEDIUM}>Medium</SelectItem>
-                      <SelectItem value={DisasterSeverity.HIGH}>High</SelectItem>
-                      <SelectItem value={DisasterSeverity.CRITICAL}>Critical</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="affectedCount"
-              rules={{ required: "Affected count is required" }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estimated People Affected</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min="0"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="contactNo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contact Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Your contact number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="details"
-            rules={{ required: "Details are required" }}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Emergency Details</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Provide as much detail as possible about the emergency situation..."
-                    className="min-h-[120px]"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <FormLabel className="block mb-2">Upload Image Evidence</FormLabel>
+          {/* Row 2: Upload Image & Estimated People Affected */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Upload Image */}
+            <div className="flex-1">
+              <FormLabel className="block mb-2 font-semibold">Upload Image Evidence</FormLabel>
               <div className="flex items-center gap-4">
                 <label className="cursor-pointer">
-                  <div className="flex items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-safety-500 transition-colors">
+                  <div className="flex items-center justify-center w-32 h-24 border-2 border-dashed border-gray-300 rounded-lg hover:border-emergency-500 transition-colors">
                     <div className="flex flex-col items-center">
                       <Upload className="h-8 w-8 text-gray-400" />
-                      <span className="text-sm text-gray-500 mt-1">Select image</span>
+                      <span className="text-xs text-gray-500 mt-1">Select image</span>
                     </div>
                   </div>
                   <Input
@@ -497,7 +347,7 @@ const DisasterReportForm: React.FC = () => {
                   />
                 </label>
                 {imagePreview && (
-                  <div className="relative h-32 w-32">
+                  <div className="relative h-20 w-20">
                     <img
                       src={imagePreview}
                       alt="Preview"
@@ -520,32 +370,188 @@ const DisasterReportForm: React.FC = () => {
                 )}
               </div>
             </div>
-
-            <div>
-              <FormLabel className="block mb-2">Record Audio Description</FormLabel>
-              <Button
-                type="button"
-                variant={isRecordingAudio ? "destructive" : "outline"}
-                className="flex items-center gap-2"
-                onClick={toggleAudioRecording}
-              >
-                <Mic className="h-4 w-4" />
-                {isRecordingAudio ? "Stop Recording" : "Start Recording"}
-              </Button>
-              {isRecordingAudio && (
-                <p className="text-sm text-red-500 mt-2">Recording in progress...</p>
-              )}
+            {/* Estimated People Affected */}
+            <div className="flex-1">
+              <FormField
+                control={form.control}
+                name="affectedCount"
+                rules={{ required: "Affected count is required" }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold">Estimated People Affected</FormLabel>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {[1, 5, 10, 100, 10000].map((num) => (
+                        <Button
+                          key={num}
+                          type="button"
+                          size="sm"
+                          variant={field.value === num ? "default" : "outline"}
+                          className="px-3"
+                          onClick={() => field.onChange(num)}
+                        >
+                          {num}
+                        </Button>
+                      ))}
+                    </div>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="Or enter manually"
+                        value={field.value}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t">
+          {/* Emergency Situation (was Emergency Details, now in main form) */}
+          <FormField
+            control={form.control}
+            name="details"
+            rules={{ required: "Emergency situation is required" }}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-semibold">Emergency Situation</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Describe the emergency situation..."
+                    className="min-h-[80px]"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Advanced Options Dropdown */}
+          <div>
+            <Button
+              type="button"
+              variant="ghost"
+              className="flex items-center gap-2 text-gray-700"
+              onClick={() => setShowAdvanced((v) => !v)}
+            >
+              {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {showAdvanced ? "Hide Advanced Options" : "Show Advanced Options"}
+            </Button>
+            {showAdvanced && (
+              <div className="mt-4 space-y-4 border rounded-lg p-4 bg-gray-50">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Name (contact person name)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="disasterId"
+                  rules={{ required: "Type is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Type</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value?.toString()}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={DisasterType.FLOOD.toString()}>Flood</SelectItem>
+                          <SelectItem value={DisasterType.EARTHQUAKE.toString()}>Earthquake</SelectItem>
+                          <SelectItem value={DisasterType.HOUSEHOLDFIRE.toString()}>Household Fire</SelectItem>
+                          <SelectItem value={DisasterType.WILDFIRE.toString()}>Wild Fire</SelectItem>
+                          <SelectItem value={DisasterType.TSUNAMI.toString()}>Tsunami</SelectItem>
+                          <SelectItem value={DisasterType.LANDSLIDE.toString()}>Landslide</SelectItem>
+                          <SelectItem value={DisasterType.OTHER.toString()}>Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="emergencyName"
+                  rules={{ required: "Emergency name is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Brief name for this emergency" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="severity"
+                  rules={{ required: "Severity is required" }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Severity Level</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select severity" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value={DisasterSeverity.LOW}>Low</SelectItem>
+                          <SelectItem value={DisasterSeverity.MEDIUM}>Medium</SelectItem>
+                          <SelectItem value={DisasterSeverity.HIGH}>High</SelectItem>
+                          <SelectItem value={DisasterSeverity.CRITICAL}>Critical</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="contactNo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contact Number</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Your contact number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Submit */}
+          <div className="flex items-center justify-between pt-4 border-t mt-4">
             <div className="flex items-center text-emergency-500">
               <AlertTriangle className="h-5 w-5 mr-2" />
               <span className="text-sm font-medium">This will be reported to emergency services</span>
             </div>
             <Button
               type="submit"
-              className="bg-emergency-500 hover:bg-emergency-600"
+              className="bg-emergency-500 hover:bg-emergency-600 text-lg px-8 py-2"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Submitting..." : "Submit Emergency Report"}
@@ -594,8 +600,6 @@ const DisasterReportForm: React.FC = () => {
         )
       }
     </Card>
-
-
   );
 };
 
