@@ -1,7 +1,10 @@
 from models.agent_state import AgentState
+from models.request_status import TipsResponse
 import requests
-from OpenAI import OpenAI
+from openai import OpenAI
+import dotenv
 
+dotenv.load_dotenv()
 
 def run_tips_agent(state: AgentState) -> AgentState:
     print("Tips agent is running...")
@@ -14,7 +17,10 @@ def run_tips_agent(state: AgentState) -> AgentState:
     - Identify disaster/general preparedness context
     - Provide actionable, concise safety/preparedness tips
     - If real-time info is needed, use the web-search MCP tool (if available)
-    - Output must be plain text message only
+    - Output must be plain text message only and give maximum 3 tips if the user asking help only otherwise just provide general information.
+
+    Response:
+    {{"tips": "<tips>" }}
     """
 
 
@@ -30,12 +36,13 @@ def run_tips_agent(state: AgentState) -> AgentState:
                     "content": PROMPT,
                 },
             ],
+            text_format=TipsResponse,
         )
 
-        print(f"Status output: {res}")
-        output = res.output_parsed
+        print(f"Status output: {res.output_parsed}")
+        output = res.output_parsed.tips
         if output:
-            print("TTips return successful.")
+            print("Tips return successful.")
             state.user_msg = output
             
         else:

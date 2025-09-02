@@ -3,3 +3,5 @@ venv
 *.pt
 vaf
 __pycache__/
+tve
+*.log

@@ -6,3 +6,6 @@ class AgentRequest(BaseModel):
 
 class AgentResponse(BaseModel):
     state: Dict[str, Any]
+
+class TipsResponse(BaseModel):
+    tips: str
