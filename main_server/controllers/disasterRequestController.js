@@ -123,13 +123,14 @@ export const createUserRequest = async (req, res) => {
       `;
 
   // //  // Call gateway server
-  const gatewayResponse = await fetch(`http://localhost:8000/ai_workflow`, {
+  const gatewayResponse = await fetch(`http://localhost:8000/tasks/send`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       input: {
        message : messageText.trim()
-      }
+      },
+      agent:"workflow"
     }),
   });
 

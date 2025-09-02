@@ -3,4 +3,10 @@ from pydantic import BaseModel
 from typing import Dict, Any
 
 class GatewayResponse(BaseModel):
-    data: Dict[str, Any]
+    state: Dict[str, Any]
+
+class GatewayRequest(BaseModel):
+    input: Dict[str, Any]
+    agent: str
+
+

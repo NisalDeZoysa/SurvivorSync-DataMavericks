@@ -154,7 +154,7 @@
 //         >
 //           <Bot className="h-6 w-6 text-white animate-pulse" />
 //         </Button>
-        
+
 //         {/* Floating notification dot */}
 //         <div className={cn(
 //           "absolute -top-1 -right-1 h-4 w-4 bg-emergency-500 rounded-full",
@@ -349,28 +349,24 @@ const FloatingChatbot = () => {
     try {
       // Send message to backend in the required JSON format
       const response = await axios.post(
-        'http://localhost:5003/tasks/send',
-        { message: message },  // Correct JSON format
+        'http://localhost:8000/tasks/send',
+        {
+          input: {
+            message: message
+          },
+          agent: "tips"
+        },  // Correct JSON format
         { headers: { 'Content-Type': 'application/json' } }
       );
+      console.log("Backend response:", response);
+      const data = response.data.state;
 
-      const data = response.data;
-      
       // Check for both possible response formats
       let botReply = '';
-      
-      // 1. Check if response comes from tips-agent directly
-      if (data?.['tips-agent']?.response?.message) {
-        botReply = data['tips-agent'].response.message;
-      } 
-      // 2. Check if response comes through agent_responses
-      else if (data?.agent_responses) {
-        const tipsResponse = data.agent_responses.find(
-          (agent: any) => agent.tips_agent
-        );
-        botReply = tipsResponse?.tips_agent?.response?.message;
-      } 
-      // 3. Fallback to error message
+
+      if (data) {
+        botReply = data.user_msg;
+      }
       else {
         botReply = "Sorry, I couldn't understand the assistant's response.";
       }
@@ -381,7 +377,7 @@ const FloatingChatbot = () => {
         isBot: true,
         timestamp: new Date()
       };
-      
+
       setMessages(prev => [...prev, botMessage]);
 
     } catch (error) {
@@ -420,7 +416,7 @@ const FloatingChatbot = () => {
         >
           <Bot className="h-6 w-6 text-white animate-pulse" />
         </Button>
-        
+
         {/* Floating notification dot */}
         <div className={cn(
           "absolute -top-1 -right-1 h-4 w-4 bg-emergency-500 rounded-full",
@@ -484,8 +480,8 @@ const FloatingChatbot = () => {
               >
                 <div className={cn(
                   "max-w-[80%] p-3 rounded-2xl shadow-sm",
-                  msg.isBot 
-                    ? "bg-white border border-gray-200 rounded-bl-sm" 
+                  msg.isBot
+                    ? "bg-white border border-gray-200 rounded-bl-sm"
                     : "bg-safety-500 text-white rounded-br-sm"
                 )}>
                   <p className="text-sm">{msg.text}</p>
