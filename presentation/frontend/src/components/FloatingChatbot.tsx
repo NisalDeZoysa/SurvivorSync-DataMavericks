@@ -361,14 +361,14 @@ const FloatingChatbot = () => {
       console.log("Backend response:", response);
       const data = response.data.state;
 
-      // Check for both possible response formats
-      let botReply = '';
+      let botReply = "Sorry, I couldn't understand the assistant's response.";
 
-      if (data) {
-        botReply = data.user_msg;
-      }
-      else {
-        botReply = "Sorry, I couldn't understand the assistant's response.";
+      if (data?.user_msg) {
+        if (typeof data.user_msg === "string") {
+          botReply = data.user_msg; // unlikely, but safe
+        } else if (typeof data.user_msg === "object" && "message" in data.user_msg) {
+          botReply = data.user_msg.message;  // ✅ extract string
+        }
       }
 
       const botMessage: Message = {
@@ -396,6 +396,7 @@ const FloatingChatbot = () => {
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       handleSendMessage();
     }
   };

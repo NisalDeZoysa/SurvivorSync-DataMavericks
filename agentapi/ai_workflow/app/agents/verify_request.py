@@ -1,3 +1,4 @@
+import json
 import requests
 
 from models.agent_state import AgentState
@@ -54,60 +55,64 @@ def request_verify_agent(state: AgentState):
     
 
     try:
-        client = OpenAI()
-        # Open API Code
-        res = client.responses.parse(
-            model="gpt-4o-2024-08-06",
-            input=[
-                {"role": "system", "content": "Give the proper structured output."},
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-            ],
-            text_format=RequestStatus,
-        )
+        # client = OpenAI()
+        # # Open API Code
+        # res = client.responses.parse(
+        #     model="gpt-4o-2024-08-06",
+        #     input=[
+        #         {"role": "system", "content": "Give the proper structured output."},
+        #         {
+        #             "role": "user",
+        #             "content": prompt,
+        #         },
+        #     ],
+        #     text_format=RequestStatus,
+        # )
 
-        print(f"Status output: {res}")
-        output_status = res.output_parsed.status
+        # print(f"Status output: {res}")
+        # output_status = res.output_parsed.status
 
-        if output_status == "verified":
-            # Implement the function to update the database with the verified status
-            update_request_status(state.request.get("request_id"), "verified")
+        # if output_status == "verified":
+        #     # Implement the function to update the database with the verified status
+        #     update_request_status(state.request.get("request_id"), "verified")
             
-        state.status = output_status
-        state.reason = res.output_parsed.reason
+        # state.status = output_status
+        # state.reason = res.output_parsed.reason
         
 
         # # Ollama Call
-        # res = requests.post(
-        #         "https://c6e71855f5ee.ngrok-free.app/api/generate",
-        #         headers={"Content-Type": "application/json"},
-        #         json={
-        #             "model": "qwen3:4b",
-        #             "prompt": prompt,
-        #             "stream": False,
-        #             "options": {"temperature": 0.2},
-        #             "format": schema
-        #         },
-        #     )
-        # res.raise_for_status()
-        # model_output = res.text.strip()
-        # try:
-        #     parsed_output = json.loads(model_output)
-                
-        # except json.JSONDecodeError:
-        #         print("⚠️ Model output is not valid JSON:", model_output)
-        #         parsed_output = {}
+        res = requests.post(
+                "https://55713976f485.ngrok-free.app/api/generate",
+                headers={"Content-Type": "application/json"},
+                json={
+                    "model": "qwen3:4b",
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0.2},
+                    "format": RequestStatus.model_json_schema(),
+                },
+            )
+        res.raise_for_status()
 
-        # response_text = parsed_output.get("response", "")
-        # status_res = parse_workflow_response(response_text)
-        # print(f"Status output: {status_res}")
-        # if status_res.get('status') == "verified":
-        #     # Implement the function to update the database with the verified status
-        #     update_request_status(state.request.get("request_id"), "verified")
+        api_response = res.json()
+        raw_text = api_response["response"]
 
-        # state.status = status_res.get('status', '').strip()
+        try:
+            response_dict = json.loads(raw_text)
+        except json.JSONDecodeError:
+            raise ValueError(f"Invalid JSON in response: {raw_text}")
+
+        # Validate with Pydantic
+        request_status = RequestStatus(**response_dict)
+
+        print("✅ Parsed RequestStatus:", request_status)
+
+        if request_status.status == "verified":
+            # Implement the function to update the database with the verified status
+            update_request_status(state.request.get("request_id"), "verified")
+
+        state.status = request_status.status
+        state.reason = request_status.reason
 
     except requests.RequestException as e:
         print(f"❌ Error calling LLM API: {e}")

@@ -74,8 +74,6 @@ def ensure_packages():
 # install packages
 ensure_packages()
 
-
-
 # ---------------------- ffmpeg -----------------------
 ffmpeg_exe = iio_ffmpeg.get_ffmpeg_exe()
 os.environ["IMAGEIO_FFMPEG_EXE"] = ffmpeg_exe
@@ -124,7 +122,7 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 1024*1024*1024  # 1GB
 
 MODEL_NAME = os.getenv("WHISPER_MODEL", "tiny")
-MODEL_DIR = os.getenv("WHISPER_MODEL_DIR", os.path.join(os.getcwd(), "models"))
+MODEL_DIR = os.getenv("WHISPER_MODEL_DIR", os.path.join(os.getcwd(), "whisper_tiny"))
 DEVICE = os.getenv("WHISPER_DEVICE", None)
 PORT = int(os.getenv("FLASK_PORT", "5000"))
 

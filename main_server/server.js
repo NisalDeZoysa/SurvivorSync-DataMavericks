@@ -8,13 +8,13 @@ import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import seedDatabase from './seed.js'; // Your seeder function
 
-import { whatsappClient } from './controllers/whatsAppConroller.js';
+// import { whatsappClient } from './controllers/whatsAppConroller.js';
 
 
 
 dotenv.config();
 
-//whatsappClient.initialize();
+// whatsappClient.initialize();
 
 const app = express();
 const PORT = process.env.PORT || 7000;
@@ -109,7 +109,7 @@ sequelize
 )
   .then(async () => {
     console.log('Database connected');
-    //await seedDatabase();
+    // await seedDatabase();
     // Start HTTP server (not app.listen)
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

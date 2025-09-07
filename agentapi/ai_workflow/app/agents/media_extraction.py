@@ -25,7 +25,7 @@ def media_extraction_agent(state: AgentState):
                     image_bytes = img_file.read()
                     image_b64 = base64.b64encode(image_bytes).decode("utf-8")  # ✅ Encode
                 res = requests.post(
-                    "https://c6e71855f5ee.ngrok-free.app/api/generate",
+                    "https://55713976f485.ngrok-free.app/api/generate",
                     headers={"Content-Type": "application/json"},
                     json={
                         "model": "llava:7b",
@@ -57,7 +57,7 @@ def media_extraction_agent(state: AgentState):
                 with open(resolved_path, "rb") as f:
                     files = {"file": (resolved_path.name, f, "audio/mpeg")}
                     response = requests.post(
-                        "https://ddf50a823a2e.ngrok-free.app/transcribe",  
+                        "https://5a86e32817c5.ngrok-free.app/transcribe",  
                         files=files,
                         data={"language": "en"}  # optional
                     )
