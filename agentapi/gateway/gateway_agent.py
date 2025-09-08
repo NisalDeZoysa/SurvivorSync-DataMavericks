@@ -83,14 +83,7 @@ import asyncio
 app = FastAPI()
 
 # Agent cards for discovery
-AGENT_CARD = {
-    "name": "SERVER_AGENT",
-    "title": "Server Agent Delegator",
-    "description": "Delegates tasks to Tips Agent and Workflow Agent via A2A protocol",
-    "url": "http://localhost:8000",
-    "version": "1.0",
-    "capabilities": {"streaming": False, "pushNotifications": False}
-}
+
 
 # Create A2A clients to talk to Tips and Workflow agents
 tips_agent_client = A2AClient("http://localhost:8002/a2a")
@@ -100,38 +93,3 @@ class TaskRequest(BaseModel):
     agent: str  # "tips" or "workflow"
     input: str
 
-@app.get("/.well-known/agent.json")
-async def get_agent_card():
-    return AGENT_CARD
-
-@app.post("/tasks/send")
-async def send_task(request: TaskRequest):
-    try:
-        # Choose target agent client based on request
-        if request.agent == "tips":
-            client = tips_agent_client
-        elif request.agent == "workflow":
-            client = workflow_agent_client
-        else:
-            raise HTTPException(status_code=400, detail="Unknown agent specified")
-
-        # Construct A2A message from input
-        message = Message(
-            content=TextContent(text=request.input),
-            role=MessageRole.USER
-        )
-
-        # Send message asynchronously to target agent
-        response = await client.send_message(message)
-        
-        
-        # Extract reply text from agent response
-        if response.content.type == "text":
-            result_text = response.content.text
-        else:
-            result_text = "<Non-text response>"
-
-        return {"response": result_text}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))

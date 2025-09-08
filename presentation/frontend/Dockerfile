@@ -25,8 +25,8 @@ WORKDIR /usr/share/nginx/html
 # Copy built application from build stage
 COPY --from=build /app/dist .
 
-# Expose port 8080
-EXPOSE 8080
+# Expose port 3000
+EXPOSE 3000
 
 # Run Nginx
 CMD ["nginx", "-g", "daemon off;"]

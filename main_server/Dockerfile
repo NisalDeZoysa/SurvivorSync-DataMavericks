@@ -1,32 +1,20 @@
-# Stage 1: Build
-FROM node:22 AS build
+# Use Node.js LTS image
+FROM node:22
 
-# Set working directory
+# Set working directory inside the container
 WORKDIR /app
 
-# Copy package*.json files
+# Copy package.json and package-lock.json first (for better caching)
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --production
 
-# Copy application code
+# Copy application source code
 COPY . .
 
-# Build the application
-RUN npm run build
-
-# Stage 2: Production
-FROM nginx:alpine
-
-# Set working directory
-WORKDIR /usr/share/nginx/html
-
-# Copy built application from build stage
-COPY --from=build /app/dist .
-
-# Expose port 7000
+# Expose backend port (your Express app listens on 7000)
 EXPOSE 7000
 
-# Run Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the Express server
+CMD ["npm", "start"]
