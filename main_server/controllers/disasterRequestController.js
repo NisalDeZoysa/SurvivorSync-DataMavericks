@@ -118,8 +118,8 @@ export const createUserRequest = async (req, res) => {
       Location: Latitude ${request.latitude}, Longitude ${request.longitude}
       District: ${request.district}
       Province: ${request.province}
-      Image_path: Server/${request.image}
-      Voice_path: Server/${request.voice}
+      Image_path: main_server/${request.image}
+      Voice_path: main_server/${request.voice}
       `;
 
   // //  // Call gateway server
@@ -148,7 +148,7 @@ export const createUserRequest = async (req, res) => {
   const userMsg = workflow.user_msg.message || "We are doing our best to help! Our team is reviewing your request.";
   console.log("\nResource Center IDs:", resourceCenterIds);
 
-  //await sendMessage(request.contactNo, userMsg);
+  // await sendMessage(request.contactNo, userMsg);
   // Include gateway response in your final output if needed
   res.status(201).json({
     message: "User request created",

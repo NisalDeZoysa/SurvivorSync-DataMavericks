@@ -1,3 +1,4 @@
+import json
 import requests
 from models.agent_state import AgentState
 from openai import OpenAI
@@ -52,67 +53,75 @@ def resource_assign_agent(state: AgentState):
 
 
     try:
-        client = OpenAI()
-        # Open API Code
-        res = client.responses.parse(
-            model="gpt-4o-2024-08-06",
-            input=[
-                {"role": "system", "content": "Give the proper structured output."},
-                {
-                    "role": "user",
-                    "content": PROMPT,
-                },
-            ],
-            text_format=AllocatedResources,
-        )
-
-        print(f"Status output: {res}")
-        resources = res.output_parsed
-        assign_complete = assign_resources(resources.request_id, resources.resource_center_ids, resources.quantities)
-        if assign_complete:
-            print("Resource assignment successful.")
-            state.allocated_resources = resources
-            response = change_status_after_assign_resources(resources.request_id, "success")
-            state.disaster_status = response.get('status')
-            print(f"Disaster Status change result: {response.get('status')}")
-        else:
-            print("Resource assignment failed.")
-        # res = requests.post(
-        #         "https://c6e71855f5ee.ngrok-free.app/api/generate",
-        #         headers={"Content-Type": "application/json"},
-        #         json={
-        #             "model": "qwen3:4b",
-        #             "prompt": PROMPT,
-        #             "stream": False,
-        #             "options": {"temperature": 0.2},
-        #             "format": schema
+        # client = OpenAI()
+        # # Open API Code
+        # res = client.responses.parse(
+        #     model="gpt-4o-2024-08-06",
+        #     input=[
+        #         {"role": "system", "content": "Give the proper structured output."},
+        #         {
+        #             "role": "user",
+        #             "content": PROMPT,
         #         },
-        #     )
-        # res.raise_for_status()
+        #     ],
+        #     text_format=AllocatedResources,
+        # )
 
-        # model_output = res.text.strip()
-        # try:
-        #     parsed_output = json.loads(model_output)
-                
-        # except json.JSONDecodeError:
-        #         print("⚠️ Model output is not valid JSON:", model_output)
-        #         parsed_output = {}
+        # print(f"Status output: {res}")
+        # resources = res.output_parsed
+        # assign_complete = assign_resources(resources.request_id, resources.resource_center_ids, resources.quantities)
+        # if assign_complete:
+        #     print("Resource assignment successful.")
+        #     state.allocated_resources = resources
+        #     response = change_status_after_assign_resources(resources.request_id, "success")
+        #     state.disaster_status = response.get('status')
+        #     print(f"Disaster Status change result: {response.get('status')}")
+        # else:
+        #     print("Resource assignment failed.")
+        res = requests.post(
+                "https://55713976f485.ngrok-free.app/api/generate",
+                headers={"Content-Type": "application/json"},
+                json={
+                    "model": "qwen3:4b",
+                    "prompt": PROMPT,
+                    "stream": False,
+                    "options": {"temperature": 0.2},
+                    "format": AllocatedResources.model_json_schema(),
+                },
+            )
+        res.raise_for_status()
 
-        # response_text = parsed_output.get("response", "")
-        # res_clear = parse_workflow_response(response_text)
-        # print(f"Allocation Resource: {res_clear}")
+        raw_text = res.json()['response']
+        try:
+            json_output = json.loads(raw_text)
+        except json.JSONDecodeError:
+            raise ValueError(f"Invalid JSON in response: {raw_text}")
+        
+        res_clear = AllocatedResources(**json_output)
 
-        # # Save the allocation results to the database
-        # if res_clear:
-        #     response = assign_resources(res_clear.get("request_id"),res_clear.get("resource_center_ids",[]),res_clear.get("quantities",[]))
-        #     if response.get("status") == "success":
-        #         state.allocated_resources = res_clear
-        #         print("Resource allocation successful.")
-        #         print(res_clear.get("request_id"))
-        #         get_status = change_status_after_assign_resources(res_clear.get("request_id"), "success")
-        #         print(f"Status change result: {get_status.get('status')}")
-        #         # Update the state with the new status
-        #         state.disaster_status = get_status.get('status')
+        print(f"Allocated Resources: {res_clear}")
+
+        # Save the allocation results to the database
+        if res_clear:
+            try:
+                response = assign_resources(res_clear.request_id, res_clear.resource_center_ids, res_clear.quantities)
+                print(f"DB Assignment Response: {response}")
+            except Exception as e:
+                print(f"❌ Error assigning resources in DB: {e}")
+                response = {"status": "failure"}
+            if response.get("status") == "success":
+                state.allocated_resources = res_clear
+                print("Resource allocation successful.")
+                try:
+                    response = change_status_after_assign_resources(res_clear.request_id, "success")
+                    state.disaster_status = response.get('status')
+                    print(f"Disaster Status change result: {response.get('status')}")
+                except Exception as e:
+                    state.disaster_status = "failure"
+                    print(f"❌ Error changing status in DB: {e}")
+            else:
+                print("Resource assignment failed.")
+                state.disaster_status = "failure"
 
     except requests.RequestException as e:
         print(f"❌ Error calling LLM API: {e}")
