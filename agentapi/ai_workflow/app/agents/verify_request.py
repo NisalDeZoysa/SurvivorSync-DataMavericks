@@ -1,4 +1,5 @@
 import json
+import os
 import requests
 
 from app.models.agent_state import AgentState
@@ -8,10 +9,10 @@ from openai import OpenAI
 import dotenv
 
 dotenv.load_dotenv()
-
+NGROK_URL = os.getenv("NGROK_URL")
 
 def request_verify_agent(state: AgentState):
-    NGROK_URL = dotenv.get_key(dotenv_path=".env", key_to_get="NGROK_URL")
+    
     if not NGROK_URL:
         raise ValueError("NGROK_URL is not set in the .env file.")
     print("Verifying request...")

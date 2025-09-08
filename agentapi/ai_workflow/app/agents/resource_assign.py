@@ -1,4 +1,5 @@
 import json
+import os
 import requests
 from app.models.agent_state import AgentState
 from openai import OpenAI
@@ -7,9 +8,11 @@ from app.db.resource_db import assign_resources, change_status_after_assign_reso
 import dotenv
 
 dotenv.load_dotenv()
+NGROK_URL = os.getenv("NGROK_URL")
+TRANSCRIBE_URL = os.getenv("TRANSCRIBE_URL")
 
 def resource_assign_agent(state: AgentState):
-    NGROK_URL = dotenv.get_key(dotenv_path=".env", key_to_get="NGROK_URL")
+    
     if not NGROK_URL:
         raise ValueError("NGROK_URL is not set in the .env file.")
     print("Assigning resources...")

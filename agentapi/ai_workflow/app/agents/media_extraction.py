@@ -1,6 +1,7 @@
 
 
 import base64
+import os
 import threading
 import requests
 from app.models.agent_state import AgentState
@@ -8,11 +9,12 @@ from app.utils.media_utils import resolve_media_path
 import dotenv
 
 dotenv.load_dotenv()
+NGROK_URL = os.getenv("NGROK_URL")
+TRANSCRIBE_URL = os.getenv("TRANSCRIBE_URL")
 
 
 def media_extraction_agent(state: AgentState):
-    NGROK_URL = dotenv.get_key(dotenv_path=".env", key_to_get="NGROK_URL")
-    TRANSCRIBE_URL = dotenv.get_key(dotenv_path=".env",key_to_get="TRANSCRIBE_URL")
+ 
     if not NGROK_URL:
         raise ValueError("NGROK_URL is not set in the .env file.")
     

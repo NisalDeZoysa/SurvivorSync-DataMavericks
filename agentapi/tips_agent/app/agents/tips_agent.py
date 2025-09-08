@@ -1,4 +1,5 @@
 import json
+import os
 from app.models.agent_state import AgentState
 from app.models.agent_state import UserMessage
 import requests
@@ -6,6 +7,7 @@ from openai import OpenAI
 import dotenv
 
 dotenv.load_dotenv()
+NGROK_URL = os.getenv("NGROK_URL")
 
 def run_tips_agent(state: AgentState) -> AgentState:
     print("Tips agent is running...")
@@ -28,6 +30,8 @@ def run_tips_agent(state: AgentState) -> AgentState:
 
 
     try:
+        if not NGROK_URL:
+            raise ValueError("NGROK_URL is not set in the .env file.")
         # client = OpenAI()
         # # Open API Code
         # res = client.responses.parse(
@@ -52,7 +56,7 @@ def run_tips_agent(state: AgentState) -> AgentState:
         #     state.error_msg = "Tips agent failed to generate a response."
         
         res = requests.post(
-                "https://55713976f485.ngrok-free.app/api/generate",
+                NGROK_URL + "/api/generate",
                 headers={"Content-Type": "application/json"},
                 json={
                     "model": "qwen3:4b",

@@ -349,7 +349,7 @@ const FloatingChatbot = () => {
     try {
       // Send message to backend in the required JSON format
       const response = await axios.post(
-        'http://localhost:8000/tasks/send',
+        'http://gateway:8000/tasks/send',
         {
           input: {
             message: message

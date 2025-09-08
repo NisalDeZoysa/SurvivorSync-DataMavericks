@@ -1,10 +1,16 @@
 from mailbox import Message
+import os
 from xmlrpc import client
 from fastapi import APIRouter, HTTPException
 from app.models.gateway_response import GatewayRequest, GatewayResponse, GatewayRequest
 import requests
 import dotenv
+
 dotenv.load_dotenv()
+TIPS_URL = os.getenv("TIPS_URL")
+WORKFLOW_URL = os.getenv("WORKFLOW_URL")
+
+
 router = APIRouter()
 
 
@@ -28,8 +34,6 @@ def health_check():
 
 @router.post("/tasks/send", response_model=GatewayResponse)
 async def send_task(request: GatewayRequest):
-    TIPS_URL = dotenv.get_key(dotenv_path=".env", key_to_get="TIPS_URL")
-    WORKFLOW_URL = dotenv.get_key(dotenv_path=".env", key_to_get="WORKFLOW_URL")
     if not TIPS_URL:
         raise HTTPException(status_code=500, detail="TIPS_URL is not set in the .env file.")
     if not WORKFLOW_URL:

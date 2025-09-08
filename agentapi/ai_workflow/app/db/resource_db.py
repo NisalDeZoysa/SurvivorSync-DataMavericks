@@ -9,9 +9,9 @@ def resource_fetch(request_id: int) -> dict:
     """
     try:
         conn = mysql.connector.connect(
-            host="localhost",
+            host="db",
             user="root",
-            password="",
+            password="root",
             database="survivorsync"
         )
         cursor = conn.cursor(dictionary=True)
@@ -80,9 +80,9 @@ def requests_fetch(location: list[float], disaster_id: int) -> dict:
         print(f"Today's date: {today_start}, Tomorrow's date: {tomorrow_start}")
 
         conn = mysql.connector.connect(
-            host="localhost",
+            host="db",
             user="root",
-            password="",
+            password="root",
             database="survivorsync"
         )
         cursor = conn.cursor(dictionary=True)
@@ -128,9 +128,9 @@ def update_request_status(request_id: int, status: str):
 
     try:
         conn = mysql.connector.connect(
-            host="localhost",
+            host="db",
             user="root",
-            password="",
+            password="root",
             database="survivorsync"
         )
 
@@ -172,9 +172,9 @@ def assign_resources(request_id: int, resource_center_ids: list[int], quantities
         print(f"Assigning resources to request ID {request_id}...")
 
         conn = mysql.connector.connect(
-            host="localhost",
+            host="db",
             user="root",
-            password="",
+            password="root",
             database="survivorsync"
         )
 
@@ -257,9 +257,9 @@ def change_status_after_assign_resources(request_id: int, status: str) -> dict:
         print(f"Changing status of request ID {request_id} to '{status}'...")
 
         conn = mysql.connector.connect(
-            host="localhost",
+            host="db",
             user="root",
-            password="",
+            password="root",
             database="survivorsync"
         )
         cursor = conn.cursor(dictionary=True)
