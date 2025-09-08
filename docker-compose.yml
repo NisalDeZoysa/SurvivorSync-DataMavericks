@@ -36,14 +36,14 @@ services:
     build: ./agentapi/ai_workflow
     container_name: ai_workflow_service
     env_file:
-      - ./ai_workflow/.env
+      - ./agentapi/ai_workflow/.env
     restart: unless-stopped
     ports:
       - "8001:8001"
     volumes:
-      - ./ai_workflow:/app
+      - ./agentapi/ai_workflow:/app
     networks:
-      - agentnet
+      - app_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 10s
@@ -54,14 +54,14 @@ services:
     build: ./agentapi/gateway
     container_name: gateway_service
     env_file:
-      - ./gateway/.env
+      - ./agentapi/gateway/.env
     restart: unless-stopped
     ports:
       - "8000:8000"
     volumes:
-      - ./gateway:/app
+      - ./agentapi/gateway:/app
     networks:
-      - agentnet
+      - app_network
     depends_on:
       ai_workflow:
         condition: service_healthy
@@ -77,14 +77,14 @@ services:
     build: ./agentapi/tips_agent
     container_name: tips_agent_service
     env_file:
-      - ./tips_agent/.env
+      - ./agentapi/tips_agent/.env
     restart: unless-stopped
     ports:
       - "8002:8002"
     volumes:
-      - ./tips_agent:/app
+      - ./agentapi/tips_agent:/app
     networks:
-      - agentnet
+      - app_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 10s
