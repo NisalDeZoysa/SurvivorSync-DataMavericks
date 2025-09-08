@@ -27,21 +27,28 @@ def resource_assign_agent(state: AgentState):
         - available = count - used
         - resourceId = resource center id
 
-    Output format:
+    Follow this reasoning process step by step:
+        1. Analyze the disaster request details (urgency, type, quantity needed).
+        2. List all available resource centers and their current availability.
+        3. Apply the rules systematically:
+            - Rule 1: Never allocate more than available (no over-allocation).
+            - Rule 2: Do not exhaust all resources at once (keep reserves).
+            - Rule 3: Consider disaster urgency when deciding quantities.
+            - Rule 4: Apply an optimal allocation strategy (balanced + fair).
+            - Rule 5: Prioritize centers by proximity and availability.
+            - Rule 6: Mark allocated quantities as used after assignment.
+        4. Decide how much each resource center should contribute, explaining the reasoning for each choice.
+        5. Verify the allocation satisfies all rules and the request demand.
+
+    After reasoning, provide the final output **only in the following JSON format**:
+
     {{
-        "request_id": "<id>", id from state.request
+        "request_id": "<id>",   # id from state.request
         "resource_center_ids": [<list of resource center ids which can assign to this request>],
         "quantities": [<list of quantities corresponding to each resource center id>]
     }}
-
-    Rules:
-            1. Never allocate more than available (no over-allocation).
-            2. Do not exhaust all resources at once (keep reserves).
-            3. Consider disaster urgency when deciding quantities.
-            4. Apply an optimal allocation strategy (balanced + fair).
-            5. Prioritize centers by proximity and availability.
-            6. Mark allocated quantities as used after assignment.
     """
+
     try:
         # client = OpenAI()
         # # Open API Code

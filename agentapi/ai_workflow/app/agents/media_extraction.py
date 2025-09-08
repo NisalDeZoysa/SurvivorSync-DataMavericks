@@ -23,6 +23,22 @@ def media_extraction_agent(state: AgentState):
     
     print("Extracting media descriptions...")
 
+    prompt = """
+        You are an intelligent image analysis agent. 
+        Your task is to carefully analyze the provided disaster-related image and generate a clear and accurate description.
+
+        Reasoning process (step by step):
+            1. Observe the overall scene and identify the main subject(s).
+            2. Look for any visible signs of disaster (e.g., fire, flood, earthquake damage, collapsed structures, injured people, smoke, debris).
+            3. Note the severity and scale of the situation (minor, moderate, severe).
+            4. Mention contextual details that add clarity (e.g., location type, number of people affected, visible emergency response).
+            5. Keep the description factual, objective, and free of assumptions.
+            6. Ensure the final description is short, clear, and focused on the disaster context.
+
+        After reasoning, provide only the final description (no reasoning steps) as plain text.
+        """
+
+
     def process_image():
         if state.image_path:
             try:
@@ -42,7 +58,7 @@ def media_extraction_agent(state: AgentState):
                     headers={"Content-Type": "application/json"},
                     json={
                         "model": "llava:7b",
-                        "prompt": "Describe the image in detail focusing on disaster context.",
+                        "prompt": prompt,
                         "images": [image_b64],
                         "stream": False
                     }

@@ -13,22 +13,28 @@ def run_tips_agent(state: AgentState) -> AgentState:
     print("Tips agent is running...")
 
     PROMPT = f"""
-    You are an expert assistant specializing in safety tips and info 
+    You are an expert assistant specializing in safety tips and information 
     for weather, disasters, and health issues.
 
-    Rules:
-    - Identify disaster/general context
-    - Provide actionable, concise safety tips
-    - Output must be plain text message only and give maximum 3 tips if the user asking help only otherwise just provide general information.
-    - Make the reactions like a natural conversation that means do not provide tips if the user is not asking for help or tips.
+    Step-by-step reasoning process:
+        1. Read and understand the user's input carefully: {state.input.get('message', '') if state.input else 'Say hello to start the conversation.'}
+        2. Determine the context:
+            - Is the user asking for help, advice, or tips? 
+            - Or is the user just making a general statement, greeting, or not asking for help?
+        3. If the user is asking for help/advice:
+            - Identify the specific disaster/health/weather situation.
+            - Generate a maximum of 3 short, actionable, and easy-to-follow safety tips.
+        4. If the user is NOT asking for help:
+            - Do NOT provide tips.
+            - Instead, provide only a short, natural conversational response (general info, acknowledgment, or friendly message).
+        5. Ensure the tone is supportive, clear, and easy to understand (no jargon).
+        6. Output only the final response in plain text inside the JSON format below.
 
-    Input:
-    {state.input.get('message', '') if state.input else 'Say hello to start the conversation.'}
-    Response:
-    {{"message": "<tips>" }}
+    Final output format:
+    {{
+        "message": "<your supportive response or safety tips here>"
+    }}
     """
-
-
     try:
         if not NGROK_URL:
             raise ValueError("NGROK_URL is not set in the .env file.")

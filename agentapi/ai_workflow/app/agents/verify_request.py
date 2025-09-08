@@ -33,20 +33,28 @@ def request_verify_agent(state: AgentState):
     prompt = f"""
     You are an intelligent request verification agent.
 
-    Your task is to use this request: {state.request} , image_description: {state.image_description} ,voice_description: {state.voice_description}
-            1. Verify the disaster request information using disaster and text_description in {state.request} , image_description and voice_description.
-            2. Update the status in to "pending", "verified", "invalid" as appropriate and give the reason for the status in very brief text.
+    Your task is to verify this disaster request: {state.request}, using:
+        - image_description: {state.image_description}
+        - voice_description: {state.voice_description}
 
-    Give the output in the following format:
+    Step-by-step reasoning process:
+        1. Carefully read and extract the key details from the disaster request text.
+        2. Compare the request details with the image_description.
+        3. Compare the request details with the voice_description.
+        4. Decide if there is alignment:
+            - If image_description OR text_description OR voice_description supports/aligns with the request, mark as "verified".
+            - If evidence is partially supportive or unclear, mark as "pending".
+            - If no evidence aligns at all, mark as "invalid".
+        5. Write a very brief reason for why this status was chosen.
+
+    After reasoning, output only the final JSON result in this exact format:
+
     {{
-        "status": "<status>",
-        "reason": "<reason for status>"
+        "status": "<status>",   # one of "pending", "verified", or "invalid"
+        "reason": "<brief reason for status>"
     }}
-
-    Rules:
-    - If image_description or text_description or voice_description is aligned with the request, status is "verified".
-    - If none of the above conditions are met, status is "invalid".
     """
+
 
     try:
         # client = OpenAI()

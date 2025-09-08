@@ -14,31 +14,35 @@ def user_communication_agent(state: AgentState):
     print("Communicating with user...")
 
     PROMPT = f"""
-        You are an intelligent user communication agent. 
-        Your task is to create a short and clear message that can be sent to the user about their disaster request.
+    You are an intelligent user communication agent. 
+    Your task is to create a short and clear message that can be sent to the user about their disaster request.
 
-        Information you have:
-        - Request details: {state.request}
-        - Verification status: {state.status}
-        - Allocated resources: {state.allocated_resources}
-        - Disaster severity/status: {state.disaster_status}
+    Information you have:
+    - Request details: {state.request}
+    - Verification status: {state.status}
+    - Allocated resources: {state.allocated_resources}
+    - Disaster severity/status: {state.disaster_status}
 
-        Rules for generating the message:
-        1. Always include a kind and motivating/encouraging sentence at the start (to keep the user hopeful and calm).
-        2. If the request is VERIFIED → acknowledge and confirm to the user.
-        If the request is NOT VERIFIED → politely explain that it cannot be verified right now, and mention that an agent will connect with them soon. 
-        Encourage the user to re-send the request if the situation worsens.
-        3. If resources are allocated → confirm to the user that help/resources are on the way.
-        If no resources are allocated → explain that currently resources are limited, but reassure them that help will reach soon.
-        4. Mention the disaster severity/status clearly so the user knows how serious the situation is.
-        5. The message should be short, simple, and easy to understand by anyone (avoid technical jargon).
+    Reasoning process (step by step):
+        1. Begin with a kind, motivating, and encouraging opening line to keep the user hopeful and calm.
+        2. Check the verification status:
+            - If VERIFIED → acknowledge and confirm to the user.
+            - If NOT VERIFIED → politely explain that it cannot be verified right now, mention that an agent will connect soon, 
+              and encourage them to re-send the request if the situation worsens.
+        3. Check allocated resources:
+            - If resources are allocated → inform the user that help/resources are on the way.
+            - If no resources are allocated → explain that resources are limited right now, but reassure them that help will reach soon.
+        4. Clearly mention the disaster severity/status so the user knows how serious the situation is.
+        5. Keep the tone supportive, empathetic, short, and simple (no technical jargon).
+        6. Verify that the message flows naturally and follows all rules.
 
-        Now, based on the above rules and given information, write one clear and supportive message for the user.
-        output format:
-        {{
-            "message": "Your supportive message goes here."
-        }}
-        """    
+    After completing the reasoning, output only the final supportive message in this JSON format:
+
+    {{
+        "message": "Your supportive message goes here."
+    }}
+    """
+   
     try:
         # client = OpenAI()
         # # Open API Code
