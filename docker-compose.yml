@@ -8,7 +8,7 @@ services:
     build: ./presentation/frontend
     container_name: ui
     ports:
-      - "3030:3000"   # Vite default dev port
+      - "8080:8080" 
     depends_on:
       - backend
     networks:
@@ -20,13 +20,10 @@ services:
   backend:
     build: ./main_server
     container_name: backend
+    env_file:
+      - ./main_server/.env 
     ports:
       - "7000:7000"
-    environment:
-      - DATABASE_HOST=db
-      - DATABASE_USER=root
-      - DATABASE_PASSWORD=
-      - DATABASE_NAME=survivorsync
     depends_on:
       - db
     networks:
@@ -35,35 +32,35 @@ services:
   # =========================
   # AI Agents (Flask)
   # =========================
-  ai_workflow:
-    build: ./agentapi/ai_workflow
-    container_name: ai_workflow
-    ports:
-      - "8001:8001"
-    depends_on:
-      - db
-    networks:
-      - app_network
+  # ai_workflow:
+  #   build: ./agentapi/ai_workflow
+  #   container_name: ai_workflow
+  #   ports:
+  #     - "8001:8001"
+  #   depends_on:
+  #     - db
+  #   networks:
+  #     - app_network
 
-  gateway:
-    build: ./agentapi/gateway
-    container_name: gateway
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-    networks:
-      - app_network
+  # gateway:
+  #   build: ./agentapi/gateway
+  #   container_name: gateway
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - db
+  #   networks:
+  #     - app_network
 
-  tips_agent:
-    build: ./agentapi/tips_agent
-    container_name: tips_agent
-    ports:
-      - "8002:8002"
-    depends_on:
-      - db
-    networks:
-      - app_network
+  # tips_agent:
+  #   build: ./agentapi/tips_agent
+  #   container_name: tips_agent
+  #   ports:
+  #     - "8002:8002"
+  #   depends_on:
+  #     - db
+  #   networks:
+  #     - app_network
 
   # =========================
   # Database (MySQL)
@@ -76,7 +73,7 @@ services:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: survivorsync
     ports:
-      - "3306:3306"
+      - "33081:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:

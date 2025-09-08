@@ -1,10 +1,10 @@
-# Stage 1: Build
-FROM node:22 AS build
+# Use Node.js image
+FROM node:22
 
 # Set working directory
 WORKDIR /app
 
-# Copy package*.json files
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
 # Install dependencies
@@ -13,20 +13,8 @@ RUN npm install
 # Copy application code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Expose the Vite dev server port
+EXPOSE 8080
 
-# Stage 2: Production
-FROM nginx:alpine
-
-# Set working directory
-WORKDIR /usr/share/nginx/html
-
-# Copy built application from build stage
-COPY --from=build /app/dist .
-
-# Expose port 3000
-EXPOSE 3000
-
-# Run Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the dev server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
