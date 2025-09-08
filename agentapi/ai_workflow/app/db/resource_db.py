@@ -196,10 +196,10 @@ def assign_resources(request_id: int, resource_center_ids: list[int], quantities
         for resource_center_id, amount in zip(resource_center_ids, quantities):
 
             print(f"Allocating {amount} units from resource center {resource_center_id} to request {request_id}")
-            # Insert into allocated_resources
             insert_query = """
-                INSERT INTO allocated_resources (disasterRequestId, resourceCenterId, amount, isAllocated)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO allocated_resources 
+                (disasterRequestId, resourceCenterId, amount, isAllocated, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, NOW(), NOW())
             """
             cursor.execute(insert_query, (request_id, resource_center_id, amount, True))    
 
