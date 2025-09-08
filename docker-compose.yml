@@ -32,35 +32,64 @@ services:
   # =========================
   # AI Agents (Flask)
   # =========================
-  # ai_workflow:
-  #   build: ./agentapi/ai_workflow
-  #   container_name: ai_workflow
-  #   ports:
-  #     - "8001:8001"
-  #   depends_on:
-  #     - db
-  #   networks:
-  #     - app_network
+  ai_workflow:
+    build: ./agentapi/ai_workflow
+    container_name: ai_workflow_service
+    env_file:
+      - ./ai_workflow/.env
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./ai_workflow:/app
+    networks:
+      - agentnet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # gateway:
-  #   build: ./agentapi/gateway
-  #   container_name: gateway
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     - db
-  #   networks:
-  #     - app_network
+  gateway:
+    build: ./agentapi/gateway
+    container_name: gateway_service
+    env_file:
+      - ./gateway/.env
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./gateway:/app
+    networks:
+      - agentnet
+    depends_on:
+      ai_workflow:
+        condition: service_healthy
+      tips_agent:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # tips_agent:
-  #   build: ./agentapi/tips_agent
-  #   container_name: tips_agent
-  #   ports:
-  #     - "8002:8002"
-  #   depends_on:
-  #     - db
-  #   networks:
-  #     - app_network
+  tips_agent:
+    build: ./agentapi/tips_agent
+    container_name: tips_agent_service
+    env_file:
+      - ./tips_agent/.env
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./tips_agent:/app
+    networks:
+      - agentnet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # =========================
   # Database (MySQL)

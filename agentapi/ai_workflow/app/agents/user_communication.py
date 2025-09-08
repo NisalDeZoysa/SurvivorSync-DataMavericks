@@ -1,10 +1,14 @@
 import json
 import requests
-from models.agent_state import AgentState, UserMessage
+from app.models.agent_state import AgentState, UserMessage
 from openai import OpenAI
+import dotenv
 
-
+dotenv.load_dotenv()
 def user_communication_agent(state: AgentState):
+    NGROK_URL = dotenv.get_key(dotenv_path=".env", key_to_get="NGROK_URL")
+    if not NGROK_URL:
+        raise ValueError("NGROK_URL is not set in the .env file.")
     print("Communicating with user...")
 
     PROMPT = f"""
@@ -32,17 +36,7 @@ def user_communication_agent(state: AgentState):
         {{
             "message": "Your supportive message goes here."
         }}
-        """
-    
-    schema = {
-        "type": "object",
-        "properties": {
-            "message": {"type": "string"}
-        },
-        "required": ["message"]
-    }
-
-    
+        """    
     try:
         # client = OpenAI()
         # # Open API Code
@@ -62,7 +56,7 @@ def user_communication_agent(state: AgentState):
         # state.user_msg = parsed
         
         res = requests.post(
-                "https://55713976f485.ngrok-free.app/api/generate",
+                NGROK_URL + "/api/generate",
                 headers={"Content-Type": "application/json"},
                 json={
                     "model": "qwen3:4b",

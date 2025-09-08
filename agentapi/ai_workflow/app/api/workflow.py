@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from models.agent_state import AgentState
-from models.request_status import WorkflowRequest, WorkflowResponse
-from workflows.disaster_workflow import run_agent_workflow
+from app.models.agent_state import AgentState
+from app.models.request_status import WorkflowRequest, WorkflowResponse
+from app.workflows.disaster_workflow import run_agent_workflow
 
 router = APIRouter()
 
@@ -17,6 +17,10 @@ async def call_ai_workflow(request: WorkflowRequest):
         print("Error occurred:", e)
         raise HTTPException(status_code=500, detail=f"Workflow execution failed: {e}")
 
+
+@router.get("/health")
+def health_check():
+    return {"status": "ok"}
 
 @router.get("/.well-known/agent.json")
 def get_agent_card():

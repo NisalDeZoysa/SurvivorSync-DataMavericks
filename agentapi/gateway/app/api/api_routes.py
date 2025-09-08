@@ -1,9 +1,10 @@
 from mailbox import Message
 from xmlrpc import client
 from fastapi import APIRouter, HTTPException
-from models.gateway_response import GatewayRequest, GatewayResponse, GatewayRequest
+from app.models.gateway_response import GatewayRequest, GatewayResponse, GatewayRequest
 import requests
-
+import dotenv
+dotenv.load_dotenv()
 router = APIRouter()
 
 
@@ -21,13 +22,23 @@ AGENT_CARD = {
 async def get_agent_card():
     return AGENT_CARD
 
+@router.get("/health")
+def health_check():
+    return {"status": "ok"}
+
 @router.post("/tasks/send", response_model=GatewayResponse)
 async def send_task(request: GatewayRequest):
+    TIPS_URL = dotenv.get_key(dotenv_path=".env", key_to_get="TIPS_URL")
+    WORKFLOW_URL = dotenv.get_key(dotenv_path=".env", key_to_get="WORKFLOW_URL")
+    if not TIPS_URL:
+        raise HTTPException(status_code=500, detail="TIPS_URL is not set in the .env file.")
+    if not WORKFLOW_URL:
+        raise HTTPException(status_code=500, detail="WORKFLOW_URL is not set in the .env file.")
     try:
         response = None
         if request.agent == "tips":
             try:
-                tips_response = requests.post("http://localhost:8002/tasks/send", json={"input": request.input})
+                tips_response = requests.post(TIPS_URL + "/tasks/send", json={"input": request.input})
                 print("Tips agent response :", tips_response)
                 response = tips_response.json()
             except requests.RequestException as e:
@@ -35,7 +46,7 @@ async def send_task(request: GatewayRequest):
                 raise HTTPException(status_code=500, detail="Failed to send task to Tips agent")
         elif request.agent == "workflow":
             try:
-                workflow_response = requests.post("http://localhost:8001/tasks/send", json={"input": request.input})
+                workflow_response = requests.post(WORKFLOW_URL + "/tasks/send", json={"input": request.input})
                 print("Workflow agent response :", workflow_response)
                 response = workflow_response.json()
             except requests.RequestException as e:

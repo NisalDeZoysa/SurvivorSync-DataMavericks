@@ -1,13 +1,19 @@
 import json
 import requests
 
-from models.agent_state import AgentState
-from models.request_status import RequestStatus
-from db.resource_db import requests_fetch, update_request_status
+from app.models.agent_state import AgentState
+from app.models.request_status import RequestStatus
+from app.db.resource_db import requests_fetch, update_request_status
 from openai import OpenAI
+import dotenv
+
+dotenv.load_dotenv()
 
 
 def request_verify_agent(state: AgentState):
+    NGROK_URL = dotenv.get_key(dotenv_path=".env", key_to_get="NGROK_URL")
+    if not NGROK_URL:
+        raise ValueError("NGROK_URL is not set in the .env file.")
     print("Verifying request...")
 
     # Get all the disaster which has same details
@@ -40,19 +46,6 @@ def request_verify_agent(state: AgentState):
     - If image_description or text_description or voice_description is aligned with the request, status is "verified".
     - If none of the above conditions are met, status is "invalid".
     """
-    
-
-    schema = {
-        "type": "object",
-        "properties": {
-            "status": {
-                "type": "string",
-                "enum": ["pending", "verified", "invalid"]
-            }
-        },
-        "required": ["status"]
-    }
-    
 
     try:
         # client = OpenAI()
@@ -82,7 +75,7 @@ def request_verify_agent(state: AgentState):
 
         # # Ollama Call
         res = requests.post(
-                "https://55713976f485.ngrok-free.app/api/generate",
+                NGROK_URL + "/api/generate",
                 headers={"Content-Type": "application/json"},
                 json={
                     "model": "qwen3:4b",

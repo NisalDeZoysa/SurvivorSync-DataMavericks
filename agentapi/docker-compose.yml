@@ -1,47 +1,73 @@
 version: "3.9"
-
 services:
   ai_workflow:
     build: ./ai_workflow
     container_name: ai_workflow_service
-    env_file: .env
+    env_file:
+      - ./ai_workflow/.env
     restart: unless-stopped
+    ports:
+      - "8001:8001"
     volumes:
       - ./ai_workflow:/app
     networks:
       - agentnet
-
-  gateway:
-    build: ./gateway
-    container_name: gateway_service
-    env_file: .env
-    restart: unless-stopped
-    ports:
-      - "8080:8080"   # expose API port
-    volumes:
-      - ./gateway:/app
-    networks:
-      - agentnet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   tips_agent:
     build: ./tips_agent
     container_name: tips_agent_service
-    env_file: .env
+    env_file:
+      - ./tips_agent/.env
     restart: unless-stopped
+    ports:
+      - "8002:8002"
     volumes:
       - ./tips_agent:/app
     networks:
       - agentnet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  mcps:
-    build: ./mcps
-    container_name: mcps_service
-    env_file: .env
+  gateway:
+    build: ./gateway
+    container_name: gateway_service
+    env_file:
+      - ./gateway/.env
     restart: unless-stopped
+    ports:
+      - "8000:8000"
     volumes:
-      - ./mcps:/app
+      - ./gateway:/app
     networks:
       - agentnet
+    depends_on:
+      ai_workflow:
+        condition: service_healthy
+      tips_agent:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # mcps:
+  #   build: ./mcps
+  #   container_name: mcps_service
+  #   env_file: .env
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ./mcps:/app
+  #   networks:
+  #     - agentnet
 
 networks:
   agentnet:

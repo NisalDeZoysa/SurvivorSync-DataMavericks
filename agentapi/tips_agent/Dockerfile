@@ -2,7 +2,7 @@
 FROM python:3.10-slim
 
 # Set working directory inside container
-WORKDIR /app
+WORKDIR /tips_agent
 
 # Install system dependencies (needed for mysqlclient etc.)
 RUN apt-get update && apt-get install -y \
@@ -11,6 +11,8 @@ RUN apt-get update && apt-get install -y \
     default-libmysqlclient-dev \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file and install dependencies
 COPY requirements.txt .

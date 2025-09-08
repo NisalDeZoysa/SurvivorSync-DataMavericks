@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from api import tips_routes
+from app.api import tips_routes
 import uvicorn
 
 app = FastAPI(title="Tips Agent server")

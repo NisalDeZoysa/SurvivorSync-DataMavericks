@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from models.agent_state import AgentState
-from models.request_status import AgentRequest, AgentResponse
-from agents.tips_agent import run_tips_agent
+from app.models.agent_state import AgentState
+from app.models.request_status import AgentRequest, AgentResponse
+from app.agents.tips_agent import run_tips_agent
 
 router = APIRouter()
 
@@ -27,3 +27,7 @@ def get_agent_card():
         "capabilities": {"streaming": False, "pushNotifications": False}
     }
     return AGENT_CARD
+
+@router.get("/health")
+def health_check():
+    return {"status": "ok"}

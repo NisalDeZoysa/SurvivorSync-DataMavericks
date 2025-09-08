@@ -1,11 +1,11 @@
 from langgraph.graph import StateGraph, END
-from models.agent_state import AgentState
-from agents.request_intake import request_intake_agent
-from agents.media_extraction import media_extraction_agent
-from agents.verify_request import request_verify_agent, check_verification
-from agents.resource_tracking import resource_tracking_agent
-from agents.resource_assign import resource_assign_agent
-from agents.user_communication import user_communication_agent
+from app.models.agent_state import AgentState
+from app.agents.request_intake import request_intake_agent
+from app.agents.media_extraction import media_extraction_agent
+from app.agents.verify_request import request_verify_agent, check_verification
+from app.agents.resource_tracking import resource_tracking_agent
+from app.agents.resource_assign import resource_assign_agent
+from app.agents.user_communication import user_communication_agent
 
 def create_workflow():
     workflow = StateGraph(AgentState)

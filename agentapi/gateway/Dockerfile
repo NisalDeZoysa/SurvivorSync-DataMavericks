@@ -2,7 +2,7 @@
 FROM python:3.10-slim
 
 # Set working directory inside container
-WORKDIR /app
+WORKDIR /gateway
 
 # Install system dependencies (needed for mysqlclient etc.)
 RUN apt-get update && apt-get install -y \

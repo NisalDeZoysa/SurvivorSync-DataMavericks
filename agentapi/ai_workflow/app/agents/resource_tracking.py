@@ -1,5 +1,5 @@
-from db.resource_db import resource_fetch
-from models.agent_state import AgentState
+from app.db.resource_db import resource_fetch
+from app.models.agent_state import AgentState
 
 
 def resource_tracking_agent(state: AgentState):

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api import api_routes
+from app.api import api_routes
 import uvicorn
 
 app = FastAPI(title="Gateway Agent")

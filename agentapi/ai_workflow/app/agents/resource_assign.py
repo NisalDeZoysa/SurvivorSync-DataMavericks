@@ -1,12 +1,17 @@
 import json
 import requests
-from models.agent_state import AgentState
+from app.models.agent_state import AgentState
 from openai import OpenAI
-from models.agent_state import AllocatedResources
-from db.resource_db import assign_resources, change_status_after_assign_resources
+from app.models.agent_state import AllocatedResources
+from app.db.resource_db import assign_resources, change_status_after_assign_resources
+import dotenv
 
+dotenv.load_dotenv()
 
 def resource_assign_agent(state: AgentState):
+    NGROK_URL = dotenv.get_key(dotenv_path=".env", key_to_get="NGROK_URL")
+    if not NGROK_URL:
+        raise ValueError("NGROK_URL is not set in the .env file.")
     print("Assigning resources...")
 
     PROMPT = f"""
@@ -34,24 +39,6 @@ def resource_assign_agent(state: AgentState):
             5. Prioritize centers by proximity and availability.
             6. Mark allocated quantities as used after assignment.
     """
-
-    schema = {
-        "type": "object",
-        "properties": {
-            "request_id": {"type": "integer"},
-            "resource_center_ids": {
-                "type": "array",
-                "items": {"type": "integer"}
-            },
-            "quantities": {
-                "type": "array",
-                "items": {"type": "integer"}
-            }
-        },
-        "required": ["request_id", "resource_center_ids", "quantities"]
-    }
-
-
     try:
         # client = OpenAI()
         # # Open API Code
@@ -79,7 +66,7 @@ def resource_assign_agent(state: AgentState):
         # else:
         #     print("Resource assignment failed.")
         res = requests.post(
-                "https://55713976f485.ngrok-free.app/api/generate",
+                NGROK_URL + "/api/generate",
                 headers={"Content-Type": "application/json"},
                 json={
                     "model": "qwen3:4b",

@@ -1,6 +1,6 @@
 import json
-from models.agent_state import AgentState
-from models.agent_state import UserMessage
+from app.models.agent_state import AgentState
+from app.models.agent_state import UserMessage
 import requests
 from openai import OpenAI
 import dotenv

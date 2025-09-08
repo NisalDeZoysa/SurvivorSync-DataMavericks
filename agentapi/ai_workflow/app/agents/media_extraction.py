@@ -3,11 +3,22 @@
 import base64
 import threading
 import requests
-from models.agent_state import AgentState
-from utils.media_utils import resolve_media_path
+from app.models.agent_state import AgentState
+from app.utils.media_utils import resolve_media_path
+import dotenv
+
+dotenv.load_dotenv()
 
 
 def media_extraction_agent(state: AgentState):
+    NGROK_URL = dotenv.get_key(dotenv_path=".env", key_to_get="NGROK_URL")
+    TRANSCRIBE_URL = dotenv.get_key(dotenv_path=".env",key_to_get="TRANSCRIBE_URL")
+    if not NGROK_URL:
+        raise ValueError("NGROK_URL is not set in the .env file.")
+    
+    if not TRANSCRIBE_URL:
+        raise ValueError("TRANSCRIBE_URL is not set in the .env file.")
+    
     print("Extracting media descriptions...")
 
     def process_image():
@@ -25,7 +36,7 @@ def media_extraction_agent(state: AgentState):
                     image_bytes = img_file.read()
                     image_b64 = base64.b64encode(image_bytes).decode("utf-8")  # ✅ Encode
                 res = requests.post(
-                    "https://a28859c2860d.ngrok-free.app/api/generate",
+                    NGROK_URL +  "/api/generate",
                     headers={"Content-Type": "application/json"},
                     json={
                         "model": "llava:7b",
@@ -44,6 +55,7 @@ def media_extraction_agent(state: AgentState):
                 print(f"⚠️ Image extraction error: {e}")
 
     def process_voice():
+
         if state.voice_path:
             try:
                 resolved_path = resolve_media_path(state.voice_path)
@@ -57,7 +69,7 @@ def media_extraction_agent(state: AgentState):
                 with open(resolved_path, "rb") as f:
                     files = {"file": (resolved_path.name, f, "audio/mpeg")}
                     response = requests.post(
-                        "https://a28859c2860d.ngrok-free.app/transcribe",  
+                        TRANSCRIBE_URL + "/transcribe",
                         files=files,
                         data={"language": "en"}  # optional
                     )
