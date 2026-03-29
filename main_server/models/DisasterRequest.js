@@ -31,11 +31,11 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
   },
   severity: {
     type: DataTypes.ENUM('LOW', 'MEDIUM', 'HIGH', 'CRITICAL'),
-    allowNull: false,
+    allowNull: true,
   },
   status:{
     type: DataTypes.ENUM('PENDING', 'VERIFIED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'),
-    allowNull: false,
+    allowNull: true,
     defaultValue: 'PENDING',
   },
   details: {
@@ -44,11 +44,11 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
   },
   affectedCount: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
   },
   contactNo: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   latitude: {
     type: DataTypes.DECIMAL(10, 6),
@@ -76,7 +76,7 @@ const DisasterRequest = sequelize.define('DisasterRequest', {
   },
   isVerified: {
     type: DataTypes.BOOLEAN,
-    allowNull: false,
+    allowNull: true,
     defaultValue: false,
   }
 },{

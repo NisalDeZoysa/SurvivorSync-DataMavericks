@@ -8,107 +8,89 @@ dotenv.config();
 const AGENTAPI_URL = process.env.AGENTAPI_URL;
 
 export const createUserRequest = async (req, res) => {
-  let {
-    name,
-    userId,
-    disasterId,
-    severity,
-    details,
-    affectedCount,
-    contactNo,
-    latitude,
-    longitude,
-  } = req.body;
+  try {
+    console.log("Received createUserRequest:", req.body);
+    let {
+      name,
+      userId,
+      disasterId,
+      severity,
+      details,
+      affectedCount,
+      contactNo,
+      latitude,
+      longitude,
+    } = req.body;
 
-  // convert latitude and longitude to numbers
-  latitude = parseFloat(latitude);
-  longitude = parseFloat(longitude);
-  userId = parseInt(userId);
-  disasterId = parseInt(disasterId);
-  affectedCount = parseInt(affectedCount);
+    // convert to correct types
+    latitude = parseFloat(latitude);
+    longitude = parseFloat(longitude);
+    userId = parseInt(userId);
+    disasterId = parseInt(disasterId);
+    affectedCount = parseInt(affectedCount);
+
+    // Province and district extracted from address
+    let province = "";
+    let district = "";
+    if (!latitude || !longitude) {
+      return res.status(400).json({
+        error: "Latitude and longitude are required to determine location",
+      });
+    } else {
+      try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`;
+
+        const response = await fetch(url, {
+          headers: {
+            "User-Agent": "SurvivorSync/1.0 (dinukpkcc@gmail.com)",
+          },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch province/district from coordinates");
+        }
+        const responseData = await response.json();
+        province = responseData.address?.state || responseData.address?.country || "Unknown";
+        district = responseData.address?.state_district || responseData.address?.county || "Unknown";
+      } catch (err) {
+        console.warn("Failed to fetch province/district from coordinates", err);
+      }
+    }
+
+    // File paths
+    const imageFile = req.files?.image?.[0]?.path || null;
+    const voiceFile = req.files?.voice?.[0]?.path || null;
+
+    console.log("imageFile:", imageFile);
+    console.log("voiceFile:", voiceFile);
 
 
-  // Province and district extracted from address
-  let province = "";
-  let district = "";
-  if (!latitude && !longitude) {
-    // return error
-    return res.status(400).json({
-      error: "Latitude and longitude are required to determine location",
+    // Create request in DB
+    const request = await DisasterRequest.create({
+      name: name,
+      userId: userId,
+      disasterId: disasterId,
+      severity: severity,
+      details: details,
+      affectedCount: affectedCount,
+      contactNo: contactNo,
+      latitude: latitude,
+      longitude: longitude,
+      image: imageFile,
+      voice: voiceFile,
+      district: district,
+      province: province
     });
 
-  } else {
-    console.log(
-      "Fetching province/district from coordinates:",
-      latitude,
-      longitude
-    );
-    try {
-      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`;
+    // Get disaster name
+    const disaster = await Disaster.findByPk(disasterId);
 
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent": "SurvivorSync/1.0 (dinukpkcc@gmail.com)", // Required by Nominatim usage policy
-        },
-      });
-      if (!response.ok) {
-        throw new Error("Failed to fetch province/district from coordinates");
-      }
-      const responseData = await response.json();
+    const io = req.app.get('io');
+    const updatedStats = await fetchDisasterStatsData();
+    io.emit('disasterStatsUpdated', updatedStats);
 
-      // console.log("Nominatim response data:", responseData);
-
-      // Update province and district if found
-      province = responseData.address?.state || responseData.address?.country || "Unknown";
-      district = responseData.address?.state_district || responseData.address?.county || "Unknown";
-    } catch (err) {
-      console.warn("Failed to fetch province/district from coordinates", err);
-
-    }
-  }
-
-  console.log("Request body:", req.body);
-  console.log('Voice file:', req.files?.voice);
-
-  // Since only one image is allowed, pick the first file's path as a string
-  const imageFile = req.files?.image?.[0]?.path || null;
-  const voiceFile = req.files?.voice?.[0]?.path || null;
-
-  console.log("Image file path:", imageFile);
-  console.log("Voice file path:", voiceFile);
-
-  const request = await DisasterRequest.create({
-    name,
-    userId,
-    disasterId,
-    severity,
-    details,
-    affectedCount,
-    contactNo,
-    latitude,
-    longitude,
-    image: imageFile,
-    voice: voiceFile,
-    district,
-    province
-  });
-
-  // Get disaster name
-  const disaster = await Disaster.findByPk(disasterId);
-
-  console.log("Disaster ID:", disaster.dataValues.name);
-
-  const io = req.app.get('io');
-
-  // Fetch updated stats data (not route handler)
-  const updatedStats = await fetchDisasterStatsData();
-
-  // Emit updated stats to clients
-  io.emit('disasterStatsUpdated', updatedStats);
-  // call gateway_server to get a response
-  const messageText = `
+    const messageText = `
       User ID: ${request.userId}
-      Disaster: ${disaster.dataValues.name}
+      Disaster: ${disaster?.name || "Unknown"}
       Disaster ID: ${request.disasterId}
       Request Id: ${request.id}
       Severity: ${request.severity}
@@ -118,53 +100,51 @@ export const createUserRequest = async (req, res) => {
       Location: Latitude ${request.latitude}, Longitude ${request.longitude}
       District: ${request.district}
       Province: ${request.province}
-      Image_path: main_server/${request.image}
-      Voice_path: main_server/${request.voice}
-      `;
+      Is Verified: ${request.isVerified}
+      Image_path: ${request.image}
+      Voice_path: ${request.voice}
+    `;
 
-  // //  // Call gateway server
-  const gatewayResponse = await fetch(`http://gateway:8000/tasks/send`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      input: {
-       message : messageText.trim()
-      },
-      agent:"workflow"
-    }),
-  });
+    // Call gateway server
+    const gatewayResponse = await fetch(`http://gateway:8000/tasks/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: { message: messageText.trim() },
+        agent: "workflow"
+      }),
+    });
 
-  // 1. Get the parsed JSON response
-  const gatewayData = await gatewayResponse.json();
-  console.log("Gateway Response:", JSON.stringify(gatewayData, null, 2));
+    const gatewayData = await gatewayResponse.json();
 
-  // 2. Extract required fields from workflow_result
-  const workflow = gatewayData.state || {};
-  const allocated = workflow.allocated_resources || {};
+    const workflow = gatewayData.state || {};
+    const allocated = workflow.allocated_resources || {};
+    const resourceCenterIds = allocated.resource_center_ids || [];
+    const disasterStatus = workflow.disaster_status || "PENDING";
+    const status = workflow.status || "INVALID";
+    const userMsg = workflow.user_msg?.message || "We are doing our best to help! Our team is reviewing your request.";
 
-  const resourceCenterIds = allocated.resource_center_ids || [];
-  const disasterStatus = workflow.disaster_status || "PENDING";
-  const status = workflow.status || "INVALID";
-  const userMsg = workflow.user_msg.message || "We are doing our best to help! Our team is reviewing your request.";
-  console.log("\nResource Center IDs:", resourceCenterIds);
+    res.status(201).json({
+      message: "User request created",
+      success: true,
+      request,
+      gatewayResponse: {
+        resource_center_ids: resourceCenterIds,
+        disaster_status: disasterStatus,
+        status,
+        user_msg: userMsg
+      }
+    });
 
-  // await sendMessage(request.contactNo, userMsg);
-  // Include gateway response in your final output if needed
-  res.status(201).json({
-    message: "User request created",
-    success: true,
-    request,
-    // completeResponse:{
-    //   gatewayData
-    // },
-    gatewayResponse: {
-      resource_center_ids: resourceCenterIds,
-      disaster_status: disasterStatus,
-      status: status,
-      user_msg: userMsg
-    }
-  });
+  } catch (error) {
+    console.error("Error in createUserRequest:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to create user request"
+    });
+  }
 };
+
 
 export const exportDisasterStats = async (req, res) => {
   try {
@@ -254,7 +234,7 @@ export const deleteRequest = async (req, res) => {
 export const getVerifiedRequest = async (req, res) => {
   try {
     const request = await DisasterRequest.findAll({
-      where: { isVerified: true ,},
+      where: { isVerified: true, },
     });
 
     // Need to find all where the isVerified is true and createdAt is today day

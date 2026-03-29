@@ -36,59 +36,60 @@ def run_tips_agent(state: AgentState) -> AgentState:
     }}
     """
     try:
-        if not NGROK_URL:
-            raise ValueError("NGROK_URL is not set in the .env file.")
-        # client = OpenAI()
-        # # Open API Code
-        # res = client.responses.parse(
-        #     model="gpt-4o-2024-08-06",
-        #     input=[
-        #         {"role": "system", "content": "Give the proper structured output."},
-        #         {
-        #             "role": "user",
-        #             "content": PROMPT,
-        #         },
-        #     ],
-        #     text_format=TipsResponse,
-        # )
-
-        # print(f"Status output: {res.output_parsed}")
-        # output = res.output_parsed.tips
-        # if output:
-        #     print("Tips return successful.")
-        #     state.user_msg = output
-            
-        # else:
-        #     state.error_msg = "Tips agent failed to generate a response."
         
-        res = requests.post(
-                NGROK_URL + "/api/generate",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "model": "qwen3:4b",
-                    "prompt": PROMPT,
-                    "stream": False,
-                    "options": {"temperature": 0.3, "top_p": 2.0},
-                    "format": UserMessage.model_json_schema(),
+        client = OpenAI()
+        # Open API Code
+        res = client.responses.parse(
+            model="gpt-4o-2024-08-06",
+            input=[
+                {"role": "system", "content": "Give the proper structured output."},
+                {
+                    "role": "user",
+                    "content": PROMPT,
                 },
-            )
-        res.raise_for_status()
+            ],
+            text_format=UserMessage,
+        )
 
-        model_output = res.json()['response']
-        try:
-            parsed_output = json.loads(model_output)  
-        except json.JSONDecodeError:
-                print("⚠️ Model output is not valid JSON:", model_output)
-                parsed_output = {}
-
-        res_clear = UserMessage(**parsed_output)
-        print(f"Allocation Resource: {res_clear}")
-
-        if res_clear:
+        print(f"Status output: {res.output_parsed}")
+        output = res.output_parsed.message
+        if output:
             print("Tips return successful.")
-            state.user_msg = res_clear
+            state.user_msg = output
+            
         else:
             state.error_msg = "Tips agent failed to generate a response."
+        
+        # if not NGROK_URL:
+        #     raise ValueError("NGROK_URL is not set in the .env file.")
+        # res = requests.post(
+        #         NGROK_URL + "/api/generate",
+        #         headers={"Content-Type": "application/json"},
+        #         json={
+        #             "model": "qwen3:4b",
+        #             "prompt": PROMPT,
+        #             "stream": False,
+        #             "options": {"temperature": 0.3, "top_p": 2.0},
+        #             "format": UserMessage.model_json_schema(),
+        #         },
+        #     )
+        # res.raise_for_status()
+
+        # model_output = res.json()['response']
+        # try:
+        #     parsed_output = json.loads(model_output)  
+        # except json.JSONDecodeError:
+        #         print("⚠️ Model output is not valid JSON:", model_output)
+        #         parsed_output = {}
+
+        # res_clear = UserMessage(**parsed_output)
+        # print(f"Allocation Resource: {res_clear}")
+
+        # if res_clear:
+        #     print("Tips return successful.")
+        #     state.user_msg = res_clear
+        # else:
+        #     state.error_msg = "Tips agent failed to generate a response."
 
     except requests.RequestException as e:
         print(f"❌ Error calling LLM API: {e}")

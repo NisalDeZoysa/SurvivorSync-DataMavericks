@@ -1,8 +1,10 @@
 import multer from 'multer';
 import fs from 'fs';
 
-const imageDir = './uploads/images';
-const voiceDir = './uploads/voices';
+// multer destination
+const imageDir = '/app/uploads/images';
+const voiceDir = '/app/uploads/voices';
+
 
 if (!fs.existsSync(imageDir)) fs.mkdirSync(imageDir, { recursive: true });
 if (!fs.existsSync(voiceDir)) fs.mkdirSync(voiceDir, { recursive: true });

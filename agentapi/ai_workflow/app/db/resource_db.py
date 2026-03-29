@@ -2,6 +2,43 @@ import datetime
 import mysql.connector
 
 
+def fetch_disaster_id(disaster: str) -> int:
+    """
+    Fetch the disaster ID from the disasters table based on the disaster name,
+    ignoring case by lowercasing both the input and the database column.
+    """
+    try:
+        conn = mysql.connector.connect(
+            host="db",
+            user="root",
+            password="root",
+            database="survivorsync"
+        )
+        cursor = conn.cursor(dictionary=True)
+
+        # Normalize input: lowercase + strip whitespace
+        disaster_normalized = disaster.strip().lower()
+
+        query = "SELECT id FROM disasters WHERE LOWER(name) = %s"
+        cursor.execute(query, (disaster_normalized,))
+        result = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if result:
+            return result['id']
+        else:
+            return -1  # Not found
+
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
+        return -1
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        return -1
+
+    
 def resource_fetch(request_id: int) -> dict:
     """
     Track resources based on location for a single disaster request ID.

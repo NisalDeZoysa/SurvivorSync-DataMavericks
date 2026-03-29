@@ -124,7 +124,7 @@ app.config['MAX_CONTENT_LENGTH'] = 1024*1024*1024  # 1GB
 MODEL_NAME = os.getenv("WHISPER_MODEL", "tiny")
 MODEL_DIR = os.getenv("WHISPER_MODEL_DIR", os.path.join(os.getcwd(), "whisper_tiny"))
 DEVICE = os.getenv("WHISPER_DEVICE", None)
-PORT = int(os.getenv("FLASK_PORT", "5000"))
+PORT = int(os.getenv("FLASK_PORT", "5060"))
 
 print(f"[BOOT] Preparing model '{MODEL_NAME}' into: {MODEL_DIR}")
 model_path = ensure_model_file(MODEL_NAME, MODEL_DIR)

@@ -26,6 +26,8 @@ services:
       - "7000:7000"
     depends_on:
       - db
+    volumes:
+      - media_data:/app/uploads
     networks:
       - app_network
 
@@ -42,6 +44,7 @@ services:
       - "8001:8001"
     volumes:
       - ./agentapi/ai_workflow:/app
+      - media_data:/app/uploads
     networks:
       - app_network
     healthcheck:
@@ -113,6 +116,7 @@ services:
 # =========================
 volumes:
   db_data:
+  media_data:
 
 # =========================
 # Networks

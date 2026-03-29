@@ -9,8 +9,8 @@ dotenv.load_dotenv()
 NGROK_URL = os.getenv("NGROK_URL")
 def user_communication_agent(state: AgentState):
     
-    if not NGROK_URL:
-        raise ValueError("NGROK_URL is not set in the .env file.")
+    # if not NGROK_URL:
+    #     raise ValueError("NGROK_URL is not set in the .env file.")
     print("Communicating with user...")
 
     PROMPT = f"""
@@ -44,47 +44,48 @@ def user_communication_agent(state: AgentState):
     """
    
     try:
-        # client = OpenAI()
-        # # Open API Code
-        # res = client.responses.parse(
-        #     model="gpt-4o-2024-08-06",
-        #     input=[
-        #         {"role": "system", "content": "Give the proper structured output."},
-        #         {
-        #             "role": "user",
-        #             "content": PROMPT,
-        #         },
-        #     ],
-        #     text_format=UserMessage,
-        # )
-        
-        # parsed: UserMessage = res.output_parsed
-        # state.user_msg = parsed
-        
-        res = requests.post(
-                NGROK_URL + "/api/generate",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "model": "qwen3:4b",
-                    "prompt": PROMPT,
-                    "stream": False,
-                    "options": {"temperature": 0.2},
-                    "format": UserMessage.model_json_schema(),
+        client = OpenAI()
+        # Open API Code
+        res = client.responses.parse(
+            model="gpt-4o-2024-08-06",
+            input=[
+                {"role": "system", "content": "Give the proper structured output."},
+                {
+                    "role": "user",
+                    "content": PROMPT,
                 },
-            )
-        res.raise_for_status()
+            ],
+            text_format=UserMessage,
+        )
         
-        raw_text = res.json()['response']
-        try:
-            json_output = json.loads(raw_text)
-        except json.JSONDecodeError:
-            raise ValueError(f"Invalid JSON in response: {raw_text}")
+        parsed: UserMessage = res.output_parsed
+        state.user_msg = parsed
+        
+        # Ollama
+        # res = requests.post(
+        #         NGROK_URL + "/api/generate",
+        #         headers={"Content-Type": "application/json"},
+        #         json={
+        #             "model": "qwen3:4b",
+        #             "prompt": PROMPT,
+        #             "stream": False,
+        #             "options": {"temperature": 0.2},
+        #             "format": UserMessage.model_json_schema(),
+        #         },
+        #     )
+        # res.raise_for_status()
+        
+        # raw_text = res.json()['response']
+        # try:
+        #     json_output = json.loads(raw_text)
+        # except json.JSONDecodeError:
+        #     raise ValueError(f"Invalid JSON in response: {raw_text}")
 
-        res_clear = UserMessage(**json_output)
+        # res_clear = UserMessage(**json_output)
 
-        print(f"User Message: {res_clear}")
+        # print(f"User Message: {res_clear}")
 
-        state.user_msg = res_clear
+        # state.user_msg = res_clear
 
     except requests.RequestException as e:
         print(f"❌ Error calling LLM API: {e}")
