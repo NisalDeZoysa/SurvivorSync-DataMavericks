@@ -9,7 +9,8 @@ frontend/node_modules/
 test
 venv
 node_modules
+unsloth/
 
 **/__pycache__/
 
-
+*.mp4
